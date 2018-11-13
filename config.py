@@ -11,7 +11,7 @@ from os.path import join
 DATA_DIR = "/nas/rgroup/dsig/dataset/smoke/Terra"
 IMG_DIR = DATA_DIR
 # create list of Bands here
-BANDS_LIST = ['conus','conusAOD']
+BANDS_LIST = ['M3C01','M3C02','M3C03','M3C04','M3C05','M3C06','M3C07','M3C11']
 
 # SHAPEFILE CONFIG #
 #SHAPEFILE_DIR = join(DATA_DIR, "input", "shapefiles")

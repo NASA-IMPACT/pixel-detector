@@ -91,8 +91,7 @@ def band_list(loc,band_array):
     path_list = []
 
     for band in band_array:
-        fname = glob(loc+'*'+band+'*.nc')
-        fname = fname[0]
+        fname = glob(loc+'/*'+band+'*.nc')
         if fname == []:
             return False
         else:

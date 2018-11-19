@@ -83,7 +83,7 @@ def reproject_dataset_no_transform(geotiff_path):
         return rasterio.open(out_path), out_path
 
 
-def create_array_from_nc(ncFiles_path, res = (5500,1700)):
+def create_array_from_nc(ncFiles_path, extent, res = (5600,1700)):
     '''
     Create Geotiff files from NC files and return their numpy array
     '''
@@ -93,15 +93,16 @@ def create_array_from_nc(ncFiles_path, res = (5500,1700)):
     # do NC -> geotiff -> WGS84 geotiff for each NC file
     for file in ncFiles_path:
         print(file)
+        file = file[0]
         nfile = 'NETCDF:"'+file+'":Rad'
         translate_options = gdal.TranslateOptions(
             outputType = gdal.GDT_Float32,
             format = 'GTiff',
             noData = 0
             )
-
         tr = gdal.Translate('test.tif',nfile,options = translate_options)
         tr.FlushCache()
+
 
         warp_options = gdal.WarpOptions(
             format = 'GTiff',
@@ -110,17 +111,23 @@ def create_array_from_nc(ncFiles_path, res = (5500,1700)):
             height = res[1],
             resampleAlg = 5,
             srcSRS = tr.GetProjectionRef(),
-            outputBounds = (-146.603349201,14.561800658,-52.918301215,56.001340454),
+            outputBounds = extent,
             dstSRS = osr.SRS_WKT_WGS84
             )
-
+        file = 'test'
         wr = gdal.Warp(file+'.tif',tr,options = warp_options)
         wr.FlushCache()
         rast = rasterio.open(file+'.tif')
         rast_mtx.append(rast.read(1))
         rast.close()
+    
     print('shape of raster', np.moveaxis(np.asarray(rast_mtx),0,-1).shape)
     return np.moveaxis(np.asarray(rast_mtx),0,-1)
+
+def norm(img):
+    ''' Hist EQ given array
+    '''
+    return np.sort(img.ravel()).searchsorted(img)
 
 
 def create_tiles(bands_data, tile_size, path_to_geotiff):

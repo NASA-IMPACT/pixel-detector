@@ -2,9 +2,8 @@ import numpy as np
 import tensorflow
 import keras
 import json
-from model import pixelModel, deconvolution
-
-os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"
+from model import PixelModel as pix
+import argparse
 
 argparser = argparse.ArgumentParser(
     description='train model on given json model')
@@ -30,14 +29,20 @@ argparser.add_argument(
     '--initial',
     help='path to initial model')
 
+argparser.add_argument(
+    '-e',
+    '--epoch',
+    help='number of epoch')
 
-def main(args):
+
+def _main_(args):
     # build model
+    jsonfile = args.jsonfile
     if args.model == 'pixel' or args.model == 'p':
-        model = pixelModel(num_neighbor = 5)
+        model = pix(num_neighbor = 5)
     
     if args.initial != []:
-        model.train(jsonfile,num_epochs = int(args.epoch)
+        model.train(jsonfile,num_epoch= int(args.epoch)) 
         model.save_model(args.savepath)
 
     else:

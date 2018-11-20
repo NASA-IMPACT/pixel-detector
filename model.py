@@ -1,112 +1,70 @@
 # -*- coding: utf-8 -*-
 """
-Created on Fri Sep 29 15:34:06 2017
+Created on 15 nov 15:34:06 2018
 
 @author: Karthick
 """
 
-from keras.layers import Input, Dense
+from keras.layers import Input, Dense, Conv2D, Flatten, MaxPooling2D, Dropout
 from keras.models import Model
 from keras import regularizers
 import numpy as np
 import matplotlib.pyplot as plt
+from preprocessing import get_arrays_from_json
 
-def compile_model(encoding_dim1, # this is the size of our encoded representations
-                  encoding_dim2, # this is the size of our encoded representations
-                 input,  # this is our input placeholder
-                 output
-                ):
+class PixelModel():
+    def __init__(self,num_neighbor=5):
 
-
-    x_train = input[:,0:30000000]
-    x_test = input[:,30000000:]
-
-    input_img = Input(shape=(x_train.shape[0],))
-    y_train = output[:30000000]
-    y_test = output[30000000:]
-    from keras.utils import np_utils
-
-    #y_train = np_utils.to_categorical(y_train, 2)
-    #y_test = np_utils.to_categorical(y_test, 1)
-    #input = np.reshape(input)
-    # "encoded" is the encoded representation of the input
-    encoded = Dense(encoding_dim1, activation='relu')(input_img)
-
-    encoded2 = Dense(encoding_dim2, activation='softmax')(encoded)
-
-    decoded = Dense(encoding_dim1, activation='relu')(encoded)
-
-    decoded2 = Dense(input_img.shape[1]._value, activation='sigmoid')(decoded)
-
-    autoencoder = Model(input=input_img,output=decoded)
-    encoder = Model(input=input_img,output=encoded)
-    #decoder = Model(input=input_img,output=decoded)
-
-   # encoder = Model(input_img, encoded)
-
-    # create a placeholder for an encoded input
-    encoded_input = Input(shape=(encoding_dim1,))
-    # retrieve the last layer of the autoencoder model
-    decoder_layer = autoencoder.layers[-1]
-    # create the decoder model
-    decoder = Model(encoded_input, decoder_layer(encoded_input))
-
-    #autoencoder.compile(optimizer='adadelta', loss='binary_crossentropy')
-
-    encoder.compile(optimizer='rmsprop',
-                  loss='binary_crossentropy',
-                  metrics=['accuracy'])
-    return autoencoder
+        self.num_neighbor = num_neighbor
 
 
-def train_model(autoencoder,
-                encoder,# this is the size of our encoded representations
-                x_train,# this is our input placeholder
-                x_test,
-                y_train,
-                y_test
-                ):
+        ##########################
+        # Make the model
+        ##########################
+        visible = Input(shape=(num_neighbor,num_neighbor,8,))
+        conv1   = Conv2D(4, kernel_size=2, activation='relu', padding = 'same')(visible)
+        pool1   = MaxPooling2D(pool_size=(2, 2),padding = 'same')(conv1)
+        conv2   = Conv2D(2, kernel_size=2, activation='relu', padding = 'same')(pool1)
+        flatten = Flatten()(conv2)
+        #flatten = Flatten()(visible)
+        dense1  = Dense(32,activation='relu')(flatten)
+        dense2  = Dense(16, activation='relu')(dense1)
+        dense2  = Dropout(0.5)(dense2)
+        output  = Dense(1, activation='sigmoid')(dense2)
+
+        self.model = Model(inputs=visible, outputs=output)
 
 
 
 
 
+    def load_weights(self, weight_path):
+        try:
+            self.model.load_weights(weight_path)
+
+        except:
+            print('the model does not conform with the weights given')
+
+    def train(self,jsonfile,num_epoch):
+
+        x_train,y_train = get_arrays_from_json(jsonfile,self.num_neighbor)
+            
+        self.model.compile(optimizer='adam',
+                      loss='binary_crossentropy',
+                      metrics=['accuracy'])
+
+        self.model.train(x_train,y_train,
+            num_epoch = num_epoch,
+            batch_size = 10000,
+            validation_split = 0.2)
 
 
-    #x_train = x_train.reshape((len(x_train), np.prod(x_train.shape[1:])))
-    #x_test = x_test.reshape((len(x_test), np.prod(x_test.shape[1:])))
-    print(x_train.shape)
-    print(x_test.shape)
-
-    autoencoder.fit(x_train.T, x_train.T,
-                    epochs=1,
-                    batch_size=25600,
-                    shuffle=True,
-                    validation_data=(x_test.T, x_test.T))
-
-    encoder.fit(x_train.T, y_train,
-              nb_epoch=3,
-              batch_size=25600,
-              shuffle=True,
-              validation_data=(x_test.T, y_test))
-
-    score = autoencoder.evaluate(x_test.T, x_test.T, verbose=1)
-
-    score = encoder.evaluate(x_test[:30000,].T, y_test[:30000], verbose=1)
-    print('Test score before fine turning:', score[0])
-    print('Test accuracy after fine turning:', score[1])
-    # encode and decode some digits
-    # note that we take them from the *test* set
-    #encoded_imgs = encoder.predict(x_test)
-    #decoded_imgs = decoder.predict(encoded_imgs)
-
-    # use Matplotlib (don't ask)
+    def save_model(self,savepath):
+        self.model.save(savepath)
 
 
+    def load_data(io_array):
+        train = []
+        test = []
 
-
-def load_data(io_array):
-    train = []
-    test = []
-
-    return train, test
+        return train, test

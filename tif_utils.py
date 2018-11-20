@@ -114,13 +114,14 @@ def create_array_from_nc(ncFiles_path, extent, res = (5600,1700)):
             outputBounds = extent,
             dstSRS = osr.SRS_WKT_WGS84
             )
+        
         file = 'test'
         wr = gdal.Warp(file+'.tif',tr,options = warp_options)
         wr.FlushCache()
         rast = rasterio.open(file+'.tif')
         rast_mtx.append(rast.read(1))
         rast.close()
-    
+
     print('shape of raster', np.moveaxis(np.asarray(rast_mtx),0,-1).shape)
     return np.moveaxis(np.asarray(rast_mtx),0,-1)
 

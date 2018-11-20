@@ -84,14 +84,14 @@ def get_bands_path(start_time,end_time,band_array,sat_path):
     return path_list
 
 
-def band_list(loc,band_array):
+def band_list(loc,band_array,time):
     """
 
     """
     path_list = []
 
     for band in band_array:
-        fname = glob(loc+'/*'+band+'*.nc')
+        fname = glob(loc+'/*'+band+'*s'+time+'*.nc')
         if fname == []:
             return False
         else:

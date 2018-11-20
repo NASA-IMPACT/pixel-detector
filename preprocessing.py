@@ -16,9 +16,14 @@ from sklearn.preprocessing import MinMaxScaler
 from pyresample import image, geometry, utils,kd_tree,bilinear
 import rasterio, rasterio.features
 import io_util as io
+from config import BANDS_LIST
+from netcdf_decode import band_list
+import math
+from tif_utils import create_array_from_nc
+import json
 
 def convert_pixels_to_groups(X,edge_size=5,stride=0,num_bands = 8):
-	
+    
     rows,cols = X.shape[0],X.shape[1]
     mrows = int((1+(rows/edge_size)) * edge_size)
     mcols = int((1+(cols/edge_size)) * edge_size)
@@ -43,10 +48,51 @@ def convert_pixels_to_groups(X,edge_size=5,stride=0,num_bands = 8):
                 result.append(np.array(X[i-half_edge:i+half_edge+1,j-half_edge:j+half_edge+1], dtype=float))
     return np.array(result)
 
-import math
+
+def get_arrays_from_json(jsonfile,num_neighbor):
+
+    js = open(jsonfile)
+    jsondict = json.loads(js.read())
+    
+    x_array = []
+    y_array = []
+
+    for item in jsondict:
+        ncpath = item['ncfile']
+        nclist = band_list(ncpath,BANDS_LIST,time = item['nctime'])
+        extent = item['extent']
+        shapefile = fiona.open(item['shp'])
+        start = item['start']
+        end = item['end']
+        full_extent = [-146.603349201,14.561800658,-52.918301215,56.001340454]
+        full_res = [5497,1713]
+        res = (int((extent[0] - extent[2])*full_res[0] /(full_extent[0] - full_extent[2])),
+            int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
+        res = (res[0]/num_neighbor*num_neighbor,res[1]/num_neighbor*num_neighbor)
+
+        x_array.append(convert_pixels_to_groups(create_array_from_nc(nclist,extent,res = res)))
+        
+        geoms = []
+
+        for sh in shapefile:
+            if sh['properties']['Start'] == start and sh['properties']['End'] == end:
+                geoms.append(sh['geometry'])
+                
+        b1_raster = rasterio.open('test.tif')
+
+        y_array = rasterio.features.rasterize(
+                 [(geo,1) for geo in geoms],
+                 out_shape=(res[1],res[0]),
+                 transform=b1_raster.transform)
+
+        y_array.flatten()
+    
+    js.close()
+
+    return unison_shuffled_copies(x_array[0],y_array)
+
 
 def create_tiles(img):
-
 
     img_shape = img.shape
     tile_size = (5, 5)
@@ -72,12 +118,10 @@ def create_tile_pixel_out(img,tile_size = (5,5),offset = (5, 5)):
             pix = img[int(i+edge_size/2),int(j+edge_size/2)]
             # Debugging the tiles
             images.append(pix)
-            
             #cv2.imwrite("debug_" + str(i) + "_" + str(j) + ".png", cropped_img)
     
     return images
             
-
 
 def unison_shuffled_copies(a, b):
     assert len(a) == len(b)

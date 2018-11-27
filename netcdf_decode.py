@@ -5,7 +5,6 @@ import numpy as np
 from datetime import datetime
 import os
 from glob import glob
-from config import BITMAPS_DIR,WGS84_DIR
 from datetime import timedelta
 from osgeo import gdal, osr, gdal_array
 import xarray as xr
@@ -13,47 +12,6 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from pyresample import image, geometry, utils,kd_tree,bilinear
 import rasterio, rasterio.features
-import io_util as io
-
-bands = ['BAND_06']
-
-
-
-# def gen_data_from_shapefile(shapefile_path,bands):
-#      """Read The Timestamp Of the Shapefiles and decode NC file corresponding to it."""
-#      try:
-#          print("Load shapefile {}.".format(shapefile_path))
-#          with fiona.open(shapefile_path) as shapefile:
-#              for feature in shapefile:
-#                  geom = feature['geometry']
-#                  property = feature['properties']
-#                  time_str_start = property['Start']
-#                  time_str_end = property['End']
-#                  start_time = datetime.strptime(time_str_start,'%Y%j %H%M') + timedelta(hours=5)
-#                  end_time = datetime.strptime(time_str_end,'%Y%j %H%M') + timedelta(hours=5)
-#                  # Time conversion code goes here
-#                  sat_paths = get_bands_path(end_time,end_time,bands,sat_path)
-
-#                  i = 0
-#                  for path in band_path:
-#                      NDV, xsize, ysize, GeoT, Projection, data = GetnetCDFInfobyName(sat_path+path,'Rad')
-#                      data = 0
-#                      scaler = MinMaxScaler(feature_range=(0,255))
-#                      scaler.fit(data)
-#                      data = scaler.transform(data)
-#                      outfile = create_geotiff(BITMAPS_DIR+band_array[i], data, NDV, xsize, ysize, GeoT, Projection)
-#                      i = i+1
-#                      raster_dataset, wgs_location = reproject_dataset(outfile)
-#                      raster_dataset = rasterio.open(outfile)
-#                      bitmap_image = rasterio.features.rasterize(
-#                      [(geom,255)],
-#                      out_shape=raster_dataset.shape,
-#                      transform=raster_dataset.transform)
-#                      io.save_bitmap('test_bmp.bmp', np.asarray(bitmap_image,dtype='uint8'), raster_dataset)
-#                      bitmap_image[bitmap_image == 255] = 1
-                 
-#              return result,bitmap_image
-
 
 
 def get_bands_path(start_time,end_time,band_array,sat_path):
@@ -92,6 +50,7 @@ def band_list(loc,band_array,time):
 
     for band in band_array:
         fname = glob(loc+'/*'+band+'*s'+time+'*.nc')
+        print(fname)
         if fname == []:
             return False
         else:

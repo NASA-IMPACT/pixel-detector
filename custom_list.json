@@ -1,0 +1,38 @@
+[{
+  "ncfile": "/nas/rgroup/dsig/smoke/goes_train_data/100/23",
+  "nctime": "20181002307224",
+  "shp": "/nas/rgroup/dsig/smoke/2018/hms_smoke20180410.shp",
+  "extent": [
+    -102.2,
+    13.9,
+    -77.4,
+    28.5
+  ],
+  "start": "2018100 1932",
+  "end": "2018100 2132"
+  
+},
+{
+"ncfile": "/nas/rgroup/dsig/smoke/goes_train_data/163/20",
+"nctime": "20181632002209",
+"shp": "/nas/rgroup/dsig/smoke/2018/hms_smoke20180612.shp",
+"extent": [
+  -120,
+  29,
+  -111,
+  34
+],
+"start": "2018163 2002",
+"end": "2018163 2002"
+
+},
+{
+  "ncfile": "/nas/rgroup/dsig/smoke/goes_train_data/314/19",
+  "nctime": "20183141902177",
+  "shp": "/nas/rgroup/dsig/smoke/2018/hms_smoke20181110.shp",
+  "extent": [-130.7,20.8,-95.7,40.6],
+  "start": "2018314 1615",
+  "end": "2018314 1615"
+  
+}
+]

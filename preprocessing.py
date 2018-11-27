@@ -7,7 +7,6 @@ import numpy as np
 from datetime import datetime
 import os
 from glob import glob
-from config import BITMAPS_DIR,WGS84_DIR
 from datetime import timedelta
 from osgeo import gdal, osr, gdal_array
 import xarray as xr
@@ -15,12 +14,12 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from pyresample import image, geometry, utils,kd_tree,bilinear
 import rasterio, rasterio.features
-import io_util as io
 from config import BANDS_LIST
 from netcdf_decode import band_list
 import math
 from tif_utils import create_array_from_nc
 import json
+from PIL import Image
 
 def convert_pixels_to_groups(X,edge_size=5,stride=0,num_bands = 8):
     
@@ -59,7 +58,8 @@ def get_arrays_from_json(jsonfile,num_neighbor):
 
     for item in jsondict:
         ncpath = item['ncfile']
-        nclist = band_list(ncpath,BANDS_LIST,time = item['nctime'])
+        nctime = item['nctime']
+        nclist = band_list(ncpath,BANDS_LIST,time = nctime)
         extent = item['extent']
         shapefile = fiona.open(item['shp'])
         start = item['start']
@@ -70,7 +70,17 @@ def get_arrays_from_json(jsonfile,num_neighbor):
             int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
         res = (res[0]/num_neighbor*num_neighbor,res[1]/num_neighbor*num_neighbor)
 
-        x_array.append(convert_pixels_to_groups(create_array_from_nc(nclist,extent,res = res)))
+        arr,tifpath = create_array_from_nc(nclist,fname = nctime,extent=extent,res = res)
+        
+        grp_array = convert_pixels_to_groups(arr)
+
+        if x_array == []:
+            x_array = grp_array
+
+        else:
+            x_array = np.append(x_array,grp_array,axis = 0)
+
+        print('grp shape',grp_array.shape)
         
         geoms = []
 
@@ -78,18 +88,88 @@ def get_arrays_from_json(jsonfile,num_neighbor):
             if sh['properties']['Start'] == start and sh['properties']['End'] == end:
                 geoms.append(sh['geometry'])
                 
-        b1_raster = rasterio.open('test.tif')
+        b1_raster = rasterio.open(tifpath)
 
-        y_array = rasterio.features.rasterize(
+        y_mtx = rasterio.features.rasterize(
                  [(geo,1) for geo in geoms],
                  out_shape=(res[1],res[0]),
                  transform=b1_raster.transform)
 
-        y_array.flatten()
+        if y_array == []:
+            y_array = y_mtx.flatten()
+
+        else:
+            y_array = np.append(y_array,y_mtx.flatten(),axis = 0)
+
+        b1_raster.close()
+
+        Image.fromarray(np.asarray(y_mtx*255,dtype = 'uint8')).save(os.path.join(tifpath[:-11],'bitmap_WGS84.bmp'))
     
     js.close()
+    print('xarray shape',np.asarray(x_array).shape,y_array.shape)
+    return unison_shuffled_copies(x_array,y_array)
 
-    return unison_shuffled_copies(x_array[0],y_array)
+
+def get_arrays_from_predict_json(jsonfile,num_neighbor):
+
+    js = open(jsonfile)
+    jsondict = json.loads(js.read())
+    
+    x_array = []
+    y_array = []
+
+    for item in jsondict:
+        ncpath = item['ncfile']
+        nctime = item['nctime']
+        nclist = band_list(ncpath,BANDS_LIST,time = nctime)
+        extent = item['extent']
+        shapefile = fiona.open(item['shp'])
+        start = item['start']
+        end = item['end']
+        full_extent = [-146.603349201,14.561800658,-52.918301215,56.001340454]
+        full_res = [5497,1713]
+        res = (int((extent[0] - extent[2])*full_res[0] /(full_extent[0] - full_extent[2])),
+            int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
+        res = (res[0]/num_neighbor*num_neighbor,res[1]/num_neighbor*num_neighbor)
+
+        arr,tifpath = create_array_from_nc(nclist,fname = nctime,extent=extent,res = res)
+        
+        grp_array = convert_pixels_to_groups(arr)
+
+        if x_array == []:
+            x_array = grp_array
+
+        else:
+            x_array = np.append(x_array,grp_array,axis = 0)
+
+        print('grp shape',grp_array.shape)
+        
+        geoms = []
+
+        for sh in shapefile:
+            if sh['properties']['Start'] == start and sh['properties']['End'] == end:
+                geoms.append(sh['geometry'])
+                
+        b1_raster = rasterio.open(tifpath)
+
+        y_mtx = rasterio.features.rasterize(
+                 [(geo,1) for geo in geoms],
+                 out_shape=(res[1],res[0]),
+                 transform=b1_raster.transform)
+
+        if y_array == []:
+            y_array = y_mtx.flatten()
+
+        else:
+            y_array = np.append(y_array,y_mtx.flatten(),axis = 0)
+
+        b1_raster.close()
+
+        Image.fromarray(np.asarray(y_mtx*255,dtype = 'uint8')).save(os.path.join(tifpath[:-11],'bitmap_WGS84.bmp'))
+    
+    js.close()
+    print('xarray shape',np.asarray(x_array).shape,y_array.shape)
+    return x_array,y_array,y_mtx*255.0
 
 
 def create_tiles(img):

@@ -7,83 +7,17 @@ import fiona
 import os
 import itertools
 import numpy as np
-from io_util import get_file_name
-from config import WGS84_DIR
-import subprocess
+import config
+from config import TIFF_DIR as WGS84_DIR
 import osgeo
-from netCDF4 import Dataset
 from osgeo import gdal
 from osgeo import osr
 import numpy as np
 import pdb
 import subprocess
+import cv2
 
-def reproject_dataset(geotiff_path):
-    """Project a GeoTIFF to the WGS84 coordinate reference system.
-    See https://mapbox.github.io/rasterio/topics/reproject.html"""
-
-    # We want to project the GeoTIFF coordinate reference system (crs)
-    # to WGS84 (e.g. into the familiar Lat/Lon pairs). WGS84 is analogous
-    # to EPSG:4326
-    dst_crs = 'EPSG:4326'
-
-    with rasterio.open(geotiff_path) as src:
-        transform, width, height = rasterio.warp.calculate_default_transform(
-            src.crs, dst_crs, src.width, src.height, *src.bounds )
-        kwargs = src.meta.copy()
-        kwargs.update({
-            'crs': dst_crs,
-            'transform': transform,
-            'width': width,
-            'height': height
-        })
-
-        satellite_img_name = get_file_name(geotiff_path)
-        out_file_name = "{}_wgs84.tif".format(satellite_img_name)
-        out_path = os.path.join(WGS84_DIR, out_file_name)
-        with rasterio.open(out_path, 'w', **kwargs) as dst:
-            for i in range(1, src.count + 1):
-                rasterio.warp.reproject(
-                    source=rasterio.band(src, i),
-                    destination=rasterio.band(dst, i),
-                    src_transform=src.transform,
-                    src_crs=src.crs,
-                    dst_transform=transform,
-                    dst_crs=dst_crs,
-                    resampling=rasterio.warp.Resampling.nearest)
-
-        return rasterio.open(out_path), out_path
-
-
-def reproject_dataset_no_transform(geotiff_path):
-    """Project a GeoTIFF to the WGS84 coordinate reference system.
-    See https://mapbox.github.io/rasterio/topics/reproject.html"""
-
-    # We want to project the GeoTIFF coordinate reference system (crs)
-    # to WGS84 (e.g. into the familiar Lat/Lon pairs). WGS84 is analogous
-    # to EPSG:4326
-    dst_crs = 'EPSG:4326'
-    with rasterio.open(geotiff_path) as src:
-        kwargs = src.meta.copy()
-        kwargs.update({
-            'crs': dst_crs})
-        satellite_img_name = get_file_name(geotiff_path)
-        out_file_name = "{}_wgs84.tif".format(satellite_img_name)
-        out_path = os.path.join(WGS84_DIR, out_file_name)
-        with rasterio.open(out_path, 'w', **kwargs) as dst:
-            for i in range(1, src.count + 1):
-                rasterio.warp.reproject(
-                    source=rasterio.band(src, i),
-                    destination=rasterio.band(dst, i),
-                    src_crs=src.crs,
-                    dst_crs=dst_crs,
-                    resampling=rasterio.warp.Resampling.nearest,
-                    SRC_METHOD='NO_GEOTRANSFORM')
-
-        return rasterio.open(out_path), out_path
-
-
-def create_array_from_nc(ncFiles_path, extent, res = (5600,1700)):
+def create_array_from_nc(ncFiles_path,fname, extent=[-146.603349201,14.561800658,-52.918301215,56.001340454], res = (5600,1700)):
     '''
     Create Geotiff files from NC files and return their numpy array
     '''
@@ -91,44 +25,96 @@ def create_array_from_nc(ncFiles_path, extent, res = (5600,1700)):
     rast_mtx = []
 
     # do NC -> geotiff -> WGS84 geotiff for each NC file
-    for file in ncFiles_path:
-        print(file)
-        file = file[0]
-        nfile = 'NETCDF:"'+file+'":Rad'
-        translate_options = gdal.TranslateOptions(
-            outputType = gdal.GDT_Float32,
-            format = 'GTiff',
-            noData = 0
-            )
-        tr = gdal.Translate('test.tif',nfile,options = translate_options)
-        tr.FlushCache()
+    n_band = 0
+    cache_dir = os.path.join(WGS84_DIR,fname)
+
+    if fname == '':
+        print('Converting NC to WGS84 TIF Using gdal')
+
+        for file in ncFiles_path:
+
+            nfile = 'NETCDF:"'+file[0]+'":Rad'
+            translate_options = gdal.TranslateOptions(
+                outputType = gdal.GDT_Float32,
+                format = 'GTiff',
+                noData = 0
+                )
+
+            tr = gdal.Translate('test.tif',nfile,options = translate_options)
+            tr.FlushCache()
 
 
-        warp_options = gdal.WarpOptions(
-            format = 'GTiff',
-            outputType = gdal.GDT_Float32,
-            width = res[0],
-            height = res[1],
-            resampleAlg = 5,
-            srcSRS = tr.GetProjectionRef(),
-            outputBounds = extent,
-            dstSRS = osr.SRS_WKT_WGS84
-            )
+            warp_options = gdal.WarpOptions(
+                format = 'GTiff',
+                outputType = gdal.GDT_Float32,
+                width = res[0],
+                height = res[1],
+                resampleAlg = 5,
+                srcSRS = tr.GetProjectionRef(),
+                outputBounds = extent,
+                dstSRS = osr.SRS_WKT_WGS84
+                )
+
+                
+            wr = gdal.Warp('test.tif',tr,options = warp_options)
+            wr.FlushCache()
+
+            rast = rasterio.open(os.path.join('test.tif'))
+            rast_mtx.append(rast.read(1))
+            rast.close()
+
+    else:
+        print(WGS84_DIR,fname)
+        create_cache = False
+
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
+            create_cache = True
+            print('Cache not found, Converting NC to WGS84 TIF Using gdal')
         
-        file = 'test'
-        wr = gdal.Warp(file+'.tif',tr,options = warp_options)
-        wr.FlushCache()
-        rast = rasterio.open(file+'.tif')
-        rast_mtx.append(rast.read(1))
-        rast.close()
+        for file in ncFiles_path:
+            n_band = n_band+1
+            file = file[0]
 
-    print('shape of raster', np.moveaxis(np.asarray(rast_mtx),0,-1).shape)
-    return np.moveaxis(np.asarray(rast_mtx),0,-1)
+            if create_cache:    
 
-def norm(img):
-    ''' Hist EQ given array
-    '''
-    return np.sort(img.ravel()).searchsorted(img)
+                nfile = 'NETCDF:"'+file+'":Rad'
+                translate_options = gdal.TranslateOptions(
+                    outputType = gdal.GDT_Float32,
+                    format = 'GTiff',
+                    noData = 0
+                    )
+
+                tr = gdal.Translate('test.tif',nfile,options = translate_options)
+                tr.FlushCache()
+
+
+                warp_options = gdal.WarpOptions(
+                    format = 'GTiff',
+                    outputType = gdal.GDT_Float32,
+                    width = res[0],
+                    height = res[1],
+                    resampleAlg = 5,
+                    srcSRS = tr.GetProjectionRef(),
+                    outputBounds = extent,
+                    dstSRS = osr.SRS_WKT_WGS84
+                    )
+
+                    
+                wr = gdal.Warp(os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'),tr,options = warp_options)
+                wr.FlushCache()
+                print('Stored as'+os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'))
+
+
+            rast = rasterio.open(os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'))
+            rast_mtx.append(histogram_equalize(rast.read(1)))
+            rast.close()
+
+        print('shape of raster', np.moveaxis(np.asarray(rast_mtx),0,-1).shape)
+    return np.moveaxis(np.asarray(rast_mtx),0,-1),os.path.join(cache_dir,str(1)+'_WGS84'+'.tif')
+
+def histogram_equalize(img):
+    return cv2.equalizeHist(img.astype('uint8'))
 
 
 def create_tiles(bands_data, tile_size, path_to_geotiff):

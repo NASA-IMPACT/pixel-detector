@@ -11,19 +11,22 @@ from keras import regularizers
 import numpy as np
 import matplotlib.pyplot as plt
 from preprocessing import get_arrays_from_json
-import os
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+
 
 class PixelModel():
     def __init__(self,num_neighbor=5):
 
         self.num_neighbor = num_neighbor
 
+        self.make_model()
+
+
+    def make_model(self):
 
         ##########################
         # Make the model
         ##########################
+        
         visible = Input(shape=(self.num_neighbor,self.num_neighbor,8,))
         conv1   = Conv2D(4, kernel_size=2, activation='relu', padding = 'same')(visible)
         pool1   = MaxPooling2D(pool_size=(2, 2),padding = 'same')(conv1)
@@ -36,7 +39,8 @@ class PixelModel():
         output  = Dense(1, activation='sigmoid')(dense2)
         self.model = Model(inputs=visible, outputs=output)
 
-        self.model.summary()
+        self.model.summary()       
+
 
 
     def load_weights(self, weight_path):
@@ -48,7 +52,7 @@ class PixelModel():
 
     def train(self,jsonfile,num_epoch):
 
-        x_train,y_train = get_arrays_from_json(jsonfile,self.num_neighbor)
+        x_train,y_train,_ = get_arrays_from_json(jsonfile,self.num_neighbor)
             
         self.model.compile(optimizer='adam',
                       loss='binary_crossentropy',
@@ -76,6 +80,10 @@ class DeconvModel():
 
         self.num_neighbor = num_neighbor
 
+        self.make_model()
+
+
+    def make_model(self):
 
         ##########################
         # Make the model
@@ -97,10 +105,6 @@ class DeconvModel():
         x = Cropping2D(((2,2),(2,2)))(x)
         self.model  = Model(visible, x)
         self.model.summary()
-
-
-
-
 
 
     def load_weights(self, weight_path):
@@ -128,8 +132,3 @@ class DeconvModel():
         self.model.save(savepath)
 
 
-    def load_data(io_array):
-        train = []
-        test = []
-
-        return train, test

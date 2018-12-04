@@ -14,10 +14,9 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from pyresample import image, geometry, utils,kd_tree,bilinear
 import rasterio, rasterio.features
-from config import BANDS_LIST
-from netcdf_decode import band_list
+from config import BANDS_LIST,CONUS_EXTENT_COORDS,FULL_RES
 import math
-from tif_utils import create_array_from_nc
+from tif_utils import create_array_from_nc, band_list
 import json
 from PIL import Image
 
@@ -64,8 +63,8 @@ def get_arrays_from_json(jsonfile,num_neighbor):
         shapefile = fiona.open(item['shp'])
         start = item['start']
         end = item['end']
-        full_extent = [-146.603349201,14.561800658,-52.918301215,56.001340454]
-        full_res = [5497,1713]
+        full_extent = CONUS_EXTENT_COORDS
+        full_res = FULL_RES
         res = (int((extent[0] - extent[2])*full_res[0] /(full_extent[0] - full_extent[2])),
             int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
         res = (res[0]/num_neighbor*num_neighbor,res[1]/num_neighbor*num_neighbor)
@@ -126,7 +125,7 @@ def get_arrays_from_predict_json(jsonfile,num_neighbor):
         shapefile = fiona.open(item['shp'])
         start = item['start']
         end = item['end']
-        full_extent = [-146.603349201,14.561800658,-52.918301215,56.001340454]
+        full_extent = 
         full_res = [5497,1713]
         res = (int((extent[0] - extent[2])*full_res[0] /(full_extent[0] - full_extent[2])),
             int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
@@ -207,3 +206,8 @@ def unison_shuffled_copies(a, b):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
     return a[p], b[p]
+
+
+
+
+    

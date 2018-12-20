@@ -48,6 +48,31 @@ def create_logger():
     return logger
 
 
+def rclone_download(dst_path,day_array,band_string = 'M3C01',year = '2018',hour = '00'):
+    import os
+    import subprocess
+    '''rclone copy --include "*.nc" pubAWS:noaa-goes16/ABI-L1b-RadC/2018/315/ 
+    /nas/rhome/mramasub/smoke_pixel_detector/data/input/sat_images/315
+    '''
+
+    for day in day_array:
+        day = str (day)
+        if band_string == '':
+            band_str = '"*.nc"'
+        else:    
+            band_str = '"*'+band_string+'*.nc"'
+        src_str = 'pubAWS:noaa-goes16/ABI-L1b-RadC/'+year+'/'+day+'/'+hour+'/'
+        dst_str = os.path.join(dst_path,day,hour)
+
+        if not os.path.exists(dst_str):
+            os.makedirs(dst_str)
+
+        
+        print(band_str,src_str,dst_str)
+        subprocess.call('rclone copy --include '+band_str+' '+src_str+' '+dst_str,shell=True)
+
+
+
 def curl_download(bash_command):
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     output, error = process.communicate()
@@ -59,7 +84,7 @@ if __name__ == '__main__':
     for year in range(2017,2018):
         year = 2017
         basin = 'atlantic'
-        path_file = '/rhome/mramasub/smoke_pixel_detector/raw_data/
+        path_file = '/rhome/mramasub/smoke_pixel_detector/raw_data/'
         
         with open(path_file, 'r') as t:
             paths = t.readlines()

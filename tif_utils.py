@@ -16,6 +16,9 @@ import numpy as np
 import pdb
 import subprocess
 import cv2
+from glob import glob
+from PIL import Image
+from shutil import copyfile
 
 def create_array_from_nc(ncFiles_path,fname, extent=[-146.603349201,14.561800658,-52.918301215,56.001340454], res = (5600,1700)):
     '''
@@ -34,29 +37,18 @@ def create_array_from_nc(ncFiles_path,fname, extent=[-146.603349201,14.561800658
         for file in ncFiles_path:
 
             nfile = 'NETCDF:"'+file[0]+'":Rad'
-            translate_options = gdal.TranslateOptions(
-                outputType = gdal.GDT_Float32,
-                format = 'GTiff',
-                noData = 0
-                )
-
-            tr = gdal.Translate('test.tif',nfile,options = translate_options)
-            tr.FlushCache()
 
 
             warp_options = gdal.WarpOptions(
                 format = 'GTiff',
                 outputType = gdal.GDT_Float32,
-                width = res[0],
-                height = res[1],
                 resampleAlg = 5,
-                srcSRS = tr.GetProjectionRef(),
                 outputBounds = extent,
                 dstSRS = osr.SRS_WKT_WGS84
                 )
 
                 
-            wr = gdal.Warp('test.tif',tr,options = warp_options)
+            wr = gdal.Warp('test.tif',nfile,options = warp_options)
             wr.FlushCache()
 
             rast = rasterio.open(os.path.join('test.tif'))
@@ -79,31 +71,19 @@ def create_array_from_nc(ncFiles_path,fname, extent=[-146.603349201,14.561800658
             if create_cache:    
 
                 nfile = 'NETCDF:"'+file+'":Rad'
-                translate_options = gdal.TranslateOptions(
-                    outputType = gdal.GDT_Float32,
-                    format = 'GTiff',
-                    noData = 0
-                    )
-
-                tr = gdal.Translate('test.tif',nfile,options = translate_options)
-                tr.FlushCache()
-
 
                 warp_options = gdal.WarpOptions(
                     format = 'GTiff',
                     outputType = gdal.GDT_Float32,
-                    width = res[0],
+                    width=res[0],
                     height = res[1],
                     resampleAlg = 5,
-                    srcSRS = tr.GetProjectionRef(),
                     outputBounds = extent,
                     dstSRS = osr.SRS_WKT_WGS84
                     )
-
                     
-                wr = gdal.Warp(os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'),tr,options = warp_options)
+                wr = gdal.Warp(os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'),nfile,options = warp_options)
                 wr.FlushCache()
-                print('Stored as'+os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'))
 
 
             rast = rasterio.open(os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'))
@@ -115,6 +95,25 @@ def create_array_from_nc(ncFiles_path,fname, extent=[-146.603349201,14.561800658
 
 def histogram_equalize(img):
     return cv2.equalizeHist(img.astype('uint8'))
+
+
+def band_list(loc,band_array,time):
+    """
+        
+    """
+    path_list = []
+
+    for band in band_array:
+        print('fname:',loc,time)
+        fname = glob(loc+'/*'+band+'*s'+time+'*.nc')
+        if fname == []:
+            print('fname null')
+            return False
+        else:
+
+            path_list.append(fname)
+
+    return path_list
 
 
 def create_tiles(bands_data, tile_size, path_to_geotiff):

@@ -14,7 +14,7 @@ import argparse
 import matplotlib.pyplot as plt
 import cv2
 from sklearn.metrics import confusion_matrix
-
+from config import PREDICT_THRESHOLD
 argparser = argparse.ArgumentParser(
     description='Evaluate model on given json model')
 
@@ -59,7 +59,7 @@ def _main_(args):
         Image.fromarray(y_mat).save('test.bmp')
 
 
-        fig = plt.figure(figsize=(12, 10), dpi=100)
+        fig = plt.figure(figsize=(25, 15), dpi=100)
         ax = fig.add_axes([0,0,1,1])
         plt.axis('off')
         ax.imshow(y_mtx, cmap='gray')
@@ -70,18 +70,25 @@ def _main_(args):
 
         # put confusion matrix text on image
 
-        cm = confusion_matrix(y,y_pred>0.5)
+        cm = confusion_matrix(y,y_pred>PREDICT_THRESHOLD)
         #cm = cm/float(y.size)
+        acc = float(cm[0][0] + cm[1][1]) / float(cm[0][0]+cm[0][1]+cm[1][1] + cm[1][0])
 
+        recall = float(cm[1][1]) / float(cm[1][0] +cm [1][1])
+
+        precision = float(cm[1][1]) / float(cm[0][1]+cm[1][1])
+
+        disp_str = 'a:{0:.2f},r:{1:.2f},p:{2:.2f}'.format(acc,recall,precision)
         font                   = cv2.FONT_HERSHEY_SIMPLEX
-        bottomLeftCornerOfText = (y_mtx.shape[0] - 150,100)
+        bottomLeftCornerOfText = (y_mtx.shape[0] - 200,y_mtx.shape[1] - 200)
         fontScale              = 0.50
-        fontColor              = (0,0,0)
+        fontColor              = (255,255,255)
         lineType               = 2
 
         img = np.asarray(Image.open(args.output))
 
-        cv2.putText(img,str(cm), 
+        print('arc:',disp_str)
+        cv2.putText(img,disp_str, 
             bottomLeftCornerOfText, 
             font, 
             fontScale,

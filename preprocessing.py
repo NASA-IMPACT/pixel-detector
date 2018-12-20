@@ -14,7 +14,7 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from pyresample import image, geometry, utils,kd_tree,bilinear
 import rasterio, rasterio.features
-from config import BANDS_LIST,CONUS_EXTENT_COORDS,FULL_RES
+from config import BANDS_LIST,CONUS_EXTENT_COORDS,FULL_RES,FULLDISK_EXTENT_COORDS,FULL_RES_FD
 import math
 from tif_utils import create_array_from_nc, band_list
 import json
@@ -63,13 +63,16 @@ def get_arrays_from_json(jsonfile,num_neighbor):
         shapefile = fiona.open(item['shp'])
         start = item['start']
         end = item['end']
-        full_extent = CONUS_EXTENT_COORDS
-        full_res = FULL_RES
+
+        full_extent = FULLDISK_EXTENT_COORDS
+        full_res = FULL_RES_FD
+        
         res = (int((extent[0] - extent[2])*full_res[0] /(full_extent[0] - full_extent[2])),
             int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
         res = (res[0]/num_neighbor*num_neighbor,res[1]/num_neighbor*num_neighbor)
 
-        arr,tifpath = create_array_from_nc(nclist,fname = nctime,extent=extent,res = res)
+        ext_str = '_{}_{}_{}_{}'.format(extent[0],extent[1],extent[2],extent[3])
+        arr,tifpath = create_array_from_nc(nclist,fname = nctime+ext_str,extent=extent,res=res)
         
         grp_array = convert_pixels_to_groups(arr)
 
@@ -89,9 +92,11 @@ def get_arrays_from_json(jsonfile,num_neighbor):
                 
         b1_raster = rasterio.open(tifpath)
 
+        print(tifpath,geoms)
+
         y_mtx = rasterio.features.rasterize(
                  [(geo,1) for geo in geoms],
-                 out_shape=(res[1],res[0]),
+                 out_shape=(b1_raster.shape[0],b1_raster.shape[1]),
                  transform=b1_raster.transform)
 
         if y_array == []:
@@ -125,13 +130,16 @@ def get_arrays_from_predict_json(jsonfile,num_neighbor):
         shapefile = fiona.open(item['shp'])
         start = item['start']
         end = item['end']
-        full_extent = 
-        full_res = [5497,1713]
+
+        full_extent = FULLDISK_EXTENT_COORDS
+        full_res = FULL_RES_FD
+        
         res = (int((extent[0] - extent[2])*full_res[0] /(full_extent[0] - full_extent[2])),
             int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
         res = (res[0]/num_neighbor*num_neighbor,res[1]/num_neighbor*num_neighbor)
 
-        arr,tifpath = create_array_from_nc(nclist,fname = nctime,extent=extent,res = res)
+        ext_str = '_{}_{}_{}_{}'.format(extent[0],extent[1],extent[2],extent[3])
+        arr,tifpath = create_array_from_nc(nclist,fname = nctime+ext_str,extent=extent,res=res)
         
         grp_array = convert_pixels_to_groups(arr)
 
@@ -145,15 +153,18 @@ def get_arrays_from_predict_json(jsonfile,num_neighbor):
         
         geoms = []
 
+
         for sh in shapefile:
             if sh['properties']['Start'] == start and sh['properties']['End'] == end:
                 geoms.append(sh['geometry'])
-                
+            
+        print(tifpath,geoms)
+    
         b1_raster = rasterio.open(tifpath)
 
         y_mtx = rasterio.features.rasterize(
                  [(geo,1) for geo in geoms],
-                 out_shape=(res[1],res[0]),
+                 out_shape=(b1_raster.shape[0],b1_raster.shape[1]),
                  transform=b1_raster.transform)
 
         if y_array == []:
@@ -200,14 +211,52 @@ def create_tile_pixel_out(img,tile_size = (5,5),offset = (5, 5)):
             #cv2.imwrite("debug_" + str(i) + "_" + str(j) + ".png", cropped_img)
     
     return images
-            
 
 def unison_shuffled_copies(a, b):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
+
     return a[p], b[p]
 
 
 
+def balanced_sample_maker(X, y, sample_size, random_seed=42):
+    uniq_levels = np.unique(y)
+    uniq_counts = {level: sum(y == level) for level in uniq_levels}
 
-    
+    if not random_seed is None:
+        np.random.seed(random_seed)
+
+    # find observation index of each class levels
+    groupby_levels = {}
+    for ii, level in enumerate(uniq_levels):
+        obs_idx = [idx for idx, val in enumerate(y) if val == level]
+        groupby_levels[level] = obs_idx
+    # oversampling on observations of each label
+    balanced_copy_idx = []
+    for gb_level, gb_idx in groupby_levels.items():
+        over_sample_idx = np.random.choice(gb_idx, size=sample_size, replace=True).tolist()
+        balanced_copy_idx+=over_sample_idx
+    np.random.shuffle(balanced_copy_idx)
+
+    data_train=X[balanced_copy_idx]
+    labels_train=y[balanced_copy_idx]
+    if  ((len(data_train)) == (sample_size*len(uniq_levels))):
+        print('number of sampled example ', sample_size*len(uniq_levels), 'number of sample per class ', sample_size, ' #classes: ', len(list(set(uniq_levels))))
+    else:
+        print('number of samples is wrong ')
+
+    labels, values = zip(*Counter(labels_train).items())
+    print('number of classes ', len(list(set(labels_train))))
+    check = all(x == values[0] for x in values)
+    print(check)
+    if check == True:
+        print('Good all classes have the same number of examples')
+    else:
+        print('Repeat again your sampling your classes are not balanced')
+    indexes = np.arange(len(labels))
+    width = 0.5
+    plt.bar(indexes, values, width)
+    plt.xticks(indexes + width * 0.5, labels)
+    plt.show()
+    return data_train,labels_train

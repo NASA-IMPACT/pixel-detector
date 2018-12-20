@@ -1,3 +1,5 @@
+import matplotlib
+matplotlib.use('Agg')
 from keras.layers import Input, Dense
 from keras.models import load_model
 import numpy as np
@@ -6,12 +8,10 @@ import argparse
 import os
 import numpy as np
 import json
-from netcdf_decode import band_list
 from preprocessing import create_tiles, convert_pixels_to_groups, unison_shuffled_copies
-from tif_utils import create_array_from_nc
+from tif_utils import create_array_from_nc,band_list
 from config import BANDS_LIST
-import matplotlib
-matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID" 

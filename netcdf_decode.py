@@ -50,7 +50,7 @@ def band_list(loc,band_array,time):
 
     for band in band_array:
         fname = glob(loc+'/*'+band+'*s'+time+'*.nc')
-        print(fname)
+        
         if fname == []:
             return False
         else:

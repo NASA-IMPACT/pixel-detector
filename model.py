@@ -8,6 +8,7 @@ Created on 15 nov 15:34:06 2018
 from keras.layers import Input, Dense, Conv2D, Flatten, MaxPooling2D, Dropout
 from keras.models import Model
 from keras import regularizers
+from keras.callbacks import EarlyStopping, ModelCheckpoint, ReduceLROnPlateau
 import numpy as np
 import matplotlib.pyplot as plt
 from preprocessing import get_arrays_from_json
@@ -50,17 +51,26 @@ class PixelModel():
         except:
             print('the model does not conform with the weights given')
 
-    def train(self,jsonfile,num_epoch):
 
-        x_train,y_train,_ = get_arrays_from_json(jsonfile,self.num_neighbor)
+
+    def train(self,jsonfile,num_epoch,savepath):
+
+        x_train,y_train = get_arrays_from_json(jsonfile,self.num_neighbor)
             
         self.model.compile(optimizer='adam',
                       loss='binary_crossentropy',
                       metrics=['accuracy'])
 
+
+
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='auto')
+        checkpointer = ModelCheckpoint(filepath=savepath, verbose=1, save_best_only=True)
+
+
         self.model.fit(x_train,y_train,
             nb_epoch = num_epoch,
             batch_size = 10000,
+            callbacks=[early_stopping,checkpointer],
             validation_split = 0.2)
 
 
@@ -114,7 +124,7 @@ class DeconvModel():
         except:
             print('the model does not conform with the weights given')
 
-    def train(self,jsonfile,num_epoch):
+    def train(self,jsonfile,num_epoch,savepath):
 
         x_train,y_train = get_arrays_from_json(jsonfile,self.num_neighbor)
             
@@ -122,9 +132,12 @@ class DeconvModel():
                       loss='mse',
                       metrics=['mae'])
 
+        early_stopping = EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='auto')
+        checkpointer = ModelCheckpoint(filepath=savepath, verbose=1, save_best_only=True)
+
         self.model.fit(x=X_train, y=np.expand_dims(Y_train,axis = -1), 
             batch_size=32, epochs=200, verbose=1,validation_split = 0.2,
-            callbacks=None,
+            callbacks=[early_stopping,checkpointer],
             shuffle=True)
 
 

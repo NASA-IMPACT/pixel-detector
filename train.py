@@ -38,12 +38,12 @@ argparser.add_argument(
 def _main_(args):
     # build model
     jsonfile = args.jsonfile
+    savepath = args.savepath
     if args.model == 'pixel' or args.model == 'p':
         model = pix(num_neighbor = 5)
     
     if args.initial != []:
-        model.train(jsonfile,num_epoch= int(args.epoch)) 
-        model.save_model(args.savepath)
+        model.train(jsonfile,int(args.epoch),savepath) 
 
     else:
         try:

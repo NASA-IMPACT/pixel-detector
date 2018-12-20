@@ -1,0 +1,9 @@
+[{
+  "ncfile": "/nas/rgroup/dsig/smoke/goes_train_data/313/17",
+  "nctime": "20183131732179",
+  "shp": "/nas/rgroup/dsig/smoke/2018/hms_smoke20181109.shp",
+  "extent": [-130.7,20.8,-95.7,40.6],
+  "start": "2018313 1600",
+  "end": "2018313 1800"
+  
+}]

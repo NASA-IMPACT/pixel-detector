@@ -19,19 +19,25 @@ import cv2
 from glob import glob
 from PIL import Image
 from shutil import copyfile
+import sys
 
-def iterate_through(nc_file_paths, output_file_name, expect_cache = True, create_cache=True):
+def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache = True, create_cache=True):
 
     rast_mtx = list()
 
     for n_band, file in enumerate(nc_file_paths):
         nfile = 'NETCDF:"'+file[0]+'":Rad'
+
+        output_file_name =  os.path.join(cache_folder_name,str(n_band)+'_WGS84.tif')
+
         if create_cache:
-            nfile = 'NETCDF:"'+file+'":Rad'
+
             warp_options = gdal.WarpOptions(
                 format = 'GTiff',
                 outputType = gdal.GDT_Float32,
                 resampleAlg = 5,
+                width = res[0],
+                height = res[1],
                 outputBounds = extent,
                 dstSRS = osr.SRS_WKT_WGS84
                 )
@@ -42,12 +48,13 @@ def iterate_through(nc_file_paths, output_file_name, expect_cache = True, create
             wr.FlushCache()
 
         try:
-            rast = rasterio.open(os.path.join(output_file_name))
+            rast = rasterio.open(output_file_name)
+            rast_mtx.append(rast.read(1))
+            rast.close()
         except:
             print('cache not found, please verify')
+            sys.exit(1)
 
-        rast_mtx.append(rast.read(1))
-        rast.close()
     return rast_mtx
 
 
@@ -58,7 +65,6 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
     geotiff_paths = []
 
     # do NC -> geotiff -> WGS84 geotiff for each NC file
-    n_band = 0
     cache_dir = os.path.join(WGS84_DIR,fname)
     create_cache = False
 
@@ -74,7 +80,7 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
             create_cache = True
             print('Expected cache but not found, Converting NC to WGS84 TIF Using gdal')
 
-        rast_mtx = iterate_through(ncFiles_path, os.path.join(cache_dir,str(n_band)+'_WGS84'+'.tif'), create_cache = create_cache)
+        rast_mtx = iterate_through(ncFiles_path, cache_dir, extent, res, create_cache = create_cache)
 
         print('shape of raster', np.moveaxis(np.asarray(rast_mtx),0,-1).shape)
 

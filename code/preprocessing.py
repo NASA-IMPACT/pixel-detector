@@ -25,8 +25,7 @@ def convert_pixels_to_groups(img,edge_size=5,stride=0,num_bands = 8):
     Given img[x,y] array, the method yields x*y arrays of edge_size*edge_size
     matrices, each array in output corresponds to each pixel in input
     """
-
-    rows,cols = img.shape[0:2]
+    rows,cols,bands = img.shape
     result  = []
     half_edge = int(edge_size/2)
     # if stride > 0:
@@ -92,7 +91,7 @@ def get_arrays_from_json(jsonfile,num_neighbor,shuffle=True):
 
         print('grp shape',grp_array.shape)
 
-        y_array = get_bitmap_from_shp(shapefile,rasterio.open(tifpath),os.path.join(tifpath[:-11],'bitmap_WGS84.bmp'))
+        y_mtx = get_bitmap_from_shp(shapefile_path,rasterio.open(tifpath),os.path.join(tifpath[:-11],'bitmap_WGS84.bmp'))
 
         if y_array == []:
             y_array = y_mtx.flatten()
@@ -189,11 +188,11 @@ def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
 
         geoms = []
 
-        shapefile = iona.open(shp_path)
+        shapefile = fiona.open(shp_path)
 
         for shape in shapefile:
             #if sh['properties']['Start'] == start and sh['properties']['End'] == end:
-            geoms.append(sh['geometry'])
+            geoms.append(shape['geometry'])
 
         # raster the geoms onto a bitmap
 
@@ -202,9 +201,11 @@ def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
                  out_shape=(rasterio_object.shape[0],rasterio_object.shape[1]),
                  transform=rasterio_object.transform)
 
-        image.fromarray(np.asarray(y_mtx*255,dtype = 'uint8')).save()
+        Image.fromarray(np.asarray(y_mtx*255,dtype = 'uint8')).save(bitmap_path)
 
-        b1_raster.close()
+        rasterio_object.close()
+
+        return y_mtx
 
 
 

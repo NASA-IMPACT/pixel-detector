@@ -1,5 +1,6 @@
 {
             "type": "pixel",
             "num_neighbor": 5,
-            "jsonfile": "../data/custom_list.json"
+            "jsonfile": "../data/custom_list.json",
+            "savepath": "../models/model1.h5"
 }

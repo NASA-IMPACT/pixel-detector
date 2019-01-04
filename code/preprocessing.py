@@ -38,9 +38,9 @@ def convert_pixels_to_groups(img,edge_size=5,stride=0,num_bands = 8):
             moving_window[half_edge + 1, half_edge + 1] = img[i, j]
             row_extent = i if i - half_edge < 0 else 0
             height_extent = j if j - half_edge < 0 else 0
-            moving_window[]
+
             if i - half_edge < 0 or j - half_edge < 0 or i + half_edge+1>rows or j + half_edge +1> cols:
-                moving_window[half_edge+1,half_edge+1] = img[i,j]
+                moving_window[half_edge+1,half_edge+1] = img[i, j]
                 result.append(np.array(moving_window, dtype=float))
 
             else:

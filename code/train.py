@@ -2,11 +2,11 @@ import numpy as np
 import tensorflow
 import keras
 import json
-from code.model import PixelModel,DeconvModel
+from model import PixelModel,DeconvModel
 
 MODELS = {
             'pixel':PixelModel,
-            'conv':DecconvModel
+            'conv':DeconvModel
          }
 
 class Trainer:

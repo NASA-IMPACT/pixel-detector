@@ -12,6 +12,7 @@ class PixelModel():
 
         self.config = config
         self.num_neighbor = self.config['num_neighbor']
+        self.savepath = self.config['savepath']
         self.make_model()
         self.build_callbacks()
 
@@ -46,7 +47,7 @@ class PixelModel():
     def build_callbacks(self):
         self.callbacks = [
             EarlyStopping(monitor='val_loss', patience=10, verbose=1, mode='auto'),
-            ModelCheckpoint(filepath=savepath, verbose=1, save_best_only=True)
+            ModelCheckpoint(filepath= self.savepath, verbose=1, save_best_only=True)
         ]
 
     def train(self):
@@ -67,8 +68,8 @@ class PixelModel():
         )
 
 
-    def save_model(self, savepath):
-        self.model.save(self.config['savepath'])
+    def save_model(self):
+        self.model.save(self.savepath)
 
 
 class DeconvModel():
@@ -128,6 +129,6 @@ class DeconvModel():
 
 
     def save_model(self,savepath):
-        self.model.save(savepath)
+        self.model.save(self.savepath)
 
 

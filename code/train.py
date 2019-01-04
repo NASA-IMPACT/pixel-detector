@@ -2,41 +2,11 @@ import numpy as np
 import tensorflow
 import keras
 import json
-from model import PixelModel
-import argparse
-
-argparser = argparse.ArgumentParser(
-    description='train model on given json model')
-
-
-argparser.add_argument(
-    '-m',
-    '--model',
-    help='type of model')
-
-argparser.add_argument(
-    '-j',
-    '--jsonfile',
-    help='json file with ncfile and shapefile mapping')
-
-argparser.add_argument(
-    '-s',
-    '--savepath',
-    help='path to save model')
-
-argparser.add_argument(
-    '-i',
-    '--initial',
-    help='path to initial model')
-
-argparser.add_argument(
-    '-e',
-    '--epoch',
-    help='number of epoch')
+from code.model import PixelModel,DeconvModel
 
 MODELS = {
             'pixel':PixelModel,
-            'conv':ConvModel
+            'conv':DecconvModel
          }
 
 class Trainer:
@@ -51,7 +21,7 @@ class Trainer:
         """
 
         self.config = config
-        self.model_holder = MODELS[self.config['type']](self.config)
+        self.model_holder = MODELS[self.config['type']] (self.config)
 
     def train(self):
         """
@@ -69,7 +39,7 @@ class Trainer:
 
 if __name__ == '__main__':
 
-    trainer = Trainer({})
+    trainer = Trainer(json.load(open('config.json')))
     trainer.train()
 
 

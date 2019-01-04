@@ -1,10 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on 15 nov 15:34:06 2018
-
-@author: Karthick
-"""
-
 from keras.layers import Input, Dense, Conv2D, Flatten, MaxPooling2D, Dropout
 from keras.models import Model
 from keras import regularizers

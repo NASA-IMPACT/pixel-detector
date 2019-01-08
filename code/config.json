@@ -1,6 +1,9 @@
 {
             "type": "pixel",
             "num_neighbor": 5,
-            "jsonfile": "../data/custom_list.json",
-            "savepath": "../models/model1.h5"
+            "jsonfile": "../data/train_list.json",
+            "num_epoch": 150,
+            "batch_size": 10000,
+            "savepath": "../models/model2.h5",
+            "eval_json":"../data/test_list.json"
 }

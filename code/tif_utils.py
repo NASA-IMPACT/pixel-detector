@@ -21,7 +21,13 @@ from PIL import Image
 from shutil import copyfile
 import sys
 
+
 def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache = True, create_cache=True):
+    '''
+    Iterate through the NCfile paths are convert to geotiff if create_cache=True
+    else read geotiffs from cache_folder
+    Returns: (res[0],res[1],[<num of bands>]) numpy array of geotiffs in cache folder
+    '''
 
     rast_mtx = list()
 
@@ -41,6 +47,7 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache 
                 outputBounds = extent,
                 dstSRS = osr.SRS_WKT_WGS84
                 )
+
             if not expect_cache:
                 output_file_name = './test.tif'
 
@@ -49,7 +56,7 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache 
 
         try:
             rast = rasterio.open(output_file_name)
-            rast_mtx.append(rast.read(1))
+            rast_mtx.append(histogram_equalize(rast.read(1)))
             rast.close()
         except:
             print('cache not found, please verify')
@@ -88,6 +95,8 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
 
 def histogram_equalize(img):
     return cv2.equalizeHist(img.astype('uint8'))
+
+
 
 
 def band_list(loc,band_array,time):

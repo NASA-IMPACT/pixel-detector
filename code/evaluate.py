@@ -9,54 +9,39 @@ import json
 from keras.layers import Input, Dense
 from keras.models import load_model
 from model import PixelModel as pix
-from preprocessing import get_arrays_from_predict_json
+from preprocessing import get_arrays_from_json
 import argparse
 import matplotlib.pyplot as plt
 import cv2
 from sklearn.metrics import confusion_matrix
 from config import PREDICT_THRESHOLD
-argparser = argparse.ArgumentParser(
-    description='Evaluate model on given json model')
 
 
-argparser.add_argument(
-    '-m',
-    '--model',
-    help='type of model')
+class Evaluate:
 
-argparser.add_argument(
-    '-j',
-    '--jsonfile',
-    help='json file with ncfile and shapefile mapping')
+    def __init__(self, config):
+        """
+        config = {
+            'type': < choice of 'pixel' or 'deconv'>,
+            'num_neighbor': < TODO: explain this parameter >,
+            ''
+        }
+    """
 
-argparser.add_argument(
-    '-p',
-    '--savepath',
-    help='path of saved model')
+        self.config = config
+        #self.model_holder = MODELS[self.config['type']] (self.config)
 
-argparser.add_argument(
-    '-f',
-    '--output',
-    help='path of file')
+    def evaluate(self):
 
-
-def _main_(args):
-    # build model
-    jsonfile = args.jsonfile
-
-    if args.savepath == None:
-        print('give valid path to model')
-
-    else:
-
-        x,y,y_mtx = get_arrays_from_predict_json(jsonfile,5)
+        x,y,y_mtx = get_arrays_from_json(self.config['eval_json'],5, shuffle=False)
         print(x.shape,y.shape,y_mtx.shape)
-        model = load_model(args.savepath)
+        model = load_model(str(self.config['savepath']))
 
         y_pred = model.predict(x,batch_size = 10000)
+        y_pred = y_pred > PREDICT_THRESHOLD
         y_mat = np.asarray(y_pred*255.0,dtype = 'uint8').reshape(y_mtx.shape)
 
-        Image.fromarray(y_mat).save('test.bmp')
+        Image.fromarray(y_mat).save('eval2.bmp')
 
 
         fig = plt.figure(figsize=(25, 15), dpi=100)
@@ -65,10 +50,10 @@ def _main_(args):
         ax.imshow(y_mtx, cmap='gray')
         temp_y_out = y_mat
         ax.imshow(temp_y_out, alpha=0.5, cmap='jet')
-        plt.savefig(args.output)
+        plt.savefig('eval2.png')
         plt.close()
 
-        # put confusion matrix text on image
+        #put confusion matrix text on image
 
         cm = confusion_matrix(y,y_pred>PREDICT_THRESHOLD)
         #cm = cm/float(y.size)
@@ -79,25 +64,32 @@ def _main_(args):
         precision = float(cm[1][1]) / float(cm[0][1]+cm[1][1])
 
         disp_str = 'a:{0:.2f},r:{1:.2f},p:{2:.2f}'.format(acc,recall,precision)
+        #disp_str = 'null'
         font                   = cv2.FONT_HERSHEY_SIMPLEX
-        bottomLeftCornerOfText = (y_mtx.shape[0] - 200,y_mtx.shape[1] - 200)
+        bottomLeftCornerOfText = (100, 100)
         fontScale              = 0.50
         fontColor              = (255,255,255)
         lineType               = 2
 
-        img = np.asarray(Image.open(args.output))
+        img = np.asarray(Image.open('eval.png'))
 
         print('arc:',disp_str)
-        cv2.putText(img,disp_str, 
-            bottomLeftCornerOfText, 
-            font, 
+        cv2.putText(img,disp_str,
+            bottomLeftCornerOfText,
+            font,
             fontScale,
             fontColor,
             lineType)
 
-        cv2.imwrite(args.output,cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
+        cv2.imwrite('eval.png',cv2.cvtColor(img, cv2.COLOR_RGB2BGR))
 
 if __name__ == '__main__':
-    args = argparser.parse_args()
-    _main_(args)
+    # build model
+
+    eval = Evaluate(json.load(open('config.json')))
+    eval.evaluate()
+
+
+
+
 

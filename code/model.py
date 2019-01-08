@@ -12,7 +12,7 @@ class PixelModel():
 
         self.config = config
         self.num_neighbor = self.config['num_neighbor']
-        self.savepath = self.config['savepath']
+        self.savepath = str(self.config['savepath'])
         self.make_model()
         self.build_callbacks()
 
@@ -31,7 +31,7 @@ class PixelModel():
         #flatten = Flatten()(visible)
         dense1  = Dense(32,activation='relu')(flatten)
         dense2  = Dense(16, activation='relu')(dense1)
-        dense2  = Dropout(0.5)(dense2)
+        #dense2  = Dropout(0.5)(dense2)
         output  = Dense(1, activation='sigmoid')(dense2)
         self.model = Model(inputs=visible, outputs=output)
 
@@ -63,7 +63,7 @@ class PixelModel():
             y_train,
             nb_epoch = self.config['num_epoch'],
             batch_size = self.config['batch_size'],
-            callbacks = self.callbacks(),
+            callbacks = self.callbacks,
             validation_split = 0.2
         )
 
@@ -100,6 +100,7 @@ class DeconvModel():
         x = UpSampling2D((3, 3))(x)
         x = Conv2D(1, (3, 3), activation='sigmoid', padding='same')(x)
         x = Cropping2D(((2,2),(2,2)))(x)
+
         self.model  = Model(visible, x)
         self.model.summary()
 

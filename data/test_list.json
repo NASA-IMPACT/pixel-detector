@@ -1,0 +1,13 @@
+[{
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/037/23",
+ "nctime": "20180372300476",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180206_plume1.shp",
+ "extent": [
+   -122.1,
+   40.8,
+   -121.1,
+   41.8
+ ],
+ "start": "2018037 2237",
+ "end": "2018037 2237"
+}]

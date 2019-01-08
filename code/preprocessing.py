@@ -62,6 +62,8 @@ def get_arrays_from_json(jsonfile,num_neighbor,shuffle=True):
 
     """
 
+    print('reading json from :',jsonfile)
+
     js = open(jsonfile)
     jsondict = json.loads(js.read())
 
@@ -106,82 +108,7 @@ def get_arrays_from_json(jsonfile,num_neighbor,shuffle=True):
         return unison_shuffled_copies(x_array,y_array)
 
     else:
-        return x_array,y_array
-
-
-
-# hopefully donot use this. (if we can maintain the size of the arrays from get_arrays_from_json)
-
-def get_arrays_from_predict_json(jsonfile,num_neighbor):
-
-    js = open(jsonfile)
-    jsondict = json.loads(js.read())
-
-    x_array = []
-    y_array = []
-
-    for item in jsondict:
-        ncpath = item['ncfile']
-        nctime = item['nctime']
-        nclist = band_list(ncpath,BANDS_LIST,time = nctime)
-        extent = item['extent']
-        shapefile = fiona.open(item['shp'])
-        start = item['start']
-        end = item['end']
-
-        full_extent = FULLDISK_EXTENT_COORDS
-        full_res = FULL_RES_FD
-
-        res = (int((extent[0] - extent[2])*full_res[0] /(full_extent[0] - full_extent[2])),
-            int((extent[1] - extent[3])*full_res[1] /(full_extent[1] - full_extent[3])))
-        res = (res[0]/num_neighbor*num_neighbor,res[1]/num_neighbor*num_neighbor)
-
-        ext_str = '_{}_{}_{}_{}'.format(extent[0],extent[1],extent[2],extent[3])
-        arr,tifpath = create_array_from_nc(nclist,fname = nctime+ext_str,extent=extent,res=res)
-
-        grp_array = convert_pixels_to_groups(arr)
-
-        if x_array == []:
-            x_array = grp_array
-
-        else:
-            x_array = np.append(x_array,grp_array,axis = 0)
-
-        print('grp shape',grp_array.shape)
-
-        geoms = []
-
-
-        for sh in shapefile:
-            if sh['properties']['Start'] == start and sh['properties']['End'] == end:
-                geoms.append(sh['geometry'])
-
-        print(tifpath,geoms)
-
-        b1_raster = rasterio.open(tifpath)
-
-        y_mtx = rasterio.features.rasterize(
-                 [(geo,1) for geo in geoms],
-                 out_shape=(b1_raster.shape[0],b1_raster.shape[1]),
-                 transform=b1_raster.transform)
-
-        if y_array == []:
-            y_array = y_mtx.flatten()
-
-        else:
-            y_array = np.append(y_array,y_mtx.flatten(),axis = 0)
-
-        b1_raster.close()
-
-        Image.fromarray(np.asarray(y_mtx*255,dtype = 'uint8')).save(os.path.join(tifpath[:-11],'bitmap_WGS84.bmp'))
-
-    js.close()
-    print('xarray shape',np.asarray(x_array).shape,y_array.shape)
-    return x_array,y_array,y_mtx*255.0
-
-
-
-
+        return x_array,y_array,y_mtx
 
 
 def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
@@ -251,4 +178,30 @@ def unison_shuffled_copies(a, b):
     p = np.random.permutation(len(a))
 
     return a[p], b[p]
+
+/*
+    img = Image.open(bmpfile)
+    x,y = img.shape()
+
+    grid_x =  int(float(x)/grid_ratio)
+    grid_y =  int(float(y)/grid_ratio)
+
+    grid_bool = np.zeros(grid_x,grid_y)
+
+    for i in range(grid_x):
+        for j in range(grid_y):*/
+
+def convert_bmp_to_coord(bmpfile,coverage_thres = 0.5, grid_ratio = 0.05):
+    """
+    desc : get bounding box from bmp image with black/white pixels.
+
+    """
+
+
+
+
+
+
+
+
 

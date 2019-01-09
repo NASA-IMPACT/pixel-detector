@@ -1,11 +1,13 @@
-from config import BITMAPS_DIR
+import fiona
 import io_util as io
 import numpy as np
-import fiona
+import os
 import rasterio
 import rasterio.features
 import rasterio.warp
-import os
+
+from config import BITMAPS_DIR
+
 
 def create_bitmap(raster_dataset, shapefile_path, satellite_path):
     # type: (object, object, object) -> object
@@ -19,7 +21,7 @@ def create_bitmap(raster_dataset, shapefile_path, satellite_path):
 
     print("Create bitmap for water features.")
 
-    #for shapefile_path in shapefile_paths:
+    # for shapefile_path in shapefile_paths:
 
     try:
         print("Load shapefile {}.".format(shapefile_path))
@@ -28,11 +30,13 @@ def create_bitmap(raster_dataset, shapefile_path, satellite_path):
             # wether the features is a lake or a river. We only care about the geometry
             # of the feature i.e. where it is located and what shape it has.
             geometries = [feature['geometry'] for feature in shapefile]
+
+            # TODO: properties unused.
             properties = [feature['properties'] for feature in shapefile]
 
             water_features = np.concatenate(
                 (water_features, geometries), axis=0)
-    except IOError as e:
+    except IOError:
         print("No shapefile found.")
         return 0
 
@@ -74,5 +78,3 @@ def remove_edge_tiles(tiled_bands, tiled_bitmap, tile_size, source_shape):
             bitmap.append(tiled_bitmap[i])
 
     return bands, bitmap, [x[1] for x in bands]
-
-

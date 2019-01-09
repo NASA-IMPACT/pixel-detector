@@ -11,7 +11,7 @@
  ],
  "start": "2018022 2202",
  "end": "2018022 2202"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/025/20",
@@ -53,7 +53,7 @@
  ],
  "start": "2018030 1802",
  "end": "2018030 2002"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/037/23",
@@ -67,7 +67,7 @@
  ],
  "start": "2018037 2237",
  "end": "2018037 2237"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/057/20",
@@ -81,7 +81,7 @@
  ],
  "start": "2018057 2002",
  "end": "2018057 2002"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/057/20",
@@ -95,7 +95,7 @@
  ],
  "start": "2018057 2002",
  "end": "2018057 2002"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/057/20",
@@ -109,7 +109,7 @@
  ],
  "start": "2018057 2000",
  "end": "2018057 2000"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/058/20",
@@ -123,7 +123,7 @@
  ],
  "start": "2018058 1742",
  "end": "2018058 1922"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/037/23",
@@ -137,7 +137,7 @@
  ],
  "start": "2018037 2237",
  "end": "2018037 2237"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/058/20",
@@ -151,7 +151,7 @@
  ],
  "start": "2018058 1742",
  "end": "2018058 1922"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/082/20",
@@ -165,7 +165,7 @@
  ],
  "start": "2018082 1702",
  "end": "2018082 2002"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/082/20",
@@ -179,7 +179,7 @@
  ],
  "start": "2018082 1702",
  "end": "2018082 2002"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/082/20",
@@ -193,7 +193,7 @@
  ],
  "start": "2018082 2002",
  "end": "2018082 2002"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/083/20",
@@ -207,7 +207,7 @@
  ],
  "start": "2018083 1952",
  "end": "2018083 2302"
-}
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/083/20",
@@ -223,4 +223,3 @@
  "end": "2018083 19522"
 }
 ]
-

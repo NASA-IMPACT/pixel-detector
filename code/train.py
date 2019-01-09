@@ -1,13 +1,13 @@
-import numpy as np
-import tensorflow
-import keras
 import json
-from model import PixelModel,DeconvModel
+
+from model import PixelModel, DeconvModel
+
 
 MODELS = {
-            'pixel':PixelModel,
-            'conv':DeconvModel
-         }
+    'pixel': PixelModel,
+    'conv': DeconvModel
+}
+
 
 class Trainer:
 
@@ -21,7 +21,7 @@ class Trainer:
         """
 
         self.config = config
-        self.model_holder = MODELS[self.config['type']] (self.config)
+        self.model_holder = MODELS[self.config['type']](self.config)
 
     def train(self):
         """
@@ -36,12 +36,7 @@ class Trainer:
         self.model_holder.load()
 
 
-
 if __name__ == '__main__':
 
     trainer = Trainer(json.load(open('config.json')))
     trainer.train()
-
-
-
-

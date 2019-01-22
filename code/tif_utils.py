@@ -39,20 +39,26 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=
                 outputBounds=extent,
                 dstSRS=osr.SRS_WKT_WGS84
             )
-
-            if not expect_cache:
-                output_file_name = './test.tif'
-
             wr = gdal.Warp(output_file_name, nfile, options=warp_options)
             wr.FlushCache()
 
-        try:
-            rast = rasterio.open(output_file_name)
-            rast_mtx.append(histogram_equalize(rast.read(1)))
-            rast.close()
-        except:
-            print('cache not found, please verify')
-            sys.exit(1)
+        rast = rasterio.open(output_file_name)
+        rast_mtx.append(histogram_equalize(rast.read(1)))
+        rast.close()
+
+        if not expect_cache:
+            # this flow is when there should not be any intermediate
+            # file stored. all conversions happens in-memory
+
+            output_file_name = './test.tif'
+
+
+
+        # try:
+
+        # except:
+        #     print('cache not found, please verify')
+        #     sys.exit(1)
 
     return rast_mtx
 
@@ -79,15 +85,17 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
             os.makedirs(cache_dir)
             create_cache = True
             print('Expected cache but not found, Converting NC to WGS84 TIF Using gdal')
-
+        else:
+            print('Cache Found, Using Cache...')
         rast_mtx = iterate_through(ncFiles_path, cache_dir, extent, res, create_cache=create_cache)
 
         print('shape of raster', np.moveaxis(np.asarray(rast_mtx), 0, -1).shape)
 
-    return np.moveaxis(np.asarray(rast_mtx), 0, -1), os.path.join(cache_dir, str(1) + '_WGS84' + '.tif')
+    return np.moveaxis(np.asarray(rast_mtx), 0, -1), cache_dir
 
 
 def histogram_equalize(img):
+    #return img
     return cv2.equalizeHist(img.astype('uint8'))
 
 
@@ -101,7 +109,7 @@ def band_list(loc, band_array, time):
         print('fname:', loc, time)
         fname = glob(loc + '/*' + band + '*s' + time + '*.nc')
         if fname == []:
-            print('fname null')
+            print('Nc Files not Found')
             return False
         else:
 

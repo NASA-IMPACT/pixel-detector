@@ -12,7 +12,7 @@ from keras.layers import (
     MaxPooling2D,
 )
 from keras.models import Model
-from preprocessing import get_arrays_from_json
+from preprocessing import get_arrays_from_json, unison_shuffled_copies
 
 
 class PixelModel():
@@ -56,7 +56,21 @@ class PixelModel():
 
     def train(self):
 
-        x_train, y_train = get_arrays_from_json(self.config['jsonfile'], self.num_neighbor)
+        num_train_imgs = 9
+        x_, y_, _ = get_arrays_from_json(self.config['jsonfile'], self.num_neighbor)
+        x_train   = x_[:num_train_imgs]
+        y_train   = y_[:num_train_imgs]
+        x_val     = x_[num_train_imgs:]
+        y_val     = y_[num_train_imgs:]
+
+        x_train             = np.concatenate(tuple(x_train),axis=0)
+        y_train             = np.concatenate(tuple(y_train),axis=0)
+        x_val               = np.concatenate(tuple(x_val),axis=0)
+        y_val               = np.concatenate(tuple(y_val),axis=0)
+
+        x_train, y_train    = unison_shuffled_copies(x_train,y_train)
+        x_val, y_val        = unison_shuffled_copies(x_val,y_val)
+
 
         self.model.compile(
             optimizer='adam',
@@ -70,10 +84,12 @@ class PixelModel():
             nb_epoch=self.config['num_epoch'],
             batch_size=self.config['batch_size'],
             callbacks=self.callbacks,
-            validation_split=0.2
+            validation_data= [x_val, y_val],
+            shuffle = True
         )
 
     def save_model(self):
+
         self.model.save(self.savepath)
 
 

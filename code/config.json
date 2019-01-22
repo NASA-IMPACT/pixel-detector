@@ -2,8 +2,8 @@
     "type": "pixel",
     "num_neighbor": 5,
     "jsonfile": "../data/train_list.json",
-    "num_epoch": 150,
+    "num_epoch": 800,
     "batch_size": 10000,
-    "savepath": "../models/model2.h5",
+    "savepath": "../models/model_noeq.h5",
     "eval_json": "../data/test_list.json"
 }

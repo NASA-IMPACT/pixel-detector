@@ -42,7 +42,8 @@ def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):
             row_extent = i if i - half_edge < 0 else 0
             height_extent = j if j - half_edge < 0 else 0
 
-            if i - half_edge < 0 or j - half_edge < 0 or i + half_edge + 1 > rows or j + half_edge + 1 > cols:
+            if i - half_edge < 0 or j - half_edge < 0 or i + half_edge + 1 > rows or
+            j + half_edge + 1 > cols:
                 moving_window[half_edge + 1, half_edge + 1] = img[i, j]
                 result.append(np.array(moving_window, dtype=float))
 
@@ -51,6 +52,8 @@ def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):
                                            j - half_edge:j + half_edge + 1], dtype=float))
 
     return np.array(result)
+
+
 
 
 def get_arrays_from_json(jsonfile, num_neighbor, shuffle=True):
@@ -112,6 +115,9 @@ def get_arrays_from_json(jsonfile, num_neighbor, shuffle=True):
     # else:
     return x_array, y_array, cache_dir_list
 
+
+
+
 def append_to_list(lst, element):
     print('appending ', np.asarray(element).shape, 'to', lst.__len__())
     if lst != []:
@@ -119,6 +125,8 @@ def append_to_list(lst, element):
     else:
         lst = [element]
     print(lst)
+
+
 
 
 def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
@@ -144,6 +152,8 @@ def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
     return y_mtx
 
 
+
+
 def get_res_for_extent(extent, num_neighbor=5):
 
     full_extent = FULLDISK_EXTENT_COORDS
@@ -155,6 +165,8 @@ def get_res_for_extent(extent, num_neighbor=5):
     res = (res[0] / num_neighbor * num_neighbor, res[1] / num_neighbor * num_neighbor)
 
     return res
+
+
 
 
 def create_tile_pixel_out(img, tile_size=(5, 5), offset=(5, 5)):
@@ -177,6 +189,8 @@ def create_tile_pixel_out(img, tile_size=(5, 5), offset=(5, 5)):
     return images
 
 
+
+
 def unison_shuffled_copies(a, b):
     """
     shuffle a,b in unison and return shuffled a,b
@@ -185,6 +199,9 @@ def unison_shuffled_copies(a, b):
     p = np.random.permutation(len(a))
 
     return a[p], b[p]
+
+
+
 
 def convert_xy_to_latlon(row, col, transform):
     """
@@ -212,6 +229,7 @@ def convert_bmp_to_shp(img_path, transform, shp_path, visualize_path=''):
 
         for id_, points in enumerate(hull_points_list):
             poly = geometry.Polygon([convert_xy_to_latlon(x, y, transform) for x,y in points])
+
             output.write({
                     'geometry':geometry.mapping(poly),
                     'properties':{
@@ -234,6 +252,9 @@ def get_res_for_extent(extent, num_neighbor = 5):
 
     return res
 
+
+
+
 def create_tile_pixel_out(img,tile_size = (5,5),offset = (5, 5)):
     """
     create tiles of given image
@@ -253,6 +274,8 @@ def create_tile_pixel_out(img,tile_size = (5,5),offset = (5, 5)):
 
 
 
+
+
 def unison_shuffled_copies(a, b):
     """
     shuffle a,b in unison and return shuffled a,b
@@ -261,6 +284,8 @@ def unison_shuffled_copies(a, b):
     p = np.random.permutation(len(a))
 
     return a[p], b[p]
+
+
 
 
 
@@ -288,6 +313,10 @@ def get_hull_from_bmp(bmpfile,coverage_thres = 0.5, grid_ratio = 0.05):
         hull_points_list.append([ith_cluster[k] for k in hull.vertices])
 
     return hull_points_list
+
+
+
+
 
 def IOU_score(predicted_bmp, true_bmp):
     '''
@@ -321,5 +350,6 @@ def vis_hull(bmpfile, outpath = 'test.png'):
 
     if outpath:
         img.save(outpath)
+
 
 

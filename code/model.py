@@ -20,7 +20,7 @@ class PixelModel():
 
         self.config = config
         self.num_neighbor = self.config['num_neighbor']
-        self.savepath = str(self.config['savepath'])
+        self.savepath = str(self.config['model_path'])
         self.make_model()
         self.build_callbacks()
 

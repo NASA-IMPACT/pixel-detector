@@ -56,7 +56,7 @@ def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):
 
 
 
-def get_arrays_from_json(jsonfile, num_neighbor, shuffle=True):
+def get_arrays_from_json(jsonfile, num_neighbor):
     """
     num_neighbor = number of pixels at the egde of the square matrix input
     jsonfile = {
@@ -79,7 +79,7 @@ def get_arrays_from_json(jsonfile, num_neighbor, shuffle=True):
     # y_array = np.ndarray((0,0))
     x_array = []
     y_array = []
-    cache_dir_list = []
+    cache_list = []
 
     for item in jsondict:
 
@@ -91,31 +91,69 @@ def get_arrays_from_json(jsonfile, num_neighbor, shuffle=True):
 
         res = get_res_for_extent(extent, num_neighbor)
         ext_str = '_{}_{}_{}_{}'.format(extent[0], extent[1], extent[2], extent[3])
-        arr, cache_dir = create_array_from_nc(nclist, fname=nctime + ext_str, extent=extent, res=res)
 
+
+        # workflow for train and evaluate
+        arr, raster_transform = create_array_from_nc(
+                                                nclist,
+                                                fname=nctime + ext_str,
+                                                extent=extent,
+                                                res=res)
+        cache_list.append(cache_dir)
         grp_array = convert_pixels_to_groups(arr)
-        cache_dir_list.append(cache_dir)
         x_array.append(np.asarray(grp_array))
         #append_to_list(x_array, grp_array)
 
-        raster_object = rasterio.open(os.path.join(cache_dir,'0_WGS84.tif'))
-        y_mtx = get_bitmap_from_shp(shapefile_path, raster_object,
+        raster_object   = rasterio.open(os.path.join(cache_dir,'0_WGS84.tif'))
+        y_mtx           = get_bitmap_from_shp(shapefile_path, raster_object,
             os.path.join(cache_dir, 'bitmap_WGS84.bmp'))
         raster_object.close()
 
         y_array.append(np.asarray(y_mtx.flatten()))
-        #append_to_list(y_array, y_mtx.flatten())
+
+    js.close()
+
+    return x_array, y_array, cache_list
+
+def get_arrays_for_prediction(jsonfile, num_neighbor, create_cache=True):
+
+    """
+    num_neighbor = number of pixels at the egde of the square matrix input
+    jsonfile = {
+      "ncfile": "<ppath/to/ncfile>",
+      "nctime": "unique time string of the ncfile",
+      "extent": [extent coordinates in lat/lon],
+    }
+
+    """
+
+    js = open(jsonfile)
+    jsondict = json.loads(js.read())
+
+    # x_array = np.ndarray((0,0,num_neighbor,num_neighbor,8))
+    # y_array = np.ndarray((0,0))
+    x_array = []
+    auxillary_list = []
+
+    for item in jsondict:
+
+        ncpath = item['ncfile']
+        nctime = item['nctime']
+        nclist = band_list(ncpath, BANDS_LIST, time=nctime)
+        extent = item['extent']
+        res = get_res_for_extent(extent, num_neighbor)
+
+        # workflow for testing
+        arr, raster_transform   = create_array_from_nc(nclist, fname='', extent=extent, res=res)
+        auxillary               = (raster_transform, res)
+        auxillary_list.append(auxillary)
+        grp_array = convert_pixels_to_groups(arr)
+        x_array.append(np.asarray(grp_array))
 
 
     js.close()
 
-    # if shuffle:
-    #     return unison_shuffled_copies(x_array, y_array), cache_dir_list
-
-    # else:
-    return x_array, y_array, cache_dir_list
-
-
+    return x_array, auxillary_list
 
 
 def append_to_list(lst, element):
@@ -211,15 +249,15 @@ def convert_xy_to_latlon(row, col, transform):
     return rasterio.transform.xy(transform,row,col,offset='center')
 
 
-def convert_bmp_to_shp(img_path, transform, shp_path, visualize_path=''):
+def convert_bmp_to_shp(img, transform, shp_path, visualize_path=''):
     """
     Desc: make shapefile from white pixels of the BMP image
     """
 
-    hull_points_list = get_hull_from_bmp(img_path)
+    hull_points_list = get_hull_from_bmp(img)
 
     if visualize_path:
-        vis_hull(img_path,visualize_path)
+        vis_hull(img,visualize_path)
 
     schema = {
         'geometry': 'Polygon',
@@ -236,6 +274,7 @@ def convert_bmp_to_shp(img_path, transform, shp_path, visualize_path=''):
                         'id':id_
                     },
                 })
+
 
 
 
@@ -289,13 +328,13 @@ def unison_shuffled_copies(a, b):
 
 
 
-def get_hull_from_bmp(bmpfile,coverage_thres = 0.5, grid_ratio = 0.05):
+def get_hull_from_bmp(img,coverage_thres = 0.5, grid_ratio = 0.05):
     """
     desc : get bounding box from bmp image with black/white pixels.
 
     """
 
-    im = np.asarray(Image.open(bmpfile).convert('L'))
+    im = np.asarray(img)
     x,y = im.shape
     im = im.T
     row,col = np.where (im == 255)

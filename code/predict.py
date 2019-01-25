@@ -1,81 +1,92 @@
-import argparse
-import matplotlib
-import matplotlib.pyplot as plt
-import numpy as np
-import os
+# @author Muthukumaran R.
 
-from config import BANDS_LIST
+import numpy as np
+
 from keras.models import load_model
 from PIL import Image
+import rasterio
+import os
+
+from config import (
+    PREDICT_THRESHOLD,
+    OUTPUT_DIR
+    )
 from preprocessing import (
-    convert_pixels_to_groups,
-)
-from tif_utils import (
-    create_array_from_nc,
-    band_list
-)
+            get_arrays_from_json,
+            get_arrays_for_prediction,
+            convert_bmp_to_shp
+            )
 
-matplotlib.use('Agg')
+class Predict:
 
-os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    def __init__(self, config):
+        """
+            config = {
+                'type'          : < choice of 'pixel' or 'deconv'>,
+                'num_neighbor'  : < n of the n*n matrix to take as
+                                    input to the model>
 
-argparser = argparse.ArgumentParser(
-    description='Predict model on given GOES 16 NC files and model')
+                'model_path'    : path to the keras model.
 
+                'jsonfile'      : <json containing ncfile, extent
+                                    to subset ncfile and shapefile
+                                    for training >
 
-argparser.add_argument(
-    '-m',
-    '--model',
-    help='path to trained model')
+                'num_epoch'     : keras num_epoch
 
-argparser.add_argument(
-    '-i',
-    '--input',
-    help='path to NC files')
+                'batch_size'    : keras batch_size
 
-argparser.add_argument(
-    '-ns',
-    '--neighborhoodSize',
-    help='size of neighborhood to take. (must match the model input)')
+                'eval_json'     : <json containing ncfile, extent
+                                    to subset ncfile and shapefile
+                                    for evaluation >
 
-argparser.add_argument(
-    '-f',
-    '--folder',
-    help='folder to test images')
+                'pred_json'     : <json containing ncfile and extent
+                                    to subset for prediction>
+            }
+        """
 
-argparser.add_argument(
-    '-v',
-    '--visualize',
-    help='bitmap to visualize output')
+        self.config     = config
+        self.jsonfile   = config['pred_json']
+        self.model      = load_model(str(self.config['model_path']))
 
 
-def _main_(args):
-    print(args)
-    model = load_model(args.model)
-    n_size = args.neighborhoodSize
-    ncFiles_path = args.input
-    X_mtx, _ = create_array_from_nc(band_list(ncFiles_path, BANDS_LIST, time=''), fname='')
-    model.summary()
-    print('predicting...')
-    y_out = model.predict(
-        convert_pixels_to_groups(X_mtx),
-        batch_size=10000)
-    y_mat = np.asarray(y_out * 255.0, dtype='uint8').reshape(X_mtx[:, :, 0].shape)
-    Image.fromarray(y_mat).save('test.bmp')
-    if not args.visualize == '':
 
-        fig = plt.figure(figsize=(12, 10), dpi=100)
-        ax = fig.add_axes([0, 0, 1, 1])
-        plt.axis('off')
-        ax.imshow(X_mtx[:, :, 0])
-        ax.imshow(y_mat, alpha=0.5, cmap='gray')
-        # temp_y_out = y_out
-        # ax.imshow(temp_y_out, alpha=0.3, cmap='jet')
-        plt.savefig('test.png')
-        plt.close()
+
+    def predict(self, shp_path):
+
+        """
+        Desc        : writes the predicted smoke shapefile to shp_path
+
+        """
+        array_list = get_arrays_for_prediction(self.config['pred_json'],
+                                               self.config['num_neighbor'])
+        id_ = 0
+        for x,transform_tuple in array_list:
+
+          id_+=1
+            res, raster_transform = transform_tuple
+            y_pred = self.model.predict(x,batch_size = self.config['batch_size'])
+
+            y_mat = np.asarray(y_pred*255.0,dtype = 'uint8').reshape((res[1],
+                res[0]),order='C')
+
+
+            convert_bmp_to_shp( Image.fromarray(y_mat).convert('L'),
+                                raster_transform,
+                                shp_path+str(id_)
+                                )
+
+
+
 
 
 if __name__ == '__main__':
-    args = argparser.parse_args()
-    _main_(args)
+
+
+    pred = Predict(json.load(open('config.json')))
+    pred.predict('./outputs/')
+
+
+
+
+

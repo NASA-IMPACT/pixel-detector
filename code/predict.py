@@ -6,6 +6,7 @@ from keras.models import load_model
 from PIL import Image
 import rasterio
 import os
+import json
 
 from config import (
     PREDICT_THRESHOLD,
@@ -48,7 +49,19 @@ class Predict:
         self.config     = config
         self.jsonfile   = config['pred_json']
         self.model      = load_model(str(self.config['model_path']))
+        self.threshold  = PREDICT_THRESHOLD
 
+
+
+
+    # def predict(self, shp_path):
+
+        """
+        Desc        : returns shapefile object
+        input       : None
+        Output      : fiona shapefile objects List TODO: return Geojson dict
+
+        """
 
 
 
@@ -56,21 +69,30 @@ class Predict:
 
         """
         Desc        : writes the predicted smoke shapefile to shp_path
+        input       : Path to store shapefiles
 
         """
-        array_list = get_arrays_for_prediction(self.config['pred_json'],
-                                               self.config['num_neighbor'])
-        id_ = 0
-        for x,transform_tuple in array_list:
 
-          id_+=1
-            res, raster_transform = transform_tuple
+        x_list, transform_list = get_arrays_for_prediction(self.config['pred_json'],
+                                               self.config['num_neighbor'])
+
+        id_ = 0
+        for x,transform_tuple in zip(x_list, transform_list):
+
+            id_+=1
+
+            raster_transform, res = transform_tuple
+
+            #predict for x
             y_pred = self.model.predict(x,batch_size = self.config['batch_size'])
 
-            y_mat = np.asarray(y_pred*255.0,dtype = 'uint8').reshape((res[1],
+            y_pred = y_pred > self.threshold
+
+            # TODO: checks for reshape needed.
+            y_mat = np.asarray(y_pred*255,dtype = 'uint8').reshape((res[1],
                 res[0]),order='C')
 
-
+            print('generating shapefiles...')
             convert_bmp_to_shp( Image.fromarray(y_mat).convert('L'),
                                 raster_transform,
                                 shp_path+str(id_)
@@ -79,12 +101,11 @@ class Predict:
 
 
 
-
 if __name__ == '__main__':
 
 
     pred = Predict(json.load(open('config.json')))
-    pred.predict('./outputs/')
+    pred.predict('/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/')
 
 
 

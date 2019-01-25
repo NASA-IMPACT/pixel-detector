@@ -35,15 +35,16 @@ def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):
 
     for i in range(rows):
         for j in range(cols):
+
             moving_window = np.zeros((edge_size, edge_size, num_bands), dtype=float)
             moving_window[half_edge + 1, half_edge + 1] = img[i, j]
 
-            # TODO: row_extent and height_extent unused. remove?
-            row_extent = i if i - half_edge < 0 else 0
-            height_extent = j if j - half_edge < 0 else 0
 
-            if i - half_edge < 0 or j - half_edge < 0 or i + half_edge + 1 > rows or
-            j + half_edge + 1 > cols:
+            if i - half_edge < 0 \
+            or j - half_edge < 0 \
+            or i + half_edge + 1 > rows \
+            or j + half_edge + 1 > cols:
+
                 moving_window[half_edge + 1, half_edge + 1] = img[i, j]
                 result.append(np.array(moving_window, dtype=float))
 
@@ -94,11 +95,12 @@ def get_arrays_from_json(jsonfile, num_neighbor):
 
 
         # workflow for train and evaluate
-        arr, raster_transform = create_array_from_nc(
-                                                nclist,
-                                                fname=nctime + ext_str,
-                                                extent=extent,
-                                                res=res)
+        arr, cache_dir = create_array_from_nc(
+                                            nclist,
+                                            fname=nctime + ext_str,
+                                            extent=extent,
+                                            res=res
+                                            )
         cache_list.append(cache_dir)
         grp_array = convert_pixels_to_groups(arr)
         x_array.append(np.asarray(grp_array))
@@ -115,6 +117,10 @@ def get_arrays_from_json(jsonfile, num_neighbor):
 
     return x_array, y_array, cache_list
 
+
+
+
+
 def get_arrays_for_prediction(jsonfile, num_neighbor, create_cache=True):
 
     """
@@ -126,37 +132,43 @@ def get_arrays_for_prediction(jsonfile, num_neighbor, create_cache=True):
     }
 
     """
+    # workflow for testing
 
-    js = open(jsonfile)
-    jsondict = json.loads(js.read())
+
+    with open(jsonfile) as file:
+        jsondict = json.loads(file.read())
+
+    print('item length:',len(jsondict))
 
     # x_array = np.ndarray((0,0,num_neighbor,num_neighbor,8))
     # y_array = np.ndarray((0,0))
+
     x_array = []
     auxillary_list = []
 
     for item in jsondict:
 
-        ncpath = item['ncfile']
-        nctime = item['nctime']
-        nclist = band_list(ncpath, BANDS_LIST, time=nctime)
-        extent = item['extent']
-        res = get_res_for_extent(extent, num_neighbor)
+        ncpath  = item['ncfile']
+        nctime  = item['nctime']
+        nclist  = band_list(ncpath, BANDS_LIST, time=nctime)
+        extent  = item['extent']
+        res     = get_res_for_extent(extent, num_neighbor)
 
-        # workflow for testing
         arr, raster_transform   = create_array_from_nc(nclist, fname='', extent=extent, res=res)
         auxillary               = (raster_transform, res)
+        grp_array               = convert_pixels_to_groups(arr)
+
         auxillary_list.append(auxillary)
-        grp_array = convert_pixels_to_groups(arr)
         x_array.append(np.asarray(grp_array))
-
-
-    js.close()
 
     return x_array, auxillary_list
 
 
+
+
+
 def append_to_list(lst, element):
+
     print('appending ', np.asarray(element).shape, 'to', lst.__len__())
     if lst != []:
         lst.append(element)
@@ -256,6 +268,10 @@ def convert_bmp_to_shp(img, transform, shp_path, visualize_path=''):
 
     hull_points_list = get_hull_from_bmp(img)
 
+    if not hull_points_list:
+
+        print('No shapes found, No shapefile will be generated')
+
     if visualize_path:
         vis_hull(img,visualize_path)
 
@@ -300,8 +316,9 @@ def create_tile_pixel_out(img,tile_size = (5,5),offset = (5, 5)):
     """
 
     img_shape = img.shape
-    images = []
-    pixel = []
+    images    = []
+    pixel     = []
+
     for i in range(int(math.ceil(img_shape[0]/(offset[1] * 1.0)))):
         for j in range(int(math.ceil(img_shape[1]/(offset[0] * 1.0)))):
             pix = img[int(i+edge_size/2),int(j+edge_size/2)]
@@ -340,16 +357,20 @@ def get_hull_from_bmp(img,coverage_thres = 0.5, grid_ratio = 0.05):
     row,col = np.where (im == 255)
     cluster_points = zip(row,col)
 
-
-    clustering = DBSCAN(eps=2, min_samples=5).fit(cluster_points)
-    labels = clustering.labels_
-    print('clusters: ',set(labels).__len__())
     hull_points_list = list()
 
-    for i in range(max(labels)+1):
-        ith_cluster = [cluster_points[k] for k in np.where(labels == i)[0]]
-        hull = ConvexHull(ith_cluster)
-        hull_points_list.append([ith_cluster[k] for k in hull.vertices])
+    if cluster_points:
+
+        print('Clustering smoke plumes using DBSCAN...')
+        clustering = DBSCAN(eps=2, min_samples=5).fit(cluster_points)
+        labels = clustering.labels_
+        print('clusters: ',set(labels).__len__())
+
+        for i in range(max(labels)+1):
+
+            ith_cluster = [cluster_points[k] for k in np.where(labels == i)[0]]
+            hull = ConvexHull(ith_cluster)
+            hull_points_list.append([ith_cluster[k] for k in hull.vertices])
 
     return hull_points_list
 
@@ -361,6 +382,7 @@ def IOU_score(predicted_bmp, true_bmp):
     '''
     calculate IOU between the given bitmaps
     '''
+
     predict_hull = get_hull_from_bmp(predicted_bmp)
     true_hull    = get_hull_from_bmp(true_bmp)
 

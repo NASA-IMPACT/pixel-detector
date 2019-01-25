@@ -24,30 +24,11 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=
     '''
 
     rast_mtx = list()
+    raster_transform = ''
 
     for n_band, file in enumerate(nc_file_paths):
+
         nfile = 'NETCDF:"' + file[0] + '":Rad'
-
-        output_file_name = os.path.join(cache_folder_name, str(n_band) + '_WGS84.tif')
-
-        raster_transform = ''
-        if create_cache:
-
-            warp_options = gdal.WarpOptions(
-                format      ='GTiff',
-                outputType  =gdal.GDT_Float32,
-                resampleAlg =5,
-                width       =res[0],
-                height      =res[1],
-                outputBounds=extent,
-                dstSRS      =osr.SRS_WKT_WGS84
-            )
-            wr = gdal.Warp(output_file_name, nfile, options=warp_options)
-            wr.FlushCache()
-
-            rast = rasterio.open(output_file_name)
-            rast_mtx.append(histogram_equalize(rast.read(1)))
-            rast.close()
 
         if not expect_cache:
             # this flow is when there should not be any intermediate
@@ -76,13 +57,40 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=
 
             rast_mtx.append(histogram_equalize(wr.ReadAsArray()))
 
+        else:
+
+            output_file_name = os.path.join(cache_folder_name, str(n_band) + '_WGS84.tif')
+
+            if create_cache:
+
+                warp_options = gdal.WarpOptions(
+                    format      ='GTiff',
+                    outputType  =gdal.GDT_Float32,
+                    resampleAlg =5,
+                    width       =res[0],
+                    height      =res[1],
+                    outputBounds=extent,
+                    dstSRS      =osr.SRS_WKT_WGS84
+                )
+                wr = gdal.Warp(output_file_name, nfile, options=warp_options)
+                wr.FlushCache()
+
+            rast = rasterio.open(output_file_name)
+            rast_mtx.append(histogram_equalize(rast.read(1)))
+            rast.close()
+
+
+
 
     return rast_mtx, raster_transform
 
 
+
+
+
 def create_array_from_nc(ncFiles_path, fname, extent, res):
     '''
-    Create Geotiff files from NC files and return their numpy array
+    Desc    : Create Geotiff files from NC files and return their numpy array
     '''
 
     geotiff_paths = []
@@ -93,10 +101,11 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
     if fname == '':
         print('Not expecting cache, Converting NC to WGS84 TIF Using gdal')
 
-        rast_mtx,raster_transform = iterate_through(ncFiles_path,
-            create_cache=False,
-            expect_cache=False
-            )
+        rast_mtx,raster_transform = iterate_through(ncFiles_path, '',
+                                                    extent, res,
+                                                    create_cache=False,
+                                                    expect_cache=False
+                                                    )
 
         return np.moveaxis(np.asarray(rast_mtx), 0, -1), raster_transform
 
@@ -111,15 +120,17 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
         else:
             print('Cache Found, Using Cache...')
 
-        rast_mtx, raster_transform = iterate_through(ncFiles_path,
-            cache_dir,
-            extent, res,
-            create_cache=create_cache
-            )
+            rast_mtx, _ = iterate_through(  ncFiles_path,
+                                            cache_dir,
+                                            extent, res,
+                                            create_cache = False
+                                            )
 
-        print('shape of raster', np.moveaxis(np.asarray(rast_mtx), 0, -1).shape)
-
+        #print('shape of raster', np.moveaxis(np.asarray(rast_mtx), 0, -1).shape)
         return np.moveaxis(np.asarray(rast_mtx), 0, -1), cache_dir
+
+
+
 
 
 def histogram_equalize(img):
@@ -127,10 +138,13 @@ def histogram_equalize(img):
     return cv2.equalizeHist(img.astype('uint8'))
 
 
+
+
 def band_list(loc, band_array, time):
     """
     Get ncfile paths matching the bands and time from the 'loc' location
     """
+
     path_list = []
 
     for band in band_array:

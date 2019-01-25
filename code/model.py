@@ -56,12 +56,14 @@ class PixelModel():
 
     def train(self):
 
-        num_train_imgs = 9
+        num_train_imgs =
         x_, y_, _ = get_arrays_from_json(self.config['jsonfile'], self.num_neighbor)
         x_train   = x_[:num_train_imgs]
         y_train   = y_[:num_train_imgs]
         x_val     = x_[num_train_imgs:]
         y_val     = y_[num_train_imgs:]
+
+        print(len(x_))
 
         x_train             = np.concatenate(tuple(x_train),axis=0)
         y_train             = np.concatenate(tuple(y_train),axis=0)

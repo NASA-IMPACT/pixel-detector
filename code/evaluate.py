@@ -73,11 +73,10 @@ class Evaluate:
         print('looking for model in', str(self.config['model_path']))
         self.model = load_model(str(self.config['model_path']))
 
-        eval_list = get_arrays_from_json(self.config['eval_json'],
-                                                            self.config['num_neighbor']
-                                                            )
-
-        for x,y,cache_dir in eval_list:
+        x_list,y_list,cache_list = get_arrays_from_json(self.config['eval_json'],
+                                         self.config['num_neighbor']
+                                        )
+        for x,y,cache_dir in zip(x_list,y_list,cache_list):
             # iterate through each x,y pair
 
             output_folder = os.path.join(self.output_path,
@@ -85,13 +84,13 @@ class Evaluate:
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
 
-            self.make_predict_bitmaps(cache_dir)
+            self.make_predict_bitmaps(x,output_folder, cache_dir)
 
             # save BAND 1 raster from cache for evaluation purposes
             b1_rast = Image.open(os.path.join(cache_dir,'0_WGS84.tif')).convert('RGBA')
             b1_rast.save(os.path.join(output_folder, self.band_img_path))
 
-            self.plot_evaluated_image()
+            self.plot_evaluated_image(output_folder)
 
             # create shapefile output
             with rasterio.open(os.path.join(cache_dir,'0_WGS84.tif')) as rasterio_obj:
@@ -103,22 +102,25 @@ class Evaluate:
 
 
 
-    def make_predict_bitmaps(self, output_folder, cache_dir):
+    def make_predict_bitmaps(self, x, output_folder, cache_dir):
 
             """
             Desc:   Get the predictions for x and store the respective bitmaps
                     in output directory, along with true bitmaps
 
-            input:  cache_dir:  directory where the cache for the ncfile is
-                                stored
+            input:  cache_dir       :  directory where the cache for the ncfile is
+                                        stored
+                    x               :  input to the keras model
+                    output_folder   :  output folder to store predictions
+
             output: y: predicted pixels formatted as Image array.
 
             """
 
-            y_true = Image.open(os.path.join(cache_dir,'bitmap_WGS84.bmp')).convert('L')
-            y_true_arr = np.asarray(y_true)
-            y_pred = self.model.predict(x,batch_size = self.config['batch_size'])
-            y_pred_bin = y_pred > self.predict_thres #thresholding outputs
+            y_true      = Image.open(os.path.join(cache_dir,'bitmap_WGS84.bmp')).convert('L')
+            y_true_arr  = np.asarray(y_true)
+            y_pred      = self.model.predict(x,batch_size = self.config['batch_size'])
+            y_pred_bin  = y_pred > self.predict_thres #thresholding outputs
             #y_pred_bin = y_pred
 
             y_mat = np.asarray(y_pred_bin*255.0,dtype = 'uint8').reshape((y_true.size[1],
@@ -159,13 +161,14 @@ class Evaluate:
             y_true.flatten() > self.predict_thres*255.0,
             y_pred.flatten() > self.predict_thres*255.0
             )
-        acc = float(cm[0][0] + cm[1][1]) / float(cm[0][0]+cm[0][1]+cm[1][1] + cm[1][0])
-        recall = float(cm[1][1]) / float(cm[1][0] +cm [1][1])
-        precision = float(cm[1][1]) / float(cm[0][1]+cm[1][1])
+        acc         = float(cm[0][0] + cm[1][1]) / float(cm[0][0]+cm[0][1]+cm[1][1] + cm[1][0])
+        recall      = float(cm[1][1]) / float(cm[1][0] +cm [1][1])
+        precision   = float(cm[1][1]) / float(cm[0][1]+cm[1][1])
 
         #add IOU score to the plot
-        iou = IOU_score(os.path.join(output_folder, self.p_bmp_path),
-            os.path.join(output_folder, self.t_bmp_path))
+        iou = IOU_score(Image.open(os.path.join(output_folder, self.p_bmp_path), mode='r'),
+                        Image.open(os.path.join(output_folder, self.t_bmp_path), mode='r'))
+
         disp_str = 'a:{0:.2f},r:{1:.2f},p:{2:.2f},IOU:{3:.2f}'.format(acc,recall,precision,iou)
         plt.xlabel('True Smoke over Predicted Smoke\n'+disp_str)
 

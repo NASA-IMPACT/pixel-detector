@@ -95,6 +95,7 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
 
     geotiff_paths = []
 
+
     # do NC -> geotiff -> WGS84 geotiff for each NC file
     cache_dir = os.path.join(WGS84_DIR, fname)
 
@@ -110,21 +111,24 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
         return np.moveaxis(np.asarray(rast_mtx), 0, -1), raster_transform
 
     else:
+
+        create_cache  = False
         print('checking cache in: ', cache_dir)
 
         if not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
             create_cache = True
-            print('Expected cache but not found, Converting NC to WGS84 TIF Using gdal')
+            print('Expected cache but not found, Creating Cache')
+
 
         else:
             print('Cache Found, Using Cache...')
 
-            rast_mtx, _ = iterate_through(  ncFiles_path,
-                                            cache_dir,
-                                            extent, res,
-                                            create_cache = False
-                                            )
+        rast_mtx, _ = iterate_through(  ncFiles_path,
+                                        cache_dir,
+                                        extent, res,
+                                        create_cache = create_cache
+                                        )
 
         #print('shape of raster', np.moveaxis(np.asarray(rast_mtx), 0, -1).shape)
         return np.moveaxis(np.asarray(rast_mtx), 0, -1), cache_dir
@@ -148,11 +152,10 @@ def band_list(loc, band_array, time):
     path_list = []
 
     for band in band_array:
-        print('fname:', loc, time)
         fname = glob(loc + '/*' + band + '*s' + time + '*.nc')
         if fname == []:
             print('Nc Files not Found')
-            return False
+            return []
         else:
 
             path_list.append(fname)

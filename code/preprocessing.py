@@ -106,12 +106,12 @@ def get_arrays_from_json(jsonfile, num_neighbor):
         x_array.append(np.asarray(grp_array))
         #append_to_list(x_array, grp_array)
 
-        raster_object   = rasterio.open(os.path.join(cache_dir,'0_WGS84.tif'))
-        y_mtx           = get_bitmap_from_shp(shapefile_path, raster_object,
-            os.path.join(cache_dir, 'bitmap_WGS84.bmp'))
-        raster_object.close()
+        with rasterio.open(os.path.join(cache_dir,'0_WGS84.tif')) as raster_object:
+            y_mtx  = get_bitmap_from_shp(shapefile_path,
+                        raster_object,
+                        os.path.join(cache_dir, 'bitmap_WGS84.bmp'))
 
-        y_array.append(np.asarray(y_mtx.flatten()))
+            y_array.append(np.asarray(y_mtx.flatten()))
 
     js.close()
 
@@ -191,10 +191,16 @@ def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
 
     # raster the geoms onto a bitmap
 
-    y_mtx = rasterio.features.rasterize(
-        [(geo, 1) for geo in geoms],
-        out_shape=(rasterio_object.shape[0], rasterio_object.shape[1]),
-        transform=transform)
+    try:
+        y_mtx = rasterio.features.rasterize(
+            [(geo, 1) for geo in geoms],
+            out_shape=(rasterio_object.shape[0], rasterio_object.shape[1]),
+            transform=transform)
+
+    except:
+        print('no objects found')
+        y_mtx = np.zeros((rasterio_object.shape[0], rasterio_object.shape[1]))
+
 
     Image.fromarray(np.asarray(y_mtx * 255, dtype='uint8')).save(bitmap_path)
 
@@ -258,7 +264,7 @@ def convert_xy_to_latlon(row, col, transform):
     uses rasterio transform module to convert row, col of an image to
     its respective lat, lon coordinates
     """
-    return rasterio.transform.xy(transform,row,col,offset='center')
+    return rasterio.transform.xy(transform,col,row,offset='center')
 
 
 def convert_bmp_to_shp(img, transform, shp_path, visualize_path=''):
@@ -364,13 +370,18 @@ def get_hull_from_bmp(img,coverage_thres = 0.5, grid_ratio = 0.05):
         print('Clustering smoke plumes using DBSCAN...')
         clustering = DBSCAN(eps=2, min_samples=5).fit(cluster_points)
         labels = clustering.labels_
-        print('clusters: ',set(labels).__len__())
+        #print('clusters: ',set(labels).__len__())
 
         for i in range(max(labels)+1):
 
             ith_cluster = [cluster_points[k] for k in np.where(labels == i)[0]]
-            hull = ConvexHull(ith_cluster)
-            hull_points_list.append([ith_cluster[k] for k in hull.vertices])
+
+            #Check if clusters are not in a single line
+            if  len(set(np.asarray(ith_cluster).T[0])) > 1\
+            and len(set(np.asarray(ith_cluster).T[1])) > 1:
+
+                hull = ConvexHull(ith_cluster)
+                hull_points_list.append([ith_cluster[k] for k in hull.vertices])
 
     return hull_points_list
 
@@ -389,7 +400,6 @@ def IOU_score(predicted_bmp, true_bmp):
     geom_intersection = cascaded_union(
         [geometry.Polygon(a).intersection(geometry.Polygon(b))
         for a, b in product(true_hull, predict_hull)])
-    print(predict_hull)
     geom_union = cascaded_union([geometry.Polygon(a) for a in true_hull+predict_hull])
 
 

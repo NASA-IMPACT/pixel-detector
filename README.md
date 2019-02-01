@@ -33,7 +33,7 @@ A pixel based classifier that uses GOES raw products and shapefiles for generati
   }, ...
   ]
   ```
- - After training is finished, the trained model is stored in `model_path` from `config.json`
+ - After training is finished, the trained model is stored in `model_path` field in `config.json`
  - To make subsequent training and evaluation faster, the raster products obtained after transforming information 
  from geo projection to WGS84 (shapefile projection) are cached in location given by `TIFF_DIR` in `config.py` file. The code uses this cache until the files are deleted manually.
  

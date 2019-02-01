@@ -9,14 +9,14 @@ A pixel based classifier that uses GOES raw products and shapefiles for generati
   - `config.json` is formatted as follows:
   ```
   {
-    "type"			    : <'pixel' or 'DeConv'>,
-    "num_neighbor"	: <n for n*n neighborhood of pixel to predict >,
-    "jsonfile"		  : "<location of json containing data information to be used for training>",
-    "num_epoch"		  : <number of epochs>,
-    "batch_size"	  : <batch size (10000)>,
-    "model_path"	  : <path/to/keras/model>,
-    "eval_json"		  : <location of json containing data information to be used for evaluation>,
-    "pred_json"		  : <location of json containing data information to be used for prediction>
+    "type"          : <'pixel' or 'DeConv'>,
+    "num_neighbor"  : <n for n*n neighborhood of pixel to predict >,
+    "jsonfile"      : <location of json containing data information to be used for training>,
+    "num_epoch"     : <number of epochs>,
+    "batch_size"    : <batch size (10000)>,
+    "model_path"    : <path/to/keras/model>,
+    "eval_json"     : <location of json containing data information to be used for evaluation>,
+    "pred_json"     : <location of json containing data information to be used for prediction>
   }
   ```
   - The json file in `jsonfile` contains information about data. It needs to be formatted as follows:
@@ -29,7 +29,7 @@ A pixel based classifier that uses GOES raw products and shapefiles for generati
      "shp"    : <`path/to/shp/file` shapefile denoting smoke occurence in the `ncfile` (in WGS84 Coordinates) >,
      "extent" : <extent information in lat,lon eg:[-110.0,33.0,-105.0,37.0]>,
      "start"  : <unused for now>,
-     "end"    :   <unused for now>
+     "end"    : <unused for now>
   }, ...
   ]
   ```

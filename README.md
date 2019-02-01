@@ -42,7 +42,7 @@ A pixel based classifier that uses GOES raw products and shapefiles for generati
 ## Prediction
 ### GeoJson Prediction
 - Prediction on the model can be done by calling `infer.py`
-- the `Predicter' class requires: `<path/to/ncfile>`,`time`(datetime.datetime object), `extent`, `path/to/model`
+- the `Predicter` class in `infer.py` requires: `<path/to/ncfile>`,`datetime.datetime object`, `extent`, `path/to/model`
 to initialize
 - Once initialized, The `Predicter.predict` method returns a GeoJson Dictionary object containing the predicted 
 smoke plumes

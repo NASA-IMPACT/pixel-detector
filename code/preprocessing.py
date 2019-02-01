@@ -20,7 +20,8 @@ from scipy.spatial import ConvexHull
 from sklearn.cluster import DBSCAN
 from shapely import geometry
 from shapely.ops import cascaded_union
-
+import geopandas
+import json
 
 def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):
     """
@@ -71,7 +72,7 @@ def get_arrays_from_json(jsonfile, num_neighbor):
 
     """
 
-    print('reading json from :', jsonfile)
+    print("reading json from :", jsonfile)
 
     js = open(jsonfile)
     jsondict = json.loads(js.read())
@@ -84,14 +85,14 @@ def get_arrays_from_json(jsonfile, num_neighbor):
 
     for item in jsondict:
 
-        ncpath = item['ncfile']
-        nctime = item['nctime']
+        ncpath = item["ncfile"]
+        nctime = item["nctime"]
         nclist = band_list(ncpath, BANDS_LIST, time=nctime)
-        extent = item['extent']
-        shapefile_path = item['shp']
+        extent = item["extent"]
+        shapefile_path = item["shp"]
 
         res = get_res_for_extent(extent, num_neighbor)
-        ext_str = '_{}_{}_{}_{}'.format(extent[0], extent[1], extent[2], extent[3])
+        ext_str = "_{}_{}_{}_{}".format(extent[0], extent[1], extent[2], extent[3])
 
 
         # workflow for train and evaluate
@@ -106,10 +107,10 @@ def get_arrays_from_json(jsonfile, num_neighbor):
         x_array.append(np.asarray(grp_array))
         #append_to_list(x_array, grp_array)
 
-        with rasterio.open(os.path.join(cache_dir,'0_WGS84.tif')) as raster_object:
+        with rasterio.open(os.path.join(cache_dir,"0_WGS84.tif")) as raster_object:
             y_mtx  = get_bitmap_from_shp(shapefile_path,
                         raster_object,
-                        os.path.join(cache_dir, 'bitmap_WGS84.bmp'))
+                        os.path.join(cache_dir, "bitmap_WGS84.bmp"))
 
             y_array.append(np.asarray(y_mtx.flatten()))
 
@@ -121,7 +122,7 @@ def get_arrays_from_json(jsonfile, num_neighbor):
 
 
 
-def get_arrays_for_prediction(jsonfile, num_neighbor, create_cache=True):
+def get_arrays_for_prediction(jsondict, num_neighbor, create_cache=False):
 
     """
     num_neighbor = number of pixels at the egde of the square matrix input
@@ -135,10 +136,9 @@ def get_arrays_for_prediction(jsonfile, num_neighbor, create_cache=True):
     # workflow for testing
 
 
-    with open(jsonfile) as file:
-        jsondict = json.loads(file.read())
 
-    print('item length:',len(jsondict))
+
+    print("item length:",len(jsondict))
 
     # x_array = np.ndarray((0,0,num_neighbor,num_neighbor,8))
     # y_array = np.ndarray((0,0))
@@ -148,13 +148,13 @@ def get_arrays_for_prediction(jsonfile, num_neighbor, create_cache=True):
 
     for item in jsondict:
 
-        ncpath  = item['ncfile']
-        nctime  = item['nctime']
+        ncpath  = item["ncfile"]
+        nctime  = item["nctime"]
         nclist  = band_list(ncpath, BANDS_LIST, time=nctime)
-        extent  = item['extent']
+        extent  = item["extent"]
         res     = get_res_for_extent(extent, num_neighbor)
 
-        arr, raster_transform   = create_array_from_nc(nclist, fname='', extent=extent, res=res)
+        arr, raster_transform   = create_array_from_nc(nclist, fname="", extent=extent, res=res)
         auxillary               = (raster_transform, res)
         grp_array               = convert_pixels_to_groups(arr)
 
@@ -169,7 +169,7 @@ def get_arrays_for_prediction(jsonfile, num_neighbor, create_cache=True):
 
 def append_to_list(lst, element):
 
-    print('appending ', np.asarray(element).shape, 'to', lst.__len__())
+    print("appending ", np.asarray(element).shape, "to", lst.__len__())
     if lst != []:
         lst.append(element)
     else:
@@ -186,8 +186,8 @@ def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
     shapefile = fiona.open(shp_path)
     transform=rasterio_object.transform
     for shape in shapefile:
-            # if sh['properties']['Start'] == start and sh['properties']['End'] == end:
-        geoms.append(shape['geometry'])
+            # if sh["properties"]["Start"] == start and sh["properties"]["End"] == end:
+        geoms.append(shape["geometry"])
 
     # raster the geoms onto a bitmap
 
@@ -198,11 +198,11 @@ def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
             transform=transform)
 
     except:
-        print('no objects found')
+        print("no objects found")
         y_mtx = np.zeros((rasterio_object.shape[0], rasterio_object.shape[1]))
 
 
-    Image.fromarray(np.asarray(y_mtx * 255, dtype='uint8')).save(bitmap_path)
+    Image.fromarray(np.asarray(y_mtx * 255, dtype="uint8")).save(bitmap_path)
 
 
     return y_mtx
@@ -264,10 +264,10 @@ def convert_xy_to_latlon(row, col, transform):
     uses rasterio transform module to convert row, col of an image to
     its respective lat, lon coordinates
     """
-    return rasterio.transform.xy(transform,col,row,offset='center')
+    return rasterio.transform.xy(transform,col,row,offset="center")
 
 
-def convert_bmp_to_shp(img, transform, shp_path, visualize_path=''):
+def convert_bmp_to_shp(img, transform, shp_path, visualize_path=""):
     """
     Desc: make shapefile from white pixels of the BMP image
     """
@@ -276,27 +276,45 @@ def convert_bmp_to_shp(img, transform, shp_path, visualize_path=''):
 
     if not hull_points_list:
 
-        print('No shapes found, No shapefile will be generated')
+        print("No shapes found, No shapefile will be generated")
 
     if visualize_path:
         vis_hull(img,visualize_path)
 
     schema = {
-        'geometry': 'Polygon',
-        'properties': {'id': 'int'},
+        "geometry": "Polygon",
+        "properties": {"id": "int"},
     }
-    with fiona.open(shp_path, 'w', 'ESRI Shapefile', schema) as output:
+    if shp_path:
+        with fiona.open(shp_path, "w", "ESRI Shapefile", schema) as output:
+
+            for id_, points in enumerate(hull_points_list):
+                poly = geometry.Polygon([convert_xy_to_latlon(x, y, transform) for x,y in points])
+
+                output.write({
+                        "geometry":     geometry.mapping(poly),
+                        "properties":   {"id":id_},
+                        })
+    else:
+
+        geojson_dict = []
 
         for id_, points in enumerate(hull_points_list):
             poly = geometry.Polygon([convert_xy_to_latlon(x, y, transform) for x,y in points])
 
-            output.write({
-                    'geometry':geometry.mapping(poly),
-                    'properties':{
-                        'id':id_
-                    },
-                })
+            pol_dict = {
+                        'geometry':     geopandas.GeoSeries([poly]).to_json(),
+                        'properties':   {'id':id_}
+            }
 
+            geojson_dict.append(pol_dict)
+
+        geo_collection = {
+                        'type':     'FeatureCollection',
+                        'features': geojson_dict,
+        }
+
+        return geo_collection
 
 
 
@@ -367,10 +385,10 @@ def get_hull_from_bmp(img,coverage_thres = 0.5, grid_ratio = 0.05):
 
     if cluster_points:
 
-        print('Clustering smoke plumes using DBSCAN...')
+        print("Clustering smoke plumes using DBSCAN...")
         clustering = DBSCAN(eps=2, min_samples=5).fit(cluster_points)
         labels = clustering.labels_
-        #print('clusters: ',set(labels).__len__())
+        #print("clusters: ",set(labels).__len__())
 
         for i in range(max(labels)+1):
 
@@ -390,9 +408,9 @@ def get_hull_from_bmp(img,coverage_thres = 0.5, grid_ratio = 0.05):
 
 
 def IOU_score(predicted_bmp, true_bmp):
-    '''
+    """
     calculate IOU between the given bitmaps
-    '''
+    """
 
     predict_hull = get_hull_from_bmp(predicted_bmp)
     true_hull    = get_hull_from_bmp(true_bmp)
@@ -408,12 +426,12 @@ def IOU_score(predicted_bmp, true_bmp):
 
 
 
-def vis_hull(bmpfile, outpath = 'test.png'):
+def vis_hull(bmpfile, outpath = "test.png"):
 
     hull_points_list = get_hull_from_bmp(bmpfile)
-    img = Image.open(bmpfile,'r')
-    new_img = Image.new('RGBA', img.size)
-    draw = ImageDraw.Draw(new_img, mode='RGBA')
+    img = Image.open(bmpfile,"r")
+    new_img = Image.new("RGBA", img.size)
+    draw = ImageDraw.Draw(new_img, mode="RGBA")
 
 
     for i,pts in enumerate(hull_points_list):

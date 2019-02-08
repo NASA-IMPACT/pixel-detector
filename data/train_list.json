@@ -1,60 +1,4 @@
 [
-
-{
- "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/245/23",
- "nctime": "20182452345354",
- "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180902_plume2.shp",
- "extent":
-   [-109.0,
-   40.5,
-   -101.0,
-   44.5
- ],
- "start": "2018246 0045",
- "end": "2018246 0045"
-},
-
-   {
- "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/140/23",
- "nctime": "20181402345425",
- "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180520_plume1.shp",
- "extent":
-   [-111.0,
-   53.3,
-   -103.9,
-   58.6
- ],
- "start": "2018141 0000",
- "end": "2018141 0000"
-},
-
-{
- "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/037/23",
- "nctime": "20180372300476",
- "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180206_plume1.shp",
- "extent":
-   [-122.1,
-   40.8,
-   -121.1,
-   41.8
- ],
- "start": "2018037 2237",
- "end": "2018037 2237"
-},
-
-{
- "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/082/20",
- "nctime": "20180822000452",
- "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180323_plume1.shp",
- "extent":
-   [-79.0,
-   25.8,
-   -78.0,
-   26.7
- ],
- "start": "2018082 1702",
- "end": "2018082 2002"
-},
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/025/20",
  "nctime": "20180252000421",
@@ -97,7 +41,19 @@
  "end": "2018030 2002"
 },
 
-
+{
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/037/23",
+ "nctime": "20180372300476",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180206_plume1.shp",
+ "extent":
+   [-122.1,
+   40.8,
+   -121.1,
+   41.8
+ ],
+ "start": "2018037 2237",
+ "end": "2018037 2237"
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/057/20",
@@ -141,8 +97,19 @@
  "end": "2018057 2000"
 },
 
-
-
+{
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/082/20",
+ "nctime": "20180822000452",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180323_plume1.shp",
+ "extent":
+   [-79.0,
+   25.8,
+   -78.0,
+   26.7
+ ],
+ "start": "2018082 1702",
+ "end": "2018082 2002"
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/082/20",
@@ -186,7 +153,19 @@
  "end": "2018083 2302"
 },
 
-
+{
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/083/20",
+ "nctime": "20180832000455",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180324_plume2.shp",
+ "extent":
+   [-87.4,
+   24.4,
+   -81.0,
+   29.0
+ ],
+ "start": "2018083 1742",
+ "end": "2018083 1952"
+},
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/100/19",
@@ -201,8 +180,6 @@
  "start": "2018100 2132",
  "end": "2018100 2332"
 },
-
-
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/100/19",
@@ -219,18 +196,19 @@
 },
 
 {
- "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/210/18",
- "nctime": "20182101800401",
- "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180729_plume1.shp",
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/140/23",
+ "nctime": "20181402345425",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180520_plume1.shp",
  "extent":
-   [-127.0,
-   32.0,
-   -98.0,
-   49.0
+   [-111.0,
+   53.3,
+   -103.9,
+   58.6
  ],
- "start": "2018210 0045",
- "end": "2018210 0045"
+ "start": "2018141 0000",
+ "end": "2018141 0000"
 },
+
 
 {
  "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/267/23",
@@ -259,31 +237,76 @@
  "start": "2018246 0030",
  "end": "2018246 0045"
 },
+
 {
- "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/083/20",
- "nctime": "20180832000455",
- "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180324_plume2.shp",
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/245/23",
+ "nctime": "20182452345354",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180902_plume2.shp",
  "extent":
-   [-87.4,
-   24.4,
-   -81.0,
-   29.0
+   [-109.0,
+   40.5,
+   -101.0,
+   44.5
  ],
- "start": "2018083 1742",
- "end": "2018083 1952"
+ "start": "2018246 0045",
+ "end": "2018246 0045"
 },
 
 {
- "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/143/23",
- "nctime": "20181432345436",
- "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180523_plume1.shp",
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/210/18",
+ "nctime": "20182101800401",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180729_plume1.shp",
+ "extent":
+   [-127.0,
+   32.0,
+   -98.0,
+   49.0
+ ],
+ "start": "2018210 0045",
+ "end": "2018210 0045"
+},
+
+{
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/152/22",
+ "nctime": "20181522200477",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180601_plume1.shp",
  "extent":
    [-110.0,
-   33.0,
-   -105.0,
-   37.0
+   32.0,
+   -91.0,
+   45.0
  ],
- "start": "2018144 0002",
- "end": "2018144 0002"
+ "start": "2018152 1812",
+ "end": "2018152 2202"
+},
+
+
+{
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/280/21",
+ "nctime": "20182802115377",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20181007_plume1.shp",
+ "extent":
+   [-126.0,
+   35.0,
+   -118.0,
+   42.0
+ ],
+ "start": "2018280 2200",
+ "end": "2018281 0000"
+},
+
+{
+ "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/276/22",
+ "nctime": "20182762200375",
+ "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20181003_plume1.shp",
+ "extent":
+   [-104.7,
+   34.3,
+   -95.7,
+   40.3
+ ],
+ "start": "2018276 2200",
+ "end": "2018276 2315"
 }
+
 ]

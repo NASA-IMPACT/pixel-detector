@@ -51,9 +51,9 @@ class PixelModel():
         #dense model
         dense1 = Flatten()(visible)
         dense1 = Dense(100, activation="relu")(dense1)
-        dense1 = Dropout(0.5)(dense1)
+        dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(75, activation="relu")(dense1)
-        dense1 = Dropout(0.4)(dense1)
+        dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(50, activation="relu")(dense1)
         dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(25, activation="relu")(dense1)
@@ -88,7 +88,7 @@ class PixelModel():
 
         x_, y_, _ = get_arrays_from_json(self.config["jsonfile"], self.num_neighbor)
         num_val_imgs = random.sample(range(0,len(x_)),5)
-        num_val_imgs = 14
+        num_val_imgs = 18
         x_train   = x_[num_val_imgs:]
         y_train   = y_[num_val_imgs:]
         x_val     = x_[:num_val_imgs]

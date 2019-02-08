@@ -99,6 +99,7 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
     # do NC -> geotiff -> WGS84 geotiff for each NC file
     cache_dir = os.path.join(WGS84_DIR, fname)
 
+    print(ncFiles_path)
     if fname == '':
         print('Not expecting cache, Converting NC to WGS84 TIF Using gdal')
 
@@ -151,11 +152,12 @@ def band_list(loc, band_array, time):
 
     path_list = []
 
+    print('checking for nc in ',loc)
     for band in band_array:
         fname = glob(loc + '/*' + band + '*s' + time + '*.nc')
         if fname == []:
             print('Nc Files not Found')
-            return []
+            return False
         else:
 
             path_list.append(fname)

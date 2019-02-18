@@ -1,27 +1,29 @@
 # @author Muthukumaran R.
 
 import fiona
+import geopandas
+import json
 import json
 import math
 import numpy as np
 import os
 import rasterio
 import rasterio.features
-from itertools import product
+
+
 # from config import shapefile_path,raw_data_path
 from config import (
     BANDS_LIST,
     FULLDISK_EXTENT_COORDS,
     FULL_RES_FD
 )
+
 from PIL import Image
-from tif_utils import create_array_from_nc, band_list
 from scipy.spatial import ConvexHull
-from sklearn.cluster import DBSCAN
 from shapely import geometry
 from shapely.ops import cascaded_union
-import geopandas
-import json
+from sklearn.cluster import DBSCAN
+from tif_utils import create_array_from_nc, band_list
 
 
 def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):
@@ -42,11 +44,12 @@ def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):
                 (edge_size, edge_size, num_bands), dtype=float)
             moving_window[half_edge + 1, half_edge + 1] = img[i, j]
 
-            if i - half_edge < 0 \
-                    or j - half_edge < 0 \
-                    or i + half_edge + 1 > rows \
-                    or j + half_edge + 1 > cols:
+            condition = i - half_edge < 0
+            condition = condition or j - half_edge < 0
+            condition = condition or i + half_edge + 1 > rows
+            condition = condition or j + half_edge + 1 > cols
 
+            if condition:
                 moving_window[half_edge + 1, half_edge + 1] = img[i, j]
                 result.append(np.array(moving_window, dtype=float))
 
@@ -91,15 +94,14 @@ def get_arrays_from_json(jsonfile, num_neighbor):
         shapefile_path = item["shp"]
 
         res = get_res_for_extent(extent, num_neighbor)
-        ext_str = "_{}_{}_{}_{}".format(
-            extent[0], extent[1], extent[2], extent[3])
+        ext_str = "_{}_{}_{}_{}".format(extent[0], extent[1], extent[2], extent[3])
 
         # workflow for train and evaluate
         arr, cache_dir = create_array_from_nc(
             nclist,
             fname=nctime + ext_str,
             extent=extent,
-            res=res
+            res=res,
         )
         cache_list.append(cache_dir)
         grp_array = convert_pixels_to_groups(arr)
@@ -183,7 +185,8 @@ def get_bitmap_from_shp(shp_path, rasterio_object, bitmap_path):
         y_mtx = rasterio.features.rasterize(
             [(geo, 1) for geo in geoms],
             out_shape=(rasterio_object.shape[0], rasterio_object.shape[1]),
-            transform=transform)
+            transform=transform
+            )
 
     except:
         print("no objects found")

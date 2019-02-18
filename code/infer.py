@@ -18,9 +18,13 @@ class Predicter:
     def __init__(self, ncfile, time, extent, model_path):
 
         nctime = self.get_timestr(time)
-        self.jsondict = [{"ncfile": ncfile,
-                          "nctime": nctime,
-                          "extent": extent}]
+        self.jsondict = [
+                            {
+                                "ncfile": ncfile,
+                                "nctime": nctime,
+                                "extent": extent,
+                            }
+        ]
         self.threshold = PREDICT_THRESHOLD
         self.num_neighbor = NUM_NEIGHBOR
         self.model = load_model(model_path)
@@ -37,8 +41,14 @@ class Predicter:
         y_pred = y_pred > self.threshold
 
         # TODO: checks for reshape needed.
-        y_mat = np.asarray(y_pred * 255, dtype="uint8").reshape((self.res[1],
-                                                                 self.res[0]), order="C")
+        y_mat = np.asarray(
+            y_pred * 255,
+            dtype="uint8",
+            ).reshape((
+                self.res[1],
+                self.res[0]),
+                order="C",
+                )
 
         geojson_dict = convert_bmp_to_shp(Image.fromarray(y_mat).convert("L"),
                                           self.rast_transform, "")

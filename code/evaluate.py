@@ -2,18 +2,20 @@
 
 import matplotlib
 matplotlib.use('Agg')
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
+
 import cv2
 import json
 import matplotlib
+import matplotlib.image as mpimg
+import matplotlib.pyplot as plt
 import numpy as np
+import os
+import rasterio
+
 
 from keras.models import load_model
 from PIL import Image
 from sklearn.metrics import confusion_matrix
-import rasterio
-import os
 
 from config import (
     PREDICT_THRESHOLD,
@@ -112,7 +114,9 @@ class Evaluate:
         """
 
         y_true = Image.open(os.path.join(
-            cache_dir, 'bitmap_WGS84.bmp')).convert('L')
+            cache_dir,
+            'bitmap_WGS84.bmp')
+        ).convert('L')
         y_true_arr = np.asarray(y_true)
         y_pred = self.model.predict(x, batch_size=self.config['batch_size'])
 
@@ -130,19 +134,23 @@ class Evaluate:
         # create shapefile output and bitmap from predicted shapefile
         with rasterio.open(os.path.join(cache_dir, BAND_1_FILENAME)) as rasterio_obj:
 
-            convert_bmp_to_shp(Image.open(os.path.join(output_folder, self.pix_bmp_path)).convert('L'),
-                               rasterio_obj.transform,
-                               os.path.join(output_folder, self.shp_path)
-                               )
-
-            y_shp = get_bitmap_from_shp(os.path.join(output_folder, self.shp_path),
-                                        rasterio_obj,
-                                        os.path.join(
-                                            output_folder, self.shp_bmp_path)
-                                        )
+            convert_bmp_to_shp(
+                Image.open(
+                    os.path.join(output_folder, self.pix_bmp_path)
+                ).convert('L'),
+                rasterio_obj.transform,
+                os.path.join(output_folder, self.shp_path)
+            )
+            y_shp = get_bitmap_from_shp(
+                os.path.join(output_folder, self.shp_path),
+                rasterio_obj,
+                os.path.join(output_folder, self.shp_bmp_path),
+            )
 
         self.save_image(y_true_arr, os.path.join(
             output_folder, self.t_bmp_path))
+
+
 
     def reshape_array_to_image(self, dim1_array, x_shape, y_shape):
         """
@@ -150,11 +158,15 @@ class Evaluate:
         """
         return np.asarray(dim1_array, dtype='uint8').reshape((x_shape, y_shape), order='C')
 
+
+
     def save_image(self, img_array, loc):
         """
         Desc    : save given 'img_array' as image in the given 'loc' location
         """
         Image.fromarray(img_array).save(loc)
+
+
 
     def plot_evaluated_image(self, output_folder):
         """
@@ -222,10 +234,15 @@ class Evaluate:
             y_pred.flatten() > self.predict_thres * 255.0
         )
 
-        acc = self.safe_div(
-            float(cm[0][0] + cm[1][1]), float(cm[0][0] + cm[0][1] + cm[1][1] + cm[1][0]))
-        recall = self.safe_div(float(cm[1][1]), float(cm[1][0] + cm[1][1]))
-        precision = self.safe_div(float(cm[1][1]), float(cm[0][1] + cm[1][1]))
+        overall_true = float(cm[0][0] + cm[1][1])
+        total = float(cm[0][0] + cm[0][1] + cm[1][1] + cm[1][0])
+        true_positive = float(cm[1][1])
+        actual_positive = float(cm[1][0] + cm[1][1])
+        predicted_positive = float(cm[0][1] + cm[1][1])
+
+        acc = self.safe_div(overall_true , total)
+        recall = self.safe_div(true_positive, actual_positive)
+        precision = self.safe_div(true_positive, predicted_positive)
 
         return acc, recall, precision
 
@@ -238,5 +255,5 @@ class Evaluate:
 
 if __name__ == '__main__':
 
-    eval = Evaluate(json.load(open('config.json')))
-    eval.evaluate()
+    ev = Evaluate(json.load(open('config.json')))
+    ev.evaluate()

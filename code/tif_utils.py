@@ -7,20 +7,20 @@ import rasterio
 import rasterio.warp
 import sys
 
-from rasterio import Affine
-from rasterio.transform import xy
 from config import TIFF_DIR as WGS84_DIR
+from glob import glob
 from osgeo import gdal
 from osgeo import osr
-from glob import glob
+from rasterio import Affine
+from rasterio.transform import xy
 
 
 def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=True, create_cache=True):
-    '''
+    """
     Iterate through the NCfile paths are convert to geotiff if create_cache=True
     else read geotiffs from cache_folder
     Returns: (res[0],res[1],[<num of bands>]) numpy array of geotiffs in cache folder
-    '''
+    """
 
     rast_mtx = list()
     raster_transform = ''
@@ -44,7 +44,9 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=
         else:
 
             output_file_name = os.path.join(
-                cache_folder_name, str(n_band) + '_WGS84.tif')
+                cache_folder_name,
+                '{n_band}_WGS84.tif'.format(n_band)
+                )
 
             if create_cache:
                 wr = gdal.Warp(nfile, 'GTiff', res, extent, output_file_name)
@@ -85,9 +87,9 @@ def gdal_warp(ncfile, format, res, extent, out_file):
 
 
 def create_array_from_nc(ncFiles_path, fname, extent, res):
-    '''
+    """
     Desc    : Create Geotiff files from NC files and return their numpy array
-    '''
+    """
 
     geotiff_paths = []
 
@@ -125,7 +127,7 @@ def create_array_from_nc(ncFiles_path, fname, extent, res):
                                       create_cache=create_cache
                                       )
 
-        #print('shape of raster', np.moveaxis(np.asarray(rast_mtx), 0, -1).shape)
+        # print('shape of raster', np.moveaxis(np.asarray(rast_mtx), 0, -1).shape)
         return np.moveaxis(np.asarray(rast_mtx), 0, -1), cache_dir
 
 
@@ -143,7 +145,7 @@ def band_list(loc, band_array, time):
 
     print('checking for nc in ', loc)
     for band in band_array:
-        fname = glob(loc + '/*' + band + '*s' + time + '*.nc')
+        fname = glob('{loc}/*{band}*s{time}*.nc'.format(loc, band, time))
         if fname == []:
             print('Nc Files not Found')
             return False

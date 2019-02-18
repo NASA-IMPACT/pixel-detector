@@ -1,22 +1,24 @@
 # @author Muthukumaran R.
 
+import json
 import numpy as np
+import os
+import rasterio
 
 from keras.models import load_model
 from PIL import Image
-import rasterio
-import os
-import json
+
 
 from config import (
     PREDICT_THRESHOLD,
-    OUTPUT_DIR
-    )
+    OUTPUT_DIR,
+)
 from preprocessing import (
-            get_arrays_from_json,
-            get_arrays_for_prediction,
-            convert_bmp_to_shp
-            )
+    get_arrays_from_json,
+    get_arrays_for_prediction,
+    convert_bmp_to_shp,
+)
+
 
 class Predict:
 
@@ -46,14 +48,11 @@ class Predict:
             }
         """
 
-        self.config     = config
-        self.jsonfile   = config['pred_json']
-        self.model      = load_model(str(self.config['model_path']))
-        self.threshold  = PREDICT_THRESHOLD
-        self.shp_path   = config['pred_shp_path']
-
-
-
+        self.config = config
+        self.jsonfile = config['pred_json']
+        self.model = load_model(str(self.config['model_path']))
+        self.threshold = PREDICT_THRESHOLD
+        self.shp_path = config['pred_shp_path']
 
     # def predict(self, shp_path):
 
@@ -64,10 +63,7 @@ class Predict:
 
         """
 
-
-
     def predict(self):
-
         """
         Desc        : writes the predicted smoke shapefile to shp_path
         input       : Path to store shapefiles
@@ -75,40 +71,31 @@ class Predict:
         """
 
         x_list, transform_list = get_arrays_for_prediction(self.config['pred_json'],
-                                               self.config['num_neighbor'])
+                                                           self.config['num_neighbor'])
 
-
-        for id_, (x,transform_tuple) in enumerate(unzip(x_list, transform_list)):
-
+        for id_, (x, transform_tuple) in enumerate(unzip(x_list, transform_list)):
 
             raster_transform, res = transform_tuple
 
-            #predict for x
-            y_pred = self.model.predict(x,batch_size = self.config['batch_size'])
+            # predict for x
+            y_pred = self.model.predict(
+                x, batch_size=self.config['batch_size'])
 
             y_pred = y_pred > self.threshold
 
             # TODO: checks for reshape needed.
-            y_mat = np.asarray(y_pred*255,dtype = 'uint8').reshape((res[1],
-                res[0]),order='C')
+            y_mat = np.asarray(y_pred * 255, dtype='uint8').reshape((res[1],
+                                                                     res[0]), order='C')
 
             print('generating shapefiles...')
-            convert_bmp_to_shp( Image.fromarray(y_mat).convert('L'),
-                                raster_transform,
-                                self.shp_path+str(id_)
-                                )
-
-
+            convert_bmp_to_shp(Image.fromarray(y_mat).convert('L'),
+                               raster_transform,
+                               self.shp_path + str(id_)
+                               )
 
 
 if __name__ == '__main__':
 
-
     pred = Predict(json.load(open('config.json')))
-    #pred.predict('/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/')
+    # pred.predict('/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/')
     pred.predict()
-
-
-
-
-

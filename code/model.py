@@ -1,4 +1,4 @@
-import matplotlib # should be declared before declaring any other package that uses MPL
+import matplotlib  # should be declared before declaring any other package that uses MPL
 matplotlib.use("Agg")
 
 import numpy as np
@@ -21,6 +21,7 @@ from keras.models import Model
 from preprocessing import get_arrays_from_json, unison_shuffled_copies
 from operator import itemgetter
 
+
 class PixelModel():
     def __init__(self, config):
 
@@ -31,14 +32,13 @@ class PixelModel():
         self.build_callbacks()
 
     def make_model(self):
-
-        ##########################
-        # Make the model
-        ##########################
+        """
+            Make the model
+        """
 
         visible = Input(shape=(self.num_neighbor, self.num_neighbor, 8,))
 
-        #conv model
+        # conv model
         # conv1   = Conv2D(4, kernel_size=2, activation="relu", padding="same")(visible)
         # pool1   = MaxPooling2D(pool_size=(2, 2), padding="same")(conv1)
         # conv2   = Conv2D(2, kernel_size=2, activation="relu", padding="same")(pool1)
@@ -48,7 +48,7 @@ class PixelModel():
         # dense2  = Dense(16, activation="relu")(dense1)
         # dense2  = Dropout(0.5)(dense2)
 
-        #dense model
+        # dense model
         dense1 = Flatten()(visible)
         dense1 = Dense(100, activation="relu")(dense1)
         dense1 = Dropout(0.3)(dense1)
@@ -62,8 +62,7 @@ class PixelModel():
         dense1 = Dropout(0.1)(dense1)
         dense1 = Dense(10, activation="relu")(dense1)
 
-
-        dense2 = Dense(5 , activation="relu")(dense1)
+        dense2 = Dense(5, activation="relu")(dense1)
         output = Dense(1, activation="sigmoid")(dense2)
 
         self.model = Model(inputs=visible, outputs=output)
@@ -72,38 +71,39 @@ class PixelModel():
     def load_weights(self, weight_path):
         try:
             self.model.load_weights(weight_path)
-        except:
+        except (InputError):
             print("the model does not conform with the weights given")
 
     def build_callbacks(self):
         self.callbacks = [
-            EarlyStopping(monitor="val_loss", patience=10, verbose=1, mode="auto"),
-            ModelCheckpoint(filepath=self.savepath, verbose=1, save_best_only=True),
+            EarlyStopping(monitor="val_loss", patience=10,
+                          verbose=1, mode="auto"),
+            ModelCheckpoint(filepath=self.savepath,
+                            verbose=1, save_best_only=True),
             TensorBoard(log_dir="./graph", histogram_freq=0,
-                                        write_graph=True, write_images=True)
+                        write_graph=True, write_images=True)
         ]
 
     def train(self):
 
-
-        x_, y_, _ = get_arrays_from_json(self.config["jsonfile"], self.num_neighbor)
-        num_val_imgs = random.sample(range(0,len(x_)),5)
+        x_, y_, _ = get_arrays_from_json(
+            self.config["jsonfile"], self.num_neighbor)
+        num_val_imgs = random.sample(range(0, len(x_)), 5)
         num_val_imgs = 18
-        x_train   = x_[num_val_imgs:]
-        y_train   = y_[num_val_imgs:]
-        x_val     = x_[:num_val_imgs]
-        y_val     = y_[:num_val_imgs]
+        x_train = x_[num_val_imgs:]
+        y_train = y_[num_val_imgs:]
+        x_val = x_[:num_val_imgs]
+        y_val = y_[:num_val_imgs]
 
         print(len(x_))
 
-        x_train             = np.concatenate(tuple(x_train),axis=0)
-        y_train             = np.concatenate(tuple(y_train),axis=0)
-        x_val               = np.concatenate(tuple(x_val),axis=0)
-        y_val               = np.concatenate(tuple(y_val),axis=0)
+        x_train = np.concatenate(tuple(x_train), axis=0)
+        y_train = np.concatenate(tuple(y_train), axis=0)
+        x_val = np.concatenate(tuple(x_val), axis=0)
+        y_val = np.concatenate(tuple(y_val), axis=0)
 
-        x_train, y_train    = unison_shuffled_copies(x_train,y_train)
-        x_val, y_val        = unison_shuffled_copies(x_val,y_val)
-
+        x_train, y_train = unison_shuffled_copies(x_train, y_train)
+        x_val, y_val = unison_shuffled_copies(x_val, y_val)
 
         self.model.compile(
             optimizer="adam",
@@ -112,23 +112,18 @@ class PixelModel():
         )
 
         history = self.model.fit(
-                                    x_train,
-                                    y_train,
-                                    nb_epoch=self.config["num_epoch"],
-                                    batch_size=self.config["batch_size"],
-                                    callbacks=self.callbacks,
-                                    validation_data= [x_val, y_val],
-                                    shuffle = True
-                                )
-
-
-
+            x_train,
+            y_train,
+            nb_epoch=self.config["num_epoch"],
+            batch_size=self.config["batch_size"],
+            callbacks=self.callbacks,
+            validation_data=[x_val, y_val],
+            shuffle=True
+        )
 
     def save_model(self):
 
         self.model.save(self.savepath)
-
-
 
 
 class DeconvModel():
@@ -140,9 +135,8 @@ class DeconvModel():
 
     def make_model(self):
 
-        ##########################
         # Make the model
-        ##########################
+
         visible = Input(shape=(self.num_neighbor, self.num_neighbor, 8,))
         x = ZeroPadding2D(((2, 1), (1, 2)))(visible)
         x = Conv2D(10, (3, 3), activation="relu", padding="same")(x)
@@ -174,8 +168,10 @@ class DeconvModel():
                            loss="mse",
                            metrics=["mae"])
 
-        early_stopping = EarlyStopping(monitor="val_loss", patience=10, verbose=1, mode="auto")
-        checkpointer = ModelCheckpoint(filepath=savepath, verbose=1, save_best_only=True)
+        early_stopping = EarlyStopping(
+            monitor="val_loss", patience=10, verbose=1, mode="auto")
+        checkpointer = ModelCheckpoint(
+            filepath=savepath, verbose=1, save_best_only=True)
 
         self.model.fit(
             x=X_train,

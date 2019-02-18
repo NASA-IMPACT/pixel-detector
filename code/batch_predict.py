@@ -50,6 +50,7 @@ class Predict:
         self.jsonfile   = config['pred_json']
         self.model      = load_model(str(self.config['model_path']))
         self.threshold  = PREDICT_THRESHOLD
+        self.shp_path   = config['pred_shp_path']
 
 
 
@@ -65,7 +66,7 @@ class Predict:
 
 
 
-    def predict(self, shp_path):
+    def predict(self):
 
         """
         Desc        : writes the predicted smoke shapefile to shp_path
@@ -76,10 +77,9 @@ class Predict:
         x_list, transform_list = get_arrays_for_prediction(self.config['pred_json'],
                                                self.config['num_neighbor'])
 
-        id_ = 0
-        for x,transform_tuple in zip(x_list, transform_list):
 
-            id_+=1
+        for id_, (x,transform_tuple) in enumerate(unzip(x_list, transform_list)):
+
 
             raster_transform, res = transform_tuple
 
@@ -95,7 +95,7 @@ class Predict:
             print('generating shapefiles...')
             convert_bmp_to_shp( Image.fromarray(y_mat).convert('L'),
                                 raster_transform,
-                                shp_path+str(id_)
+                                self.shp_path+str(id_)
                                 )
 
 
@@ -105,7 +105,8 @@ if __name__ == '__main__':
 
 
     pred = Predict(json.load(open('config.json')))
-    pred.predict('/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/')
+    #pred.predict('/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/')
+    pred.predict()
 
 
 

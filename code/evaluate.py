@@ -17,7 +17,9 @@ import os
 
 from config import (
     PREDICT_THRESHOLD,
-    OUTPUT_DIR
+    OUTPUT_DIR,
+    BAND_1_FILENAME,
+    EVAL_DISP_STR
     )
 from preprocessing import (
             get_arrays_from_json,
@@ -62,6 +64,7 @@ class Evaluate:
         self.shp_bmp_path   = 'pred_shp_bitmap.bmp'
         self.t_bmp_path     = 'true_bitmap.bmp'
         self.shp_path       = 'shapefile.shp'
+        self.true_overlay   = 'true_overlay.png'
         #self.model_holder = MODELS[self.config['type']] (self.config)
 
 
@@ -78,7 +81,6 @@ class Evaluate:
         x_list,y_list,cache_list = get_arrays_from_json(self.config['eval_json'],
                                          self.config['num_neighbor']
                                         )
-        id_ = 0
         for x,y,cache_dir in zip(x_list,y_list,cache_list):
             # iterate through each x,y pair
 
@@ -90,10 +92,10 @@ class Evaluate:
             self.make_predict_bitmaps(x,output_folder, cache_dir)
 
             # save BAND 1 raster from cache for evaluation purposes
-            b1_rast = Image.open(os.path.join(cache_dir,'0_WGS84.tif')).convert('RGBA')
+            b1_rast = Image.open(os.path.join(cache_dir,BAND_1_FILENAME)).convert('RGBA')
             b1_rast.save(os.path.join(output_folder, self.band_img_path))
 
-            self.plot_evaluated_image(output_folder, id_)
+            self.plot_evaluated_image(output_folder)
 
 
 
@@ -121,14 +123,13 @@ class Evaluate:
             #y_pred_bin  *= y_pred
             #y_pred_bin = y_pred
 
-            y_mat = np.asarray(y_pred_bin*255.0,dtype = 'uint8').reshape((y_true.size[1],
-                y_true.size[0]),order='C')
+            y_mat = self.reshape_array_to_image(y_pred_bin*255.0,y_true.size[1],y_true.size[0])
 
             # store the true and predicted bitmaps in output_dir
-            Image.fromarray(y_mat).save(os.path.join(output_folder, self.pix_bmp_path))
+            self.save_image(y_mat,os.path.join(output_folder, self.pix_bmp_path))
 
             # create shapefile output and bitmap from predicted shapefile
-            with rasterio.open(os.path.join(cache_dir,'0_WGS84.tif')) as rasterio_obj:
+            with rasterio.open(os.path.join(cache_dir,BAND_1_FILENAME)) as rasterio_obj:
 
                 convert_bmp_to_shp(Image.open(os.path.join(output_folder, self.pix_bmp_path)).convert('L'),
                                     rasterio_obj.transform,
@@ -140,13 +141,24 @@ class Evaluate:
                                             os.path.join(output_folder, self.shp_bmp_path)
                                             )
 
-            Image.fromarray(y_true_arr).save(os.path.join(output_folder, self.t_bmp_path))
+            self.save_image(y_true_arr,os.path.join(output_folder, self.t_bmp_path))
 
 
 
+    def reshape_array_to_image(self, dim1_array, x_shape, y_shape):
+        """
+        desc    : reshape given 1D array to a 2D array of given x,y Dimensions
+        """
+        return np.asarray(dim1_array,dtype = 'uint8').reshape((x_shape,y_shape),order='C')
+
+    def save_image(self, img_array, loc):
+        """
+        Desc    : save given 'img_array' as image in the given 'loc' location
+        """
+        Image.fromarray(img_array).save(loc)
 
 
-    def plot_evaluated_image(self, output_folder, id_):
+    def plot_evaluated_image(self, output_folder):
 
         """
         Desc:   Plot the Evaluation Image with appropriate metrics
@@ -163,10 +175,12 @@ class Evaluate:
 
         # create BAND_1 AND predicted bitmap subplots
         plt.subplot(2,1,1)
+        plt.xticks([])
+        plt.yticks([])
         plt.imshow(b1_img)
         plt.xlabel('GOES Band 1')
         plt.subplot(2,1,2)
-        plt.imshow(y_true, alpha=1.00, cmap='plasma')
+        plt.imshow(y_true, alpha=1.0, cmap='plasma')
         plt.imshow(y_shp,  alpha=0.5, cmap='PuBu', vmin = 125,vmax=255)
         plt.imshow(y_pred, alpha=0.5, cmap='PuBuGn', vmin = 125,vmax=255)
 
@@ -179,12 +193,21 @@ class Evaluate:
         iou = IOU_score(Image.open(os.path.join(output_folder, self.shp_bmp_path), mode='r'),
                         Image.open(os.path.join(output_folder, self.t_bmp_path), mode='r'))
 
-        disp_str = 'A:{0:.2f},R:{1:.2f},P:{2:.2f},IOU:{3:.2f}\nSA:{0:.2f},SR:{1:.2f},SP:{2:.2f}:'\
-        .format(a,r,p,iou,sa,sr,sp)
+        disp_str = EVAL_DISP_STR.format(a,r,p,iou)
         plt.xlabel(disp_str)
-
+        #plt.axis('off')
+        plt.xticks([])
+        plt.yticks([])
         plt.tight_layout()
-        plt.savefig(os.path.join(output_folder,self.eval_img_path))
+        plt.savefig(os.path.join(output_folder,self.eval_img_path),bbox_inches='tight')
+
+        plt.figure()
+        plt.imshow(b1_img)
+        plt.imshow(y_true, alpha=0.20, cmap='copper', vmin = 0,vmax=255)
+        plt.xlabel('True Shapefile Overlaid on BAND 1')
+        plt.xticks([])
+        plt.yticks([])
+        plt.savefig(os.path.join(output_folder,self.true_overlay),bbox_inches='tight')
         plt.close()
 
 

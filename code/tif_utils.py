@@ -43,7 +43,8 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=
 
         else:
 
-            output_file_name = os.path.join(cache_folder_name, str(n_band) + '_WGS84.tif')
+            output_file_name = os.path.join(
+                cache_folder_name, str(n_band) + '_WGS84.tif')
 
             if create_cache:
                 wr = gdal.Warp(nfile, 'GTiff', res, extent, output_file_name)

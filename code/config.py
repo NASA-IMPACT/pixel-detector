@@ -18,3 +18,4 @@ FULL_RES                = [5497, 1713]
 FULL_RES_FD             = [int(10848*SCALE_FACTOR), (10848*SCALE_FACTOR)]
 BAND_1_FILENAME         = '0_WGS84.tif'
 EVAL_DISP_STR           = 'A:{0:.2f}, R:{1:.2f}, P:{2:.2f}, IOU:{3:.2f}'
+NUM_NEIGHBOR            = 0.5

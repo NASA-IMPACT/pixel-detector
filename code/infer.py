@@ -7,7 +7,7 @@ from PIL import Image
 from config import (
     PREDICT_THRESHOLD,
     NUM_NEIGHBOR
-    )
+)
 
 import datetime
 import numpy as np
@@ -18,12 +18,12 @@ class Predicter:
     def __init__(self, ncfile, time, extent, model_path):
 
         nctime = self.get_timestr(time)
-        self.jsondict            = [{"ncfile": ncfile,
-                                    "nctime": nctime,
-                                    "extent": extent}]
-        self.threshold           = PREDICT_THRESHOLD
-        self.num_neighbor        = NUM_NEIGHBOR
-        self.model               = load_model(model_path)
+        self.jsondict = [{"ncfile": ncfile,
+                          "nctime": nctime,
+                          "extent": extent}]
+        self.threshold = PREDICT_THRESHOLD
+        self.num_neighbor = NUM_NEIGHBOR
+        self.model = load_model(model_path)
         self.x, transform_holder = get_arrays_for_prediction(self.jsondict,
                                                              self.num_neighbor)
         self.rast_transform, self.res = transform_holder[0]

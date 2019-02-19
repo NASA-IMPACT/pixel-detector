@@ -2,7 +2,6 @@
 
 import json
 import numpy as np
-import os
 import rasterio
 
 from keras.models import load_model
@@ -73,7 +72,7 @@ class Predict:
         x_list, transform_list = get_arrays_for_prediction(self.config['pred_json'],
                                                            self.config['num_neighbor'])
 
-        for id_, (x, transform_tuple) in enumerate(unzip(x_list, transform_list)):
+        for id_, (x, transform_tuple) in enumerate(zip(x_list, transform_list)):
 
             raster_transform, res = transform_tuple
 

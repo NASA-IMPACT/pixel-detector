@@ -5,7 +5,6 @@ matplotlib.use('Agg')
 
 import cv2
 import json
-import matplotlib
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
@@ -122,8 +121,8 @@ class Evaluate:
 
         y_pred_bin = np.where(y_pred > self.predict_thres,
                               1, 0)  # thresholding outputs
-        #y_pred_bin  *= y_pred
-        #y_pred_bin = y_pred
+        # y_pred_bin  *= y_pred
+        # y_pred_bin = y_pred
 
         y_mat = self.reshape_array_to_image(
             y_pred_bin * 255.0, y_true.size[1], y_true.size[0])
@@ -150,23 +149,17 @@ class Evaluate:
         self.save_image(y_true_arr, os.path.join(
             output_folder, self.t_bmp_path))
 
-
-
     def reshape_array_to_image(self, dim1_array, x_shape, y_shape):
         """
         desc    : reshape given 1D array to a 2D array of given x,y Dimensions
         """
         return np.asarray(dim1_array, dtype='uint8').reshape((x_shape, y_shape), order='C')
 
-
-
     def save_image(self, img_array, loc):
         """
         Desc    : save given 'img_array' as image in the given 'loc' location
         """
         Image.fromarray(img_array).save(loc)
-
-
 
     def plot_evaluated_image(self, output_folder):
         """
@@ -190,7 +183,7 @@ class Evaluate:
         plt.xlabel('GOES Band 1')
         plt.subplot(2, 1, 2)
         plt.imshow(y_true, alpha=1.0, cmap='plasma')
-        plt.imshow(y_shp,  alpha=0.5, cmap='PuBu', vmin=125, vmax=255)
+        plt.imshow(y_shp, alpha=0.5, cmap='PuBu', vmin=125, vmax=255)
         plt.imshow(y_pred, alpha=0.5, cmap='PuBuGn', vmin=125, vmax=255)
 
         # add confusion matrix to the plot
@@ -240,7 +233,7 @@ class Evaluate:
         actual_positive = float(cm[1][0] + cm[1][1])
         predicted_positive = float(cm[0][1] + cm[1][1])
 
-        acc = self.safe_div(overall_true , total)
+        acc = self.safe_div(overall_true, total)
         recall = self.safe_div(true_positive, actual_positive)
         precision = self.safe_div(true_positive, predicted_positive)
 

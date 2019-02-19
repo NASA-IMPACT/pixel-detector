@@ -4,7 +4,6 @@ import cv2
 import numpy as np
 import os
 import rasterio
-import rasterio.warp
 import sys
 
 from config import TIFF_DIR as WGS84_DIR
@@ -12,7 +11,9 @@ from glob import glob
 from osgeo import gdal
 from osgeo import osr
 from rasterio import Affine
+from rasterio import warp
 from rasterio.transform import xy
+
 
 
 def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=True, create_cache=True):
@@ -71,19 +72,19 @@ def gdal_warp(ncfile, format, res, extent, out_file):
 
     """
 
-        warp_options = gdal.WarpOptions(
-            format=format,
-            outputType=gdal.GDT_Float32,
-            resampleAlg=5,
-            width=res[0],
-            height=res[1],
-            outputBounds=extent,
-            dstSRS=osr.SRS_WKT_WGS84
-        )
-        wr = gdal.Warp(out_file, ncfile, options=warp_options)
-        wr.FlushCache()
+    warp_options = gdal.WarpOptions(
+        format=format,
+        outputType=gdal.GDT_Float32,
+        resampleAlg=5,
+        width=res[0],
+        height=res[1],
+        outputBounds=extent,
+        dstSRS=osr.SRS_WKT_WGS84,
+    )
+    wr = gdal.Warp(out_file, ncfile, options=warp_options)
+    wr.FlushCache()
 
-        return wr
+    return wr
 
 
 def create_array_from_nc(ncFiles_path, fname, extent, res):

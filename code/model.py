@@ -1,6 +1,3 @@
-import matplotlib  # should be declared before declaring any other package that uses MPL
-matplotlib.use("Agg")
-
 import numpy as np
 import random
 
@@ -15,7 +12,12 @@ from keras.layers import (
     Conv2D,
     Flatten,
     MaxPooling2D,
-    Dropout
+    Dropout,
+    ZeroPadding2D,
+    UpSampling2D,
+    Cropping2D
+
+
 )
 from keras.models import Model
 from preprocessing import get_arrays_from_json, unison_shuffled_copies
@@ -111,7 +113,7 @@ class PixelModel():
             metrics=["accuracy"]
         )
 
-        history = self.model.fit(
+        self.model.fit(
             x_train,
             y_train,
             nb_epoch=self.config["num_epoch"],
@@ -157,7 +159,7 @@ class DeconvModel():
     def load_weights(self, weight_path):
         try:
             self.model.load_weights(weight_path)
-        except:
+        except(InputError):
             print("the model does not conform with the weights given")
 
     def train(self, jsonfile, num_epoch, savepath):
@@ -174,8 +176,8 @@ class DeconvModel():
             filepath=savepath, verbose=1, save_best_only=True)
 
         self.model.fit(
-            x=X_train,
-            y=np.expand_dims(Y_train, axis=-1),
+            x=x_train,
+            y=np.expand_dims(y_train, axis=-1),
             batch_size=32, epochs=200, verbose=1, validation_split=0.2,
             callbacks=[early_stopping, checkpointer],
             shuffle=True

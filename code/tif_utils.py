@@ -15,7 +15,6 @@ from rasterio import warp
 from rasterio.transform import xy
 
 
-
 def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=True, create_cache=True):
     """
     Iterate through the NCfile paths are convert to geotiff if create_cache=True
@@ -46,11 +45,11 @@ def iterate_through(nc_file_paths, cache_folder_name, extent, res, expect_cache=
 
             output_file_name = os.path.join(
                 cache_folder_name,
-                '{n_band}_WGS84.tif'.format(n_band)
-                )
+                '{}_WGS84.tif'.format(n_band)
+            )
 
             if create_cache:
-                wr = gdal.Warp(nfile, 'GTiff', res, extent, output_file_name)
+                wr = gdal_warp(nfile, 'GTiff', res, extent, output_file_name)
 
             rast = rasterio.open(output_file_name)
             rast_mtx.append(histogram_equalize(rast.read(1)))
@@ -146,12 +145,13 @@ def band_list(loc, band_array, time):
 
     print('checking for nc in ', loc)
     for band in band_array:
-        fname = glob('{loc}/*{band}*s{time}*.nc'.format(loc, band, time))
+        fname = glob('{}/*{}*s{}*.nc'.format(loc, band, time))
+        print('{}/*{}*s{}*.nc'.format(loc, band, time))
+        print(fname)
         if fname == []:
             print('Nc Files not Found')
-            return False
+            sys.exit(1)
         else:
-
             path_list.append(fname)
 
     return path_list

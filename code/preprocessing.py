@@ -18,12 +18,14 @@ from config import (
     FULL_RES_FD
 )
 
+from itertools import product
 from PIL import Image
 from scipy.spatial import ConvexHull
 from shapely import geometry
 from shapely.ops import cascaded_union
 from sklearn.cluster import DBSCAN
 from tif_utils import create_array_from_nc, band_list
+
 
 
 def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=8):

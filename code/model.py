@@ -91,7 +91,7 @@ class PixelModel():
         x_, y_, _ = get_arrays_from_json(
             self.config["jsonfile"], self.num_neighbor)
         num_val_imgs = random.sample(range(0, len(x_)), 5)
-        num_val_imgs = 18
+        num_val_imgs = 20
         x_train = x_[num_val_imgs:]
         y_train = y_[num_val_imgs:]
         x_val = x_[:num_val_imgs]

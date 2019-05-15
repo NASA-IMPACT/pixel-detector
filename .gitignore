@@ -1,0 +1,11 @@
+*.pyc
+*.png
+*.json
+*.tiff
+*.tif
+*.bmp
+data
+model
+raw_data
+cache
+*.nc#

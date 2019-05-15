@@ -1,16 +1,10 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
-# @Date:   2019-04-02 04:31:43
-# @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-04-02 15:18:26
-
 import json
 
-from models import PixelModel
-
+from model import PixelModel, DeconvModel
 
 MODELS = {
     'pixel': PixelModel,
+    'conv': DeconvModel
 }
 
 

@@ -1,18 +1,22 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
-# @Date:   2019-04-02 04:40:19
-# @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-15 13:58:08
+from os.path import join
 
-SCALE_FACTOR = 1.0
-PREDICT_THRESHOLD = 0.50
-BANDS_LIST = ['M3C01', 'M3C02', 'M3C03']
+# Directories which contain satellite imagery and shapefiles.
+DATA_DIR = "/nas/rhome/mramasub/smoke_pixel_detector/data/"
 
-# satellite information constants
-SAT_H = 35786023.0
-SAT_LON = -75.0
-SAT_SWEEP = 'x'
-GEO_RES = (10848, 10848)
-LAT_LON_IDX = '../data/lat_lon_reprojected_py3.pkl'
-OUTPUT_DIR = '../data/eval_outputs/'
-CACHE_DIR = '../data/cache'
+# create a list of Bands here
+BANDS_LIST = ['M3C01', 'M3C02', 'M3C03', 'M3C04', 'M3C05', 'M3C06', 'M3C07', 'M3C11']
+
+# Directories to store everything related to the training data.
+BITMAPS_DIR             = join('/cache/smoke_bitmaps/')
+TIFF_DIR                = join(DATA_DIR, 'cache/WGS84_images/')
+OUTPUT_DIR              = join(DATA_DIR, "output")
+SCALE_FACTOR            = 1.0
+PREDICT_THRESHOLD       = 0.4
+CONUS_EXTENT_COORDS     = [-146.603349201, 14.561800658, -52.918301215, 56.001340454]
+FULLDISK_EXTENT_COORDS  = [-149.765109632, -64.407370418, -0.234889169, 64.407370030]
+FULL_RES                = [5497, 1713]
+FULL_RES_FD             = [int(10848*SCALE_FACTOR), (10848*SCALE_FACTOR)]
+BAND_1_FILENAME         = '0_WGS84.tif'
+EVAL_DISP_STR           = 'A:{0:.2f}, R:{1:.2f}, P:{2:.2f}, IOU:{3:.2f}'
+NUM_NEIGHBOR            = 0.5
+

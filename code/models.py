@@ -1,5 +1,5 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
+
+r: Muthukumaran R.
 # @Date:   2019-04-02 04:39:33
 # @Last Modified by:   Muthukumaran R.
 # @Last Modified time: 2019-04-30 16:27:30
@@ -248,3 +248,4 @@ class UNetModel():
     def save_model(self):
 
         self.model.save(self.savepath)
+

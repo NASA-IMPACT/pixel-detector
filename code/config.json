@@ -1,12 +1,11 @@
 {
-    "type"			: "pixel",
-    "num_neighbor"	: 5,
-    "jsonfile"		: "../data/train_list.json",
-    "num_epoch"		: 800,
-    "batch_size"	: 10000,
-    "model_path"	: "../models/dense_dropout_0.41V.h5",
-    "eval_json"		: "../data/eval_list.json",
-    "pred_json"		: "../data/pred_list.json",
+    "type"          : "pixel",
+    "num_neighbor"  : 5,
+    "jsonfile"      : "../data/train_list.json",
+    "num_epoch"     : 80,
+    "batch_size"    : 1000,
+    "model_path"    : "../models/smokev2.h5",
+    "eval_json"     : "../data/eval_list.json",
+    "pred_json"     : "../data/pred_list.json",
     "pred_shp_path" : "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/"
 }
-

@@ -9,3 +9,5 @@ model
 raw_data
 cache
 *.nc#
+.DS_store
+code/.DS_store

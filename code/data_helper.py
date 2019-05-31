@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:42:50
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-15 15:15:34
+# @Last Modified time: 2019-05-16 10:54:09
 
 """
 Description: Helper methods for data generation
@@ -113,25 +113,23 @@ def get_data(jsonfile, num_neighbor=5):
                 lat_lon_list.append(lat_lon_grid)
                 x_list.append(x_array_neighbors)
                 y_list.append(y_array.flatten())
-            except IOError:
-                print('cannot find pickle, generating...')
-                try:
-                    x_array, transforms = extract_pixels(nclist, extent)
-                    y_array = smoke_pixels_from_shp(shapefile_path,
-                                                    transforms[0],
-                                                    x_array.shape[0:2])
-                    x_array_neighbors = convert_pixels_to_groups(x_array,
-                                                                 num_neighbor)
-                    pickle.dump((x_array_neighbors,
-                        y_array, x_array, transforms),
-                                open(cache_path, 'wb'), protocol=3)
-                    b_list.append(x_array)
-                    lat_lon_list.append(transforms)
-                    x_list.append(x_array_neighbors)
-                    y_list.append(y_array.flatten())
 
-                except():
-                    print('failed to rasterize')
+            except IOError:
+
+                print('cannot find pickle file, generating cache...')
+                x_array, transforms = extract_pixels(nclist, extent)
+                y_array = smoke_pixels_from_shp(shapefile_path,
+                                                transforms[0],
+                                                x_array.shape[0:2])
+                x_array_neighbors = convert_pixels_to_groups(x_array,
+                                                             num_neighbor)
+                pickle.dump((x_array_neighbors,
+                             y_array, x_array, transforms),
+                            open(cache_path, 'wb'), protocol=3)
+                b_list.append(x_array)
+                lat_lon_list.append(transforms)
+                x_list.append(x_array_neighbors)
+                y_list.append(y_array.flatten())
 
     return (x_list, y_list, b_list, lat_lon_list)
 
@@ -187,18 +185,33 @@ def rebin(a, shape):
 def unison_shuffled_copies(a, b):
     """
     shuffle a,b in unison and return shuffled a,b
+
+    Args:
+        a (list/array): data a
+        b (list/array): data a
+
+    Returns:
+        TYPE: a,b shuffled and resampled
     """
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
 
-    # num_x_true = sum(b == True)
     # return a[p], b[p]
-
     return balanced_subsample(a[p], b[p])
 
 
 def balanced_subsample(x, y, subsample_size=1.00):
+    """ subsample x,y such that they have sample ratio represented by
+    subsample ratio
 
+    Args:
+        x (list/array): x data
+        y (list/array): y data
+        subsample_size (float, optional): subsample ratio (max/min)
+
+    Returns:
+        TYPE: Description
+    """
     class_xs = []
     min_elems = None
 

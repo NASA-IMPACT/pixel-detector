@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:42:50
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-16 10:54:09
+# @Last Modified time: 2019-06-06 15:34:59
 
 """
 Description: Helper methods for data generation
@@ -22,6 +22,8 @@ import json
 import numpy as np
 import sys
 import pickle
+import cv2
+import scipy.ndimage
 
 
 def band_list(loc, band_array, time):
@@ -67,12 +69,15 @@ def extract_pixels(nclist, extent):
         rad = ds['Rad'].data
         ref = np.clip(rad * k, 0, 1)
         gamma = 2.0
+        if i == 3 or i == 5: # if BAND_4 or BAND_6, then upsample
+            ref = scipy.ndimage.zoom(ref, 2, order=0)
         if i == 1:  # if BAND_2 then downsample
             ref = rebin(ref, [res[0], res[1]])
         ref_255 = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
 
         # reprojection to wgs84
         ref_255_wgs84, tf = wgs84_transform(ref_255, nclist[0], extent)
+        # ref_255_wgs84 = histogram_equalize(ref_255_wgs84)
         print('reprojected band {} shape :'.format(i + 1), ref_255_wgs84.shape)
         array_list.append(ref_255_wgs84)
         transforms.append(tf)
@@ -134,7 +139,7 @@ def get_data(jsonfile, num_neighbor=5):
     return (x_list, y_list, b_list, lat_lon_list)
 
 
-def convert_pixels_to_groups(img, edge_size=5, stride=0, num_bands=3):
+def convert_pixels_to_groups(img, edge_size=5):
     """
     Given img[x,y] array, the method yields x*y arrays of edge_size*edge_size
     matrices, each array in output corresponds to each pixel in input
@@ -196,8 +201,13 @@ def unison_shuffled_copies(a, b):
     assert len(a) == len(b)
     p = np.random.permutation(len(a))
 
-    # return a[p], b[p]
-    return balanced_subsample(a[p], b[p])
+    # return balanced_subsample(a[p], b[p])
+    return a[p], b[p]
+
+
+def histogram_equalize(img):
+    # return img
+    return cv2.equalizeHist(img.astype('uint8'))
 
 
 def balanced_subsample(x, y, subsample_size=1.00):

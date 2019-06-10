@@ -1,5 +1,5 @@
 import numpy as np
-
+import keras.optimizers
 from keras.callbacks import (
     EarlyStopping,
     ModelCheckpoint,
@@ -43,15 +43,15 @@ class PixelModel():
                         )
 
         # conv model
-        conv1 = Conv2D(4, kernel_size=2, activation="relu",
+        conv1 = Conv2D(12, kernel_size=2, activation="relu",
                        padding="same")(visible)
         pool1 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv1)
-        conv2 = Conv2D(8, kernel_size=2, activation="relu",
+        conv2 = Conv2D(16, kernel_size=2, activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv2)
-        conv3 = Conv2D(16, kernel_size=2, activation="relu",
-                       padding="same")(pool1)
-        pool2 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv3)
+        # conv3 = Conv2D(32, kernel_size=2, activation="relu",
+        #                padding="same")(pool2)
+        # pool2 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv3)
         flatten = Flatten()(pool2)
         dense1 = Dense(20, activation="relu")(flatten)
         dense1 = Dropout(0.3)(dense1)
@@ -62,18 +62,20 @@ class PixelModel():
 
         # dense model
         # dense1 = Flatten()(visible)
-        # dense1 = Dense(32, activation="relu")(dense1)
+        # dense1 = Dense(86, activation="relu")(dense1)
         # dense1 = Dropout(0.3)(dense1)
-        # dense1 = Dense(64, activation="relu")(dense1)
+        # dense1 = Dense(70, activation="relu")(dense1)
+        # dense1 = Dropout(0.3)(dense1)
+        # dense1 = Dense(64, activation="hard_sigmoid")(dense1)
         # dense1 = Dropout(0.3)(dense1)
         # dense1 = Dense(32, activation="relu")(dense1)
+        # dense1 = Dense(16, activation="elu")(dense1)
         # dense1 = Dropout(0.2)(dense1)
 
         dense2 = Dense(5, activation="relu")(dense1)
         output = Dense(1, activation="sigmoid")(dense2)
 
         self.model = Model(inputs=visible, outputs=output)
-        print(self.model.summary())
 
     def load_weights(self, weight_path):
         try:
@@ -93,16 +95,21 @@ class PixelModel():
 
         (x_, y_, _, _) = get_data(
             self.config["jsonfile"], self.num_neighbor)
-
-        # combine datasets
-        x_ = np.concatenate(tuple(x_), axis=0)
-        y_ = np.concatenate(tuple(y_), axis=0)
-        x_, y_ = unison_shuffled_copies(x_, y_)
-        num_val_imgs = int(float(x_.shape[0]) / 4.0)
+        num_val_imgs = 37
         x_train = x_[num_val_imgs:]
         y_train = y_[num_val_imgs:]
         x_val = x_[:num_val_imgs]
         y_val = y_[:num_val_imgs]
+
+        print(len(x_))
+
+        x_train = np.concatenate(tuple(x_train), axis=0)
+        y_train = np.concatenate(tuple(y_train), axis=0)
+        x_val = np.concatenate(tuple(x_val), axis=0)
+        y_val = np.concatenate(tuple(y_val), axis=0)
+
+        x_train, y_train = unison_shuffled_copies(x_train, y_train)
+        x_val, y_val = unison_shuffled_copies(x_val, y_val)
 
         # x_train = np.concatenate(tuple(x_train), axis=0)
         # y_train = np.concatenate(tuple(y_train), axis=0)
@@ -114,6 +121,7 @@ class PixelModel():
             loss="binary_crossentropy",
             metrics=["accuracy", "mae"]
         )
+        print(self.model.summary())
 
         self.model.fit(
             x_train,
@@ -235,7 +243,7 @@ class UNetModel():
 
         (x_, y_, _, _) = get_data(
             self.config["jsonfile"], self.num_neighbor)
-        num_val_imgs = 6
+        num_val_imgs = 25
         x_train = x_[num_val_imgs:]
         y_train = y_[num_val_imgs:]
         x_val = x_[:num_val_imgs]

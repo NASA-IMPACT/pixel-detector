@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 12:13:51
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-16 10:52:03
+# @Last Modified time: 2019-06-10 10:20:17
 
 from config import (
     PREDICT_THRESHOLD,
@@ -23,7 +23,7 @@ import numpy as np
 import os
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-
+import rasterio
 
 class Evaluate:
 
@@ -85,8 +85,8 @@ class Evaluate:
             # make prediction
             y_pred = self.model.predict(
                 x, batch_size=self.config['batch_size'])
-            y_pred = y
-            y_pred = (y_pred > PREDICT_THRESHOLD) * 1.0
+
+            y_pred = y_pred > 0.5
             y_mat = self.reshape_array_to_image(
                 (y_pred) * 255.0,
                 b_list.shape[0],
@@ -100,7 +100,6 @@ class Evaluate:
             self.save_image(y_true, os.path.join(
                 output_folder, self.t_bmp_path))
 
-            # plot images and predictions
             self.plot_rgb(b_list[:, :, 1],
                           b_list[:, :, 2],
                           b_list[:, :, 0],
@@ -108,6 +107,21 @@ class Evaluate:
                           y_mat,
                           output_folder).savefig(
                 os.path.join(output_folder, self.eval_img_path))
+
+            profile = {'driver': 'GTiff',
+                       'nodata': 0,
+                       'dtype': rasterio.uint8,
+                       'count': 6,
+                       'width': b_list.shape[0],
+                       'height': b_list.shape[1],
+                       'transform': transform[0],
+                       'crs': 'EPSG:4326',
+                       }
+
+            with rasterio.open(os.path.join(output_folder,'all_bands.tiff'), 'w', **profile) as raster:
+                for i in range(6):
+                    raster.write(b_list[:, :, i].T.astype(
+                        rasterio.uint8), i + 1)
 
     def reshape_array_to_image(self, dim1_array, x_shape, y_shape):
         """
@@ -132,7 +146,6 @@ class Evaluate:
             TYPE: Description
 
         """
-        print('b_list[1] shape', RL1)
 
         # normalization to true RGB
         GL1_true = 0.45 * ((RL1 / 25.5)**2 / 100) + 0.1 * \
@@ -146,13 +159,13 @@ class Evaluate:
 
         # plotting RGB
         fig, axes = plt.subplots(2, 3, figsize=(16, 8), dpi=250)
-        axes[0, 0].imshow(RL1, cmap='Reds', vmax=255, vmin=0)
+        axes[0, 0].imshow(RL1, cmap='gray', vmax=255, vmin=0)
         axes[0, 0].set_title('Red', fontweight='semibold')
         axes[0, 0].axis('off')
-        axes[0, 1].imshow(GL1, cmap='Greens', vmax=255, vmin=0)
+        axes[0, 1].imshow(GL1, cmap='gray', vmax=255, vmin=0)
         axes[0, 1].set_title('Veggie', fontweight='semibold')
         axes[0, 1].axis('off')
-        axes[0, 2].imshow(BL1, cmap='Blues', vmax=255, vmin=0)
+        axes[0, 2].imshow(BL1, cmap='gray', vmax=255, vmin=0)
         axes[0, 2].set_title('Blue', fontweight='semibold')
         axes[0, 2].axis('off')
         plt.subplots_adjust(wspace=.02)

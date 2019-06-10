@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-15 14:52:39
+# @Last Modified time: 2019-06-04 13:39:40
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -39,8 +39,8 @@ def width_height(bbox, resolution_in_km=1.0):
     km_per_deg_at_eq = 111.
     km_per_deg_at_lat = km_per_deg_at_eq * np.cos(np.pi * np.mean(lats) / 180.)
 
-    ny = int(abs(int((lats[1] - lats[0])) * km_per_deg_at_eq / res))
-    nx = int(abs(int((lons[1] - lons[0])) * km_per_deg_at_lat / res))
+    ny = int(abs(lats[1] - lats[0]) * km_per_deg_at_eq / res)
+    nx = int(abs(lons[1] - lons[0]) * km_per_deg_at_lat / res)
 
     return (nx, ny)
 

@@ -1,10 +1,16 @@
+# -*- coding: utf-8 -*-
+# @Author: Muthukumaran R.
+# @Date:   2019-04-02 04:31:43
+# @Last Modified by:   Muthukumaran R.
+# @Last Modified time: 2019-05-16 11:22:00
+
 import json
 
-from model import PixelModel, DeconvModel
+from models import PixelModel
+
 
 MODELS = {
     'pixel': PixelModel,
-    'conv': DeconvModel
 }
 
 
@@ -38,3 +44,4 @@ class Trainer:
 if __name__ == '__main__':
     trainer = Trainer(json.load(open('config.json')))
     trainer.train()
+

@@ -2,15 +2,16 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:31:43
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-16 11:22:00
+# @Last Modified time: 2019-07-03 15:38:24
 
 import json
 
-from models import PixelModel
+from models import PixelModel, UNetModel
 
 
 MODELS = {
     'pixel': PixelModel,
+    'unet': UNetModel,
 }
 
 

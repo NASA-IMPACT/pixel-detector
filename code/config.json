@@ -3,9 +3,9 @@
     "num_neighbor"  : 5,
     "jsonfile"      : "../data/train_list.json",
     "num_epoch"     : 100,
-    "batch_size"    : 10000,
-    "model_path"    : "../models/smokev2.h5",
-    "eval_json"     : "../data/train_list.json",
+    "batch_size"    : 10,
+    "model_path"    : "../models/smokev2_jun06_19.h5",
+    "eval_json"     : "../data/train_list_90_2019.json",
     "pred_json"     : "../data/pred_list.json",
     "pred_shp_path" : "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/"
 }

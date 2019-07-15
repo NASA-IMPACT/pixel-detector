@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 # @Author: Muthukumaran R.
-# @Date:   2019-04-02 12:13:51
+# @Date:   2019-07-02 16:41:12
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-06-10 10:20:17
-
+# @Last Modified time: 2019-07-15 14:57:28
 from config import (
     PREDICT_THRESHOLD,
     OUTPUT_DIR,
@@ -33,21 +32,15 @@ class Evaluate:
                 'type'          : < choice of 'pixel' or 'deconv'>,
                 'num_neighbor'  : < n of the n*n matrix to take as
                                     input to the model>
-
                 'jsonfile'      : <json containing ncfile, extent
                                     to subset ncfile and shapefile
                                     for training >
-
                 'num_epoch'     : keras num_epoch
-
                 'model_path'    : path to the keras model
-
                 'batch_size'    : keras batch_size
-
                 'eval_jrefacson'     : <json containing ncfile, extent
                                     to subset ncfile and shapefile
                                     for evaluation >
-
                 'pred_json'     : <json containing ncfile and extent
                                     to subset for prediction>
             }
@@ -67,13 +60,13 @@ class Evaluate:
         Description: evaluation workflow
         """
         print('looking for model in', str(self.config['model_path']))
-        self.model = load_model(str(self.config['model_path']))
+        # self.model = load_model(str(self.config['model_path']))
 
         x_list, y_list, b_list, transforms = get_data(
             str(self.config['eval_json']),
             self.config['num_neighbor']
         )
-
+        # import pdb;pdb.set_trace()
         for _id, (x, y, b_list, transform) in \
                 enumerate(zip(x_list, y_list, b_list, transforms)):
 
@@ -83,45 +76,52 @@ class Evaluate:
                 os.makedirs(output_folder)
 
             # make prediction
-            y_pred = self.model.predict(
-                x, batch_size=self.config['batch_size'])
-
-            y_pred = y_pred > 0.5
-            y_mat = self.reshape_array_to_image(
-                (y_pred) * 255.0,
-                b_list.shape[0],
-                b_list.shape[1])
+            # y_pred = self.model.predict(
+            #   x, batch_size=self.config['batch_size'])
+            # y_pred = (y_pred > PREDICT_THRESHOLD) * 1.0
+            # y_mat = self.reshape_array_to_image(
+            #     (y_pred) * 255.0,
+            #     b_list.shape[0],
+            #     b_list.shape[1])
             y_true = self.reshape_array_to_image(
                 y * 255.0, b_list.shape[0], b_list.shape[1])
 
             # save predicted images
-            self.save_image(y_mat, os.path.join(
-                output_folder, self.pix_bmp_path))
+            # self.save_image(y_mat, os.path.join(
+            #     output_folder, self.pix_bmp_path))
             self.save_image(y_true, os.path.join(
                 output_folder, self.t_bmp_path))
 
-            self.plot_rgb(b_list[:, :, 1],
-                          b_list[:, :, 2],
-                          b_list[:, :, 0],
-                          y_true,
-                          y_mat,
-                          output_folder).savefig(
-                os.path.join(output_folder, self.eval_img_path))
+            # save bands as geotiffs
+            for band in range(b_list.shape[2]):
+                band_save_path = os.path.join(output_folder,
+                                              str(band) + '.tiff')
 
-            profile = {'driver': 'GTiff',
-                       'nodata': 0,
-                       'dtype': rasterio.uint8,
-                       'count': 6,
-                       'width': b_list.shape[0],
-                       'height': b_list.shape[1],
-                       'transform': transform[0],
-                       'crs': 'EPSG:4326',
-                       }
+                arg = dict( driver='Gtiff',
+                            dtype = 'uint8',
+                            height=b_list.shape[0],
+                            width=b_list.shape[1],
+                            count=1,
+                            crs={'init': 'epsg:4326'},
+                            transform=transform[band],
+                            nodata=0
+                            )
+                # import pdb;pdb.set_trace()
+                with rasterio.open(band_save_path, 'w', **arg) as raster:
+                    raster.write(b_list[:,:,band].astype('uint8'),1)
+                    raster.close()
 
-            with rasterio.open(os.path.join(output_folder,'all_bands.tiff'), 'w', **profile) as raster:
-                for i in range(6):
-                    raster.write(b_list[:, :, i].T.astype(
-                        rasterio.uint8), i + 1)
+            # plot images and predictions
+            # self.plot_rgb(b_list[:, :, 1],
+            #               b_list[:, :, 2],
+            #               b_list[:, :, 0],
+            #               y_true,
+            #               y_mat,
+            #               output_folder).savefig(
+            #     os.path.join(output_folder, self.eval_img_path))
+
+
+
 
     def reshape_array_to_image(self, dim1_array, x_shape, y_shape):
         """
@@ -133,7 +133,6 @@ class Evaluate:
 
     def plot_rgb(self, RL1, GL1, BL1, y_true, y_pred, output_folder):
         """Summary
-
         Args:
             RL1 (TYPE): Description
             GL1 (TYPE): Description
@@ -141,10 +140,8 @@ class Evaluate:
             y_true (numpy array): true feature
             y_pred (numpy array): predicted feature
             output_folder (string): folder to store plots
-
         Returns:
             TYPE: Description
-
         """
 
         # normalization to true RGB
@@ -156,16 +153,19 @@ class Evaluate:
             [((RL1 / 25.5) ** 2 / 100),
              ((GL1 / 25.5) ** 2 / 100),
              ((BL1 / 25.5) ** 2 / 100)])
+        RGBL1_true = np.dstack([((RL1 / 25.5) ** 2 / 100),
+                                 GL1_true,
+                                 ((BL1 / 25.5) ** 2 / 100)])
 
         # plotting RGB
         fig, axes = plt.subplots(2, 3, figsize=(16, 8), dpi=250)
-        axes[0, 0].imshow(RL1, cmap='gray', vmax=255, vmin=0)
+        axes[0, 0].imshow(RL1, cmap='Reds', vmax=255, vmin=0)
         axes[0, 0].set_title('Red', fontweight='semibold')
         axes[0, 0].axis('off')
-        axes[0, 1].imshow(GL1, cmap='gray', vmax=255, vmin=0)
+        axes[0, 1].imshow(GL1, cmap='Greens', vmax=255, vmin=0)
         axes[0, 1].set_title('Veggie', fontweight='semibold')
         axes[0, 1].axis('off')
-        axes[0, 2].imshow(BL1, cmap='gray', vmax=255, vmin=0)
+        axes[0, 2].imshow(BL1, cmap='Blues', vmax=255, vmin=0)
         axes[0, 2].set_title('Blue', fontweight='semibold')
         axes[0, 2].axis('off')
         plt.subplots_adjust(wspace=.02)
@@ -195,4 +195,3 @@ if __name__ == '__main__':
 
     ev = Evaluate(json.load(open('config.json')))
     ev.evaluate()
-

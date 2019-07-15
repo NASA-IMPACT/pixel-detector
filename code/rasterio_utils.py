@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-06-04 13:39:40
+# @Last Modified time: 2019-07-02 11:52:12
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -57,7 +57,7 @@ def rasterio_meta(src, extent):
     """
     meta = src.profile
     width, height = width_height(extent)
-    new_transform = rasterio.transform.from_bounds(*extent, width, height)
+    new_transform = rasterio.transform.from_bounds(*extent, height, width)
     meta.update(count=1,
                 driver='GTiff',
                 crs={'init': 'epsg:4326'},

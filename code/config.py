@@ -10,6 +10,5 @@ GEO_RES = (10848, 10848)
 
 # Directories
 LAT_LON_IDX = '../data/lat_lon_reprojected_py3.pkl'
-OUTPUT_DIR = '../data/eval_outputs/'
+OUTPUT_DIR = '../data/eval_outputs_90_2019/'
 CACHE_DIR = '../data/cache'
-

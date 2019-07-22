@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-02 11:52:12
+# @Last Modified time: 2019-07-19 16:04:16
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -10,6 +10,7 @@ Functions based on rasterio library: https://github.com/mapbox/rasterio
 
 from rasterio.warp import reproject, Resampling, aligned_target
 from rasterio.transform import Affine
+from pyproj import Proj
 
 import rasterio
 import xarray
@@ -19,6 +20,7 @@ import math
 import numpy as np
 import os
 import sys
+import Proj
 
 
 def width_height(bbox, resolution_in_km=1.0):
@@ -66,6 +68,58 @@ def rasterio_meta(src, extent):
                 height=height,
                 nodata=0,)
     return meta
+
+
+def generate_subsets(ncfile, center, cache_path, side_size):
+    """ generate images given center and size of image, save them in filepath
+
+    Args:
+        center (TYPE): Description
+        side_size (TYPE): Description
+        file_path (TYPE): Description
+    """
+    temp_ncfile = f'NetCDF:{ncfile}:Rad'
+    img_list = list()
+    with rasterio.open(temp_ncfile, 'r') as src:
+        import pdb;pdb.set_trace()
+        geos_proj = Proj(src.crs.to_proj4())
+        wgs_proj = Proj(init='EPSG:4326')
+        center_xy = pyproj.transform(wgs_proj, geo_proj, *center)
+        center_idx = src.index(*center_xy)
+        corners = generate_corners(center_idx, side_size)
+        for corner in corners:
+            window = Window.from_slices((corner[0], corner[0] + side_size),
+                                        (corner[1], corner[0] + side_size)
+                                        )
+            src_arr = src.read(window=window)
+            # image = np.ones((side_size, side_size), dtype=rasterio.ubyte) * 127
+            with rasterio.open(cache_path, 'w',
+                               driver='GTiff', width=side_size,
+                               height=side_size, count=6,
+                               ) as dest:
+                dest.write(src_arr, file_path)
+
+
+
+
+    def generate_corners(idx, side_size):
+
+        side_half = side_size / 2
+        corner_list = [idx[0] - side_half, idx[1] - side_half]
+        corner_list += [idx[0] - side_half, idx[1]]
+        corner_list += [idx[0], idx[1] - side_half]
+        corner_list += [idx[0] + side_half, idx[1] + side_half]
+        corner_list += [idx[0] + side_half, idx[1]]
+        corner_list += [idx[0], idx[1] + side_half]
+
+        corner_list += [idx[0] - side_size, idx[1] - side_size]
+        corner_list += [idx[0] - side_size, idx[1]]
+        corner_list += [idx[0], idx[1] - side_size]
+        corner_list += [idx[0] + side_size, idx[1] + side_size]
+        corner_list += [idx[0] + side_size, idx[1]]
+        corner_list += [idx[0], idx[1] + side_size]
+
+    return corner_list
 
 
 def wgs84_transform(src_array, ncfile, extent):

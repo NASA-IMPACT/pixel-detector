@@ -1,5 +1,7 @@
 import numpy as np
 import keras.optimizers
+import os
+
 from keras.callbacks import (
     EarlyStopping,
     ModelCheckpoint,
@@ -18,7 +20,7 @@ from keras.layers import (
 
 from keras.models import Model
 from config import BANDS_LIST
-from data_helper import get_data, unison_shuffled_copies
+from data_helper import get_data, get_data_unet, unison_shuffled_copies
 from data_preparer import UnetDataPreparer
 
 class PixelModel():
@@ -93,9 +95,9 @@ class PixelModel():
 
     def train(self):
 
-        (x_, y_, _, _) = get_data(
-            self.config["jsonfile"], self.num_neighbor)
-        num_val_imgs = 37
+        (x_, y_, _, _) = get_data_unet(
+            self.config["jsonfile"], 256)
+        num_val_imgs = 28
         x_train = x_[num_val_imgs:]
         y_train = y_[num_val_imgs:]
         x_val = x_[:num_val_imgs]
@@ -220,7 +222,7 @@ class UNetModel():
         #                kernel_initializer='he_normal')(conv9)
         # conv10 = Conv2D(1, 1, activation='sigmoid')(conv9)
 
-        model = Model(input=inputs, output=conv10)
+        model = Model(input=inputs, output=conv2)
 
         model.compile(optimizer='adam',
                       loss='binary_crossentropy', metrics=['accuracy'])
@@ -244,22 +246,39 @@ class UNetModel():
         ]
 
     def train(self):
-        dp = UnetDataPreparer(jsonfile='', save_path='../data/unet_images')
-        x, y = dp.get_unet_data()
-        x, y = unison_shuffled_copies(x, y)
-        y = y / 255
-        print(y[0])
-        y = np.expand_dims(y, axis=-1)
+        # dp = UnetDataPreparer(jsonfile='', save_path='../data/unet_images')
+        # x, y = dp.get_unet_data()
+        (x_, y_, _, _) = get_data_unet(
+            self.config["jsonfile"], 256)
+        num_val_imgs = 28
+        x_train = x_[num_val_imgs:]
+        y_train = y_[num_val_imgs:]
+        x_val = x_[:num_val_imgs]
+        y_val = y_[:num_val_imgs]
 
-        self.model.fit(
-            x,
-            y,
-            nb_epoch=self.config["num_epoch"],
-            batch_size=self.config["batch_size"],
-            callbacks=self.callbacks,
-            validation_split=0.25,
-            shuffle=True
-        )
+        print(len(x_))
+
+        x_train = np.concatenate(tuple(x_train), axis=0)
+        y_train = np.concatenate(tuple(y_train), axis=0)
+        x_val = np.concatenate(tuple(x_val), axis=0)
+        y_val = np.concatenate(tuple(y_val), axis=0)
+
+        x_train, y_train = unison_shuffled_copies(x_train, y_train)
+        x_val, y_val = unison_shuffled_copies(x_val, y_val)
+        x, y = unison_shuffled_copies(x, y)
+        # y = y / 255
+        # print(y[0])
+        # y = np.expand_dims(y, axis=-1)
+
+        # self.model.fit(
+        #     x,
+        #     y,
+        #     nb_epoch=self.config["num_epoch"],
+        #     batch_size=self.config["batch_size"],
+        #     callbacks=self.callbacks,
+        #     validation_split=0.25,
+        #     shuffle=True
+        # )
 
     def save_model(self):
 

@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:42:50
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-02 11:54:22
+# @Last Modified time: 2019-07-19 14:52:58
 
 """
 Description: Helper methods for data generation
@@ -12,18 +12,24 @@ from config import (
     BANDS_LIST,
     CACHE_DIR,
     GEO_RES,
+    SAT_H,
+    SAT_SWEEP,
+    SAT_LON,
 )
-from rasterio_utils import wgs84_transform
-from shape_utils import smoke_pixels_from_shp
 from glob import glob
+from PIL import Image
+from rasterio_utils import wgs84_transform, generate_subsets
+from shape_utils import smoke_pixels_from_shp
 
-import xarray
+import cv2
 import json
 import numpy as np
-import sys
 import pickle
-import cv2
 import scipy.ndimage
+import sys
+import xarray
+import fiona
+import os
 
 
 def band_list(loc, band_array, time):
@@ -69,7 +75,7 @@ def extract_pixels(nclist, extent):
         rad = ds['Rad'].data
         ref = np.clip(rad * k, 0, 1)
         gamma = 2.0
-        if i == 3 or i == 5: # if BAND_4 or BAND_6, then upsample
+        if i == 3 or i == 5:  # if BAND_4 or BAND_6, then upsample
             ref = scipy.ndimage.zoom(ref, 2, order=0)
         if i == 1:  # if BAND_2 then downsample
             ref = rebin(ref, [res[0], res[1]])
@@ -84,6 +90,88 @@ def extract_pixels(nclist, extent):
         ds.close()
 
     return np.dstack(array_list), transforms
+
+
+def get_data_unet(jsonfile, side_size=256):
+    """Summary
+
+    Args:
+        jsonfile (json): json file containing the netcdf and shapefile
+        paths
+        num_neighbor (int, optional): num_neighbors to consider
+    """
+    print("reading from json file:", jsonfile)
+    with open(jsonfile) as js:
+        jsondict = json.loads(js.read())
+        b_list = []
+        x_list = []
+        y_list = []
+        lat_lon_list = []
+        for item in jsondict:
+            ncpath = item["ncfile"]
+            nctime = item["nctime"]
+            nclist = band_list(ncpath, BANDS_LIST, time=nctime)
+            extent = item["extent"]
+            shapefile_path = item["shp"]
+            ext_str = "_{}_{}_{}_{}".format(
+                extent[0], extent[1], extent[2], extent[3])
+            cache_path = CACHE_DIR + '/' + nctime + '_' + ext_str + '.p'
+
+            try:
+                x_img = np.array(Image.open(os.path.join(cache_path, '.tiff')))
+                y_img = np.array(Image.open(os.path.join(cache_path, '.bmp')))
+
+            except IOError:  # file not found, create and store
+
+                print('cannot find file, generating cache...')
+                x_img, y_img = generate_images(nclist, shapefile_path, cache_path, side_size)
+
+            if (x_img is not None) and (y_img is not None):
+                x_list.append(x_img)
+                y_list.append(y_img)
+
+    return (x_list, y_list, b_list, lat_lon_list)
+
+
+def generate_images(ncfiles, shapefile, cache_path, side_size=256):
+
+    with fiona.open(shapefile) as shp:
+        shp_center = ((shp.bounds[0] + shp.bounds[2]) / 2,
+                      (shp.bounds[1] + shp.bounds[3]) / 2
+                      )
+        img_list = []
+        for i, ncfile in enumerate(ncfiles):
+            subsets, transforms = generate_subsets(
+                ncfile, shp_center, os.path.join(cache_path, str(i)),
+                side_size,
+            )
+            ds = xarray.open_dataset(str(ncfile), engine='h5netcdf')
+            k = ds['kappa0'].data
+            rad = ds['Rad'].data
+            ref = np.clip(rad * k, 0, 1)
+            gamma = 2.0
+
+            if i == 3 or i == 5:  # if BAND_4 or BAND_6, then upsample
+                ref = scipy.ndimage.zoom(ref, 2, order=0)
+            if i == 1:  # if BAND_2 then downsample
+                ref = rebin(ref, [res[0], res[1]])
+            ref_255 = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
+
+
+def geo_idx(dd, dd_array):
+    """
+    search for nearest decimal degree in an array
+    of decimal degrees and return the index.
+
+    Args:
+        dd (TYPE): Description
+        dd_array (TYPE): Description
+
+    Returns:
+        TYPE: Description
+    """
+    geo_idx = (np.abs(dd_array - dd)).argmin()
+    return geo_idx
 
 
 def get_data(jsonfile, num_neighbor=5):
@@ -128,6 +216,7 @@ def get_data(jsonfile, num_neighbor=5):
                                                 x_array.shape[0:2])
                 x_array_neighbors = convert_pixels_to_groups(x_array,
                                                              num_neighbor)
+                x_array_neighbors = 0
                 pickle.dump((x_array_neighbors,
                              y_array, x_array, transforms),
                             open(cache_path, 'wb'), protocol=3)
@@ -253,4 +342,3 @@ def balanced_subsample(x, y, subsample_size=1.00):
     ys = np.concatenate(ys)
 
     return xs, ys
-

@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-24 12:53:11
+# @Last Modified time: 2019-07-25 12:45:00
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -46,7 +46,7 @@ def width_height(bbox, resolution_in_km=1.0):
     return (nx, ny)
 
 
-def rasterio_meta(src, extent):
+def rasterio_meta(src, extent, count):
     """Form the meta for the new projection using source profile
 
     Args:
@@ -59,7 +59,7 @@ def rasterio_meta(src, extent):
     meta = src.profile
     width, height = width_height(extent)
     new_transform = rasterio.transform.from_bounds(*extent, width, height)
-    meta.update(count=1,
+    meta.update(count=count,
                 driver='GTiff',
                 crs={'init': 'epsg:4326'},
                 transform=new_transform,
@@ -80,7 +80,6 @@ def generate_subsets(ncfile, center, cache_path, side_size):
     temp_ncfile = f'NetCDF:{ncfile}:Rad'
     img_list = list()
     with rasterio.open(temp_ncfile, 'r') as src:
-        import pdb;pdb.set_trace()
         geos_proj = Proj(src.crs.to_proj4())
         wgs_proj = Proj(init='EPSG:4326')
         center_xy = pyproj.transform(wgs_proj, geo_proj, *center)
@@ -97,9 +96,6 @@ def generate_subsets(ncfile, center, cache_path, side_size):
                                height=side_size, count=6,
                                ) as dest:
                 dest.write(src_arr, file_path)
-
-
-
 
     def generate_corners(idx, side_size):
 
@@ -119,6 +115,25 @@ def generate_subsets(ncfile, center, cache_path, side_size):
         corner_list += [idx[0], idx[1] + side_size]
 
     return corner_list
+
+
+def wgs84_group_transform(src_array, reference_ncfile, extent, save_path):
+
+    temp_ncfile = f'NetCDF:{reference_ncfile}:Rad'
+
+    with rasterio.open(temp_ncfile, 'r') as src:
+        dest_meta = rasterio_meta(src, extent, src_array.shape(2))
+        with rasterio.open(save_path, 'w', **dest_meta) as dst:
+            for i in range(1, src.count + 1):
+                reproject(src=np.flip(src_array[:, :, i - 1], axis=0),
+                          destination=rasterio.band(dst, i),
+                          src_transform=src.transform,
+                          src_crs=src.crs,
+                          dst_transform=dest_meta['transform'],
+                          dst_crs=dest_meta['crs'],
+                          resampling=Resampling.nearest,
+                          )
+    return (dest_meta['width'], dest_meta['height']), dest_meta['transform']
 
 
 def wgs84_transform(src_array, ncfile, extent):

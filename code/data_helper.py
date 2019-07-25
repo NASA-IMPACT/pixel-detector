@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:42:50
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-24 10:48:08
+# @Last Modified time: 2019-07-25 11:42:25
 
 """
 Description: Helper methods for data generation
@@ -11,7 +11,6 @@ Description: Helper methods for data generation
 from config import (
     BANDS_LIST,
     CACHE_DIR,
-    GEO_RES,
     SAT_H,
     SAT_SWEEP,
     SAT_LON,

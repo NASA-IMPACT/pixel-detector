@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:51:49
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-15 14:17:03
+# @Last Modified time: 2019-07-25 12:16:19
 
 """
 Functions to handle feature shapes
@@ -13,7 +13,7 @@ import rasterio.features
 import numpy as np
 
 
-def smoke_pixels_from_shp(shp_path, transform, img_shape):
+def bitmap_from_shp(shp_path, transform, img_shape):
     """ extract out the smoke pixels using the shapefile
      from the transform defined
 

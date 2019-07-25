@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:31:43
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-03 15:38:24
+# @Last Modified time: 2019-07-25 10:36:35
 
 import json
 
@@ -45,4 +45,3 @@ class Trainer:
 if __name__ == '__main__':
     trainer = Trainer(json.load(open('config.json')))
     trainer.train()
-

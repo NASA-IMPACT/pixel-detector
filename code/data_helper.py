@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:42:50
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-19 14:52:58
+# @Last Modified time: 2019-07-24 10:48:08
 
 """
 Description: Helper methods for data generation
@@ -216,10 +216,10 @@ def get_data(jsonfile, num_neighbor=5):
                                                 x_array.shape[0:2])
                 x_array_neighbors = convert_pixels_to_groups(x_array,
                                                              num_neighbor)
-                x_array_neighbors = 0
-                pickle.dump((x_array_neighbors,
-                             y_array, x_array, transforms),
-                            open(cache_path, 'wb'), protocol=3)
+                # x_array_neighbors = 0
+                # pickle.dump((x_array_neighbors,
+                #              y_array, x_array, transforms),
+                #             open(cache_path, 'wb'), protocol=3)
                 b_list.append(x_array)
                 lat_lon_list.append(transforms)
                 x_list.append(x_array_neighbors)

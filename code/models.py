@@ -19,9 +19,11 @@ from keras.layers import (
 )
 
 from keras.models import Model
+from keras import optimizers
 from config import BANDS_LIST
 from data_helper import get_data, get_data_unet, unison_shuffled_copies
-from data_preparer import UnetDataPreparer
+from loss_plot import TrainingPlot
+
 
 class PixelModel():
 
@@ -45,10 +47,10 @@ class PixelModel():
                         )
 
         # conv model
-        conv1 = Conv2D(30, kernel_size=2, activation="relu",
+        conv1 = Conv2D(40, kernel_size=2, activation="relu",
                        padding="same")(visible)
         pool1 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv1)
-        conv2 = Conv2D(35, kernel_size=2, activation="relu",
+        conv2 = Conv2D(60, kernel_size=2, activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv2)
         # conv3 = Conv2D(40, kernel_size=2, activation="relu",
@@ -91,12 +93,13 @@ class PixelModel():
                           verbose=1, mode="auto"),
             ModelCheckpoint(filepath=self.savepath,
                             verbose=1, save_best_only=True),
+            TrainingPlot(),
         ]
 
     def train(self):
 
-        (x_, y_, _, _) = get_data_unet(
-            self.config["jsonfile"], 256)
+        (x_, y_, _, _) = get_data(
+            self.config["jsonfile"], num_neighbor=self.config['num_neighbor'])
         num_val_imgs = 28
         x_train = x_[num_val_imgs:]
         y_train = y_[num_val_imgs:]
@@ -119,7 +122,7 @@ class PixelModel():
         # y_val = np.concatenate(tuple(y_val), axis=0)
 
         self.model.compile(
-            optimizer="adam",
+            optimizer=optimizers.Adam(lr=0.01, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.01, amsgrad=False),
             loss="binary_crossentropy",
             metrics=["accuracy", "mae"]
         )

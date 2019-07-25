@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-19 16:04:16
+# @Last Modified time: 2019-07-24 12:53:11
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -20,7 +20,6 @@ import math
 import numpy as np
 import os
 import sys
-import Proj
 
 
 def width_height(bbox, resolution_in_km=1.0):
@@ -59,13 +58,13 @@ def rasterio_meta(src, extent):
     """
     meta = src.profile
     width, height = width_height(extent)
-    new_transform = rasterio.transform.from_bounds(*extent, height, width)
+    new_transform = rasterio.transform.from_bounds(*extent, width, height)
     meta.update(count=1,
                 driver='GTiff',
                 crs={'init': 'epsg:4326'},
                 transform=new_transform,
-                width=width,
-                height=height,
+                width=height,
+                height=width,
                 nodata=0,)
     return meta
 

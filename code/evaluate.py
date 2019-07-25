@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 16:41:12
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-15 14:57:28
+# @Last Modified time: 2019-07-24 11:02:47
 from config import (
     PREDICT_THRESHOLD,
     OUTPUT_DIR,
@@ -60,7 +60,7 @@ class Evaluate:
         Description: evaluation workflow
         """
         print('looking for model in', str(self.config['model_path']))
-        # self.model = load_model(str(self.config['model_path']))
+        self.model = load_model(str(self.config['model_path']))
 
         x_list, y_list, b_list, transforms = get_data(
             str(self.config['eval_json']),
@@ -74,21 +74,21 @@ class Evaluate:
             output_folder = os.path.join(self.output_path, str(_id))
             if not os.path.exists(output_folder):
                 os.makedirs(output_folder)
-
             # make prediction
-            # y_pred = self.model.predict(
-            #   x, batch_size=self.config['batch_size'])
-            # y_pred = (y_pred > PREDICT_THRESHOLD) * 1.0
-            # y_mat = self.reshape_array_to_image(
-            #     (y_pred) * 255.0,
-            #     b_list.shape[0],
-            #     b_list.shape[1])
+            y_pred = self.model.predict(
+              x, batch_size=self.config['batch_size'])
+            y_pred = (y_pred > PREDICT_THRESHOLD) * 1.0
+            y_mat = self.reshape_array_to_image(
+                (y_pred) * 255.0,
+                b_list.shape[0],
+                b_list.shape[1])
             y_true = self.reshape_array_to_image(
                 y * 255.0, b_list.shape[0], b_list.shape[1])
 
             # save predicted images
-            # self.save_image(y_mat, os.path.join(
-            #     output_folder, self.pix_bmp_path))
+            self.save_image(y_mat, os.path.join(
+                output_folder, self.pix_bmp_path))
+
             self.save_image(y_true, os.path.join(
                 output_folder, self.t_bmp_path))
 
@@ -112,13 +112,13 @@ class Evaluate:
                     raster.close()
 
             # plot images and predictions
-            # self.plot_rgb(b_list[:, :, 1],
-            #               b_list[:, :, 2],
-            #               b_list[:, :, 0],
-            #               y_true,
-            #               y_mat,
-            #               output_folder).savefig(
-            #     os.path.join(output_folder, self.eval_img_path))
+            self.plot_rgb(b_list[:, :, 1],
+                          b_list[:, :, 2],
+                          b_list[:, :, 0],
+                          y_true,
+                          y_mat,
+                          output_folder).savefig(
+                os.path.join(output_folder, self.eval_img_path))
 
 
 
@@ -153,35 +153,50 @@ class Evaluate:
             [((RL1 / 25.5) ** 2 / 100),
              ((GL1 / 25.5) ** 2 / 100),
              ((BL1 / 25.5) ** 2 / 100)])
+        RGBL1 = np.dstack(
+            [np.array(RL1, dtype='uint8'),
+             np.array(GL1, dtype='uint8'),
+             np.array(BL1, dtype='uint8')])
         RGBL1_true = np.dstack([((RL1 / 25.5) ** 2 / 100),
                                  GL1_true,
                                  ((BL1 / 25.5) ** 2 / 100)])
 
         # plotting RGB
-        fig, axes = plt.subplots(2, 3, figsize=(16, 8), dpi=250)
-        axes[0, 0].imshow(RL1, cmap='Reds', vmax=255, vmin=0)
-        axes[0, 0].set_title('Red', fontweight='semibold')
-        axes[0, 0].axis('off')
-        axes[0, 1].imshow(GL1, cmap='Greens', vmax=255, vmin=0)
-        axes[0, 1].set_title('Veggie', fontweight='semibold')
-        axes[0, 1].axis('off')
-        axes[0, 2].imshow(BL1, cmap='Blues', vmax=255, vmin=0)
-        axes[0, 2].set_title('Blue', fontweight='semibold')
-        axes[0, 2].axis('off')
-        plt.subplots_adjust(wspace=.02)
-        axes[1, 0].imshow(RGBL1_veggie)
-        axes[1, 0].axis('off')
-        axes[1, 1].imshow(RGBL1_veggie)
+        fig, axes = plt.subplots(1, 3, figsize=(9, 3), dpi=250)
+        # axes[0, 0].imshow(RL1, cmap='Reds', vmax=255, vmin=0)
+        # axes[0, 0].set_title('Red', fontweight='semibold')
+        # axes[0, 0].axis('off')
+        # axes[0, 1].imshow(GL1, cmap='Greens', vmax=255, vmin=0)
+        # axes[0, 1].set_title('Veggie', fontweight='semibold')
+        # axes[0, 1].axis('off')
+        # axes[0, 2].imshow(BL1, cmap='Blues', vmax=255, vmin=0)
+        # axes[0, 2].set_title('Blue', fontweight='semibold')
+        # axes[0, 2].axis('off')
+        # plt.subplots_adjust(wspace=.02)
+        # axes[1, 0].imshow(RGBL1_veggie)
+        # axes[1, 0].axis('off')
+        # axes[1, 1].imshow(RGBL1_veggie)
 
-        self.save_image(RL1, os.path.join(output_folder, 'r.bmp'))
-        self.save_image(GL1, os.path.join(output_folder, 'g.bmp'))
-        self.save_image(BL1, os.path.join(output_folder, 'b.bmp'))
-        axes[1, 1].imshow(y_true, alpha=0.15,)
-        axes[1, 1].axis('off')
+        # self.save_image(RL1, os.path.join(output_folder, 'r.bmp'))
+        # self.save_image(GL1, os.path.join(output_folder, 'g.bmp'))
+        # self.save_image(BL1, os.path.join(output_folder, 'b.bmp'))
+        # axes[1, 1].imshow(y_true, alpha=0.15,)
+        # axes[1, 1].axis('off')
 
-        axes[1, 2].imshow(y_pred)
-        axes[1, 2].imshow(y_true, alpha=0.15,)
-        axes[1, 2].axis('off')
+        # axes[1, 2].imshow(y_pred)
+        # axes[1, 2].imshow(y_true, alpha=0.15,)
+        # axes[1, 2].axis('off')
+
+        axes[0].imshow(RGBL1)
+        axes[0].axis('off')
+        # axes[0].title('RGB imagery of smoke scene')
+        axes[1].imshow(RGBL1)
+        axes[1].imshow(y_true, cmap='Greys', alpha=0.15)
+        axes[1].axis('off')
+        # axes[1].title('smoke mask (smoke labels)')
+        axes[2].imshow(y_pred, cmap='plasma')
+        # axes[2].colorbar()
+        # axes[2].title('Prediction Heatmap')
         return plt
 
     def save_image(self, img_array, loc):

@@ -1,11 +1,11 @@
 {
-    "type"          : "unet",
+    "type"          : "pixel",
     "num_neighbor"  : 5,
     "jsonfile"      : "../data/train_list.json",
     "num_epoch"     : 100,
-    "batch_size"    : 1000,
-    "model_path"    : "../models/smokev2_jul16_unet.h5",
-    "eval_json"     : "../data/eval_list.json",
-    "pred_json"     : "../data/eval_list.json",
+    "batch_size"    : 50000,
+    "model_path"    : "../models/smokev2_jul16.h5",
+    "eval_json"     : "../data/train_list2.json",
+    "pred_json"     : "../data/train_list.json",
     "pred_shp_path" : "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/"
 }

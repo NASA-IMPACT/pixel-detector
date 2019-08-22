@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-09 15:17:21
+# @Last Modified time: 2019-08-22 11:38:27
 
 from glob import glob
 from PIL import Image
@@ -151,64 +151,6 @@ class DataPreparer():
         """
         return np.asarray(dim1_array, dtype='uint8').reshape(
             (x_shape, y_shape), order='C')
-
-
-class UnetDataPreparer(DataPreparer):
-
-    def __init__(self, jsonfile, save_path, image_size=256):
-
-        self.image_size = image_size
-        self.save_path = save_path
-        self.jsonfile = jsonfile
-
-    def prepare_tiles(self, subset_ratio=1.2):
-
-        jsonfile = self.jsonfile
-        datasets = get_data(jsonfile)
-        img_idx = 0
-        for idx, data in enumerate(zip(*datasets)):
-            print(data[1])
-            _, label, bands, _ = data
-            width, height = bands.shape[0:2]
-            bitmap = self.reshape_array_to_image(
-                label, width, height)
-            width_ratio = width / self.image_size
-            height_ratio = height / self.image_size
-            if width_ratio > subset_ratio and height_ratio > subset_ratio:
-                top_left_points = [
-                    [0, 0],
-                    [width - self.image_size, 0],
-                    [0, height - self.image_size],
-                    [width - self.image_size, height - self.image_size]
-                ]
-                for point in top_left_points:
-                    loc = os.path.join(self.save_path, str(img_idx))
-                    print('saving in', loc)
-                    self.save_image(bitmap[point[0]:point[0] + self.image_size,
-                                           point[1]:point[1] + self.image_size,
-                                           ]*255,
-                                    loc + '_label.bmp')
-                    self.save_image(
-                        bands[point[0]:point[0] + self.image_size,
-                              point[1]:point[1] + self.image_size,
-                              0:3,
-                              ],
-                        loc + '_rgb.png')
-                    img_idx += 1
-
-    def get_unet_data(self):
-
-        rgb_images = []
-        bitmap_images = []
-        for file in glob(self.save_path + '/*.png'):
-            bitmap_file = file[:-7] + 'label.bmp'
-            try:
-                rgb_images.append(np.array(Image.open(file)))
-                bitmap_images.append(np.array(Image.open(bitmap_file)))
-            except FileNotFoundError:
-                print('file not found')
-
-        return np.array(rgb_images), np.array(bitmap_images)
 
 
 if __name__ == '__main__':

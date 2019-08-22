@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-23 10:56:37
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-23 13:38:18
+# @Last Modified time: 2019-08-22 14:08:01
 
 import matplotlib
 matplotlib.use('agg')
@@ -10,6 +10,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 import keras
 import numpy as np
+
 
 class TrainingPlot(keras.callbacks.Callback):
 

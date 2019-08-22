@@ -12,18 +12,18 @@ from config import (
     PREDICT_THRESHOLD,
 )
 
-import numpy as np
-import os
+from matplotlib.colors import Normalize
+from sklearn.metrics import confusion_matrix
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
-import seaborn as sn
+import matplotlib.pyplot as plt
+import numpy as np
+import numpy as np
+import numpy.ma as ma
+import os
 import pandas as pd
 import rasterio
-import numpy.ma as ma
-import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.colors import Normalize
+import seaborn as sn
 
 
 class MidpointNormalize(Normalize):
@@ -32,20 +32,8 @@ class MidpointNormalize(Normalize):
         Normalize.__init__(self, vmin, vmax, clip)
 
     def __call__(self, value, clip=None):
-        # I'm ignoring masked values and all kinds of edge cases to make a
-        # simple example...
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
-
-
-# data = np.random.random((10, 10))
-# data = 10 * (data - 0.8)
-
-# fig, ax = plt.subplots()
-# norm = MidpointNormalize(midpoint=0)
-# im = ax.imshow(data, norm=norm, cmap=plt.cm.seismic, interpolation='none')
-# fig.colorbar(im)
-# plt.show()
 
 
 class Evaluate:
@@ -91,12 +79,6 @@ class Evaluate:
             prediction_list.append(img_prediction.reshape(
                 (img_shape[0], img_shape[1])))
 
-        # save confusion matrix
-        # df_cm = pd.DataFrame(conf_mtx, range(2),
-        #                      range(2))
-        # sn.set(font_scale=1.4)  # for label size
-        # cf = sn.heatmap(df_cm, annot=True, annot_kws={"size": 16})
-        # cf.get_figure().savefig(self.save_dir + 'conf_mat.png')
         return prediction_list
 
     def __predict__(self, data):
@@ -121,7 +103,6 @@ class Evaluate:
         for i, prediction in enumerate(predictions):
             img_name = os.path.basename(x_path[i])
             print('plotting {} of {} images:'.format(i + 1, len(predictions)))
-            #fig, axes = plt.subplots(1, 2, figsize=(16, 8), dpi=300)
 
             with rasterio.open(x_path[i]) as rast:
                 red = rast.read(2)
@@ -145,28 +126,20 @@ class Evaluate:
             plt.imshow(img)
             plt.axis('off')
             plt.savefig(os.path.join(self.save_dir,
-                                     img_name.replace('.tif', '.png')), dpi=height)
-            # thres_pred = np.asarray((prediction > PREDICT_THRESHOLD) * 255,
-            #                         dtype='uint8')
-
+                                     img_name.replace('.tif', '.png')),
+                        dpi=height)
             thres_pred = np.asarray(prediction * 255,
                                     dtype='uint8')
 
-            thres_pred_masked = ma.masked_where(thres_pred <= PREDICT_THRESHOLD * 255.0,
-                                                thres_pred)
+            thres_pred_masked = ma.masked_where(
+                thres_pred <= PREDICT_THRESHOLD * 255.0, thres_pred)
 
             plt.imshow(thres_pred_masked, alpha=0.35, cmap='spring')
             plt.axis('off')
-            # Image.fromarray(thres_pred.astype(np.uint8)).save(
-            #     '{}_bmp.bmp'.format(i))
-            # vis_path = os.path.join(self.save_dir, str(i) + '_vis.png')
-            # bitmap_from_shp( thres_pred,
-            #                transforms[i],
-            #                os.path.join(self.save_dir, str(i)),
-            #                vis_path,
-            #                )
+
             plt.savefig(os.path.join(self.save_dir,
-                                     img_name.replace('.tif', '_masked.png')), dpi=height)
+                                     img_name.replace('.tif', '_masked.png')),
+                        dpi=height)
 
 
 if __name__ == '__main__':

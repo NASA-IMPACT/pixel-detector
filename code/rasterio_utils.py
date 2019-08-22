@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-25 16:33:11
+# @Last Modified time: 2019-08-22 14:08:22
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -92,7 +92,6 @@ def generate_subsets(ncfile, center, cache_path, side_size):
                                         (corner[1], corner[0] + side_size)
                                         )
             src_arr = src.read(window=window)
-            # image = np.ones((side_size, side_size), dtype=rasterio.ubyte) * 127
             with rasterio.open(cache_path, 'w',
                                driver='GTiff', width=side_size,
                                height=side_size, count=6,
@@ -127,14 +126,16 @@ def wgs84_group_transform(src_array, reference_ncfile, extent, save_path):
         dest_meta = rasterio_meta(src, extent, src_array.shape[2])
         with rasterio.open(save_path, 'w', **dest_meta) as dst:
             for i in range(1, src_array.shape[2] + 1):
-                reproject(source=np.flip(src_array[:, :, i - 1].astype('uint8'), axis=0),
-                          destination=rasterio.band(dst, i),
-                          src_transform=src.transform,
-                          src_crs=src.crs,
-                          dst_transform=dest_meta['transform'],
-                          dst_crs=dest_meta['crs'],
-                          resampling=Resampling.bilinear,
-                          )
+                reproject(
+                  source=np.flip(src_array[:, :, i - 1].astype('uint8'),
+                                 axis=0),
+                  destination=rasterio.band(dst, i),
+                  src_transform=src.transform,
+                  src_crs=src.crs,
+                  dst_transform=dest_meta['transform'],
+                  dst_crs=dest_meta['crs'],
+                  resampling=Resampling.bilinear,
+                )
         dest_res = dest_meta['height'], dest_meta['width']
     return dest_res, dest_meta['transform']
 

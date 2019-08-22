@@ -2,13 +2,20 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-22 11:38:27
+# @Last Modified time: 2019-08-22 13:47:45
 
+from config import (
+    SAT_H,
+    SAT_LON,
+    SAT_SWEEP
+)
 from glob import glob
 from PIL import Image
 from config import BANDS_LIST
 from rasterio_utils import wgs84_group_transform
 from shape_utils import bitmap_from_shp
+from pyproj import Proj
+from pyorbital import astronomy
 
 import json
 import numpy as np
@@ -42,14 +49,27 @@ class DataPreparer():
             bitmap_array = bitmap_from_shp(shapefile_path, transform, res)
             self.save_image(bitmap_array.astype('uint8') * 255, bmp_path)
 
-    def rasterize_ncfiles(self, nclist, extent, img_path):
+    def rasterize_ncfiles(self, nclist, extent, img_path, cza_correct=False):
 
         ref_list = list()
         for i, ncfile in enumerate(nclist):
             with xarray.open_dataset(str(ncfile), engine='h5netcdf') as ds:
                 k = ds['kappa0'].data
                 rad = ds['Rad'].data
-                ref = np.clip(rad * k, 0, 1)
+                if cza_correct:
+                    geos_proj = Proj(proj='geos', h=SAT_H,
+                                     lon_0=SAT_LON, sweep=SAT_SWEEP)
+                    x = ds['x'].data * SAT_H
+                    y = ds['y'].data * SAT_H
+                    utc_time = ds['t'].data
+                    x_mesh, y_mesh = np.meshgrid(x, y)
+                    lons, lats = geos_proj(x_mesh, y_mesh, inverse=True)
+                    cza = np.zeros((rad.shape[0], rad.shape[1]))
+                    cza = astronomy.cos_zen(utc_time, lons, lats)
+                    rad = rad * k * cza
+                else:
+                    rad = rad * k
+                ref = np.clip(rad, 0, 1)
                 if 'RadF' in ds.dataset_name:
                     res = (10848, 10848)
                 else:

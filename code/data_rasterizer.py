@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-22 14:35:12
+# @Last Modified time: 2019-08-22 14:42:30
 
 from config import (
     SAT_H,
@@ -27,13 +27,13 @@ import xarray
 
 class DataPreparer():
 
-    def __init__(self, jsonfile, save_path):
+    def __init__(self, jsonfile, save_path, cza_correct):
 
         self.save_path = save_path
         self.parse_json(jsonfile)
-        self.prepare_data()
+        self.prepare_data(cza_correct)
 
-    def prepare_data(self):
+    def prepare_data(self, cza_correct):
 
         for item in self.jsondict:
             ncpath = item["ncfile"]
@@ -45,11 +45,13 @@ class DataPreparer():
                 nctime, extent[0], extent[1], extent[2], extent[3])
             img_path = os.path.join(self.save_path, ext_str + '.tif')
             bmp_path = os.path.join(self.save_path, ext_str + '.bmp')
-            res, transform = self.rasterize_ncfiles(nclist, extent, img_path)
+            res, transform = self.rasterize_ncfiles(
+                nclist, extent, img_path, cza_correct,
+            )
             bitmap_array = bitmap_from_shp(shapefile_path, transform, res)
             self.save_image(bitmap_array.astype('uint8') * 255, bmp_path)
 
-    def rasterize_ncfiles(self, nclist, extent, img_path, cza_correct=False):
+    def rasterize_ncfiles(self, nclist, extent, img_path, cza_correct):
 
         ref_list = list()
         for i, ncfile in enumerate(nclist):

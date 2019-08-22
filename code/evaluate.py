@@ -1,7 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
 
-
 from data_preparer import PixelDataPreparer
 from keras.models import load_model
 from PIL import Image

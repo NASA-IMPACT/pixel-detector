@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-22 13:47:45
+# @Last Modified time: 2019-08-22 14:35:12
 
 from config import (
     SAT_H,
@@ -175,4 +175,5 @@ class DataPreparer():
 
 if __name__ == '__main__':
 
-    dp = DataPreparer('../data/gif_list_219.json', '../data/gif_images_219/')
+    dp = DataPreparer('../data/train_list.json', '../data/images_train_cza/')
+    dp = DataPreparer('../data/eval_list.json', '../data/images_val_cza/')

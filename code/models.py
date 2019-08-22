@@ -21,8 +21,8 @@ from keras.layers import (
 from keras.models import Model
 from keras import optimizers
 from config import BANDS_LIST
-from data_helper import get_data, get_data_unet, unison_shuffled_copies
 from loss_plot import TrainingPlot
+from data_preparer import PixelDataPreparer
 
 
 class PixelModel():
@@ -40,24 +40,24 @@ class PixelModel():
             Make the model
         """
 
-        visible = Input(shape=(self.num_neighbor,
-                               self.num_neighbor,
+        visible = Input(shape=(self.num_neighbor * 2,
+                               self.num_neighbor * 2,
                                len(BANDS_LIST)
                                )
                         )
 
         # conv model
-        conv1 = Conv2D(40, kernel_size=2, activation="relu",
+        conv1 = Conv2D(32, kernel_size=2, activation="relu",
                        padding="same")(visible)
         pool1 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv1)
-        conv2 = Conv2D(60, kernel_size=2, activation="relu",
+        conv2 = Conv2D(64, kernel_size=2, activation="relu",
                        padding="same")(pool1)
         pool2 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv2)
         # conv3 = Conv2D(40, kernel_size=2, activation="relu",
         #                padding="same")(pool2)
         # pool3 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv3)
         flatten = Flatten()(pool2)
-        dense1 = Dense(50, activation="relu")(flatten)
+        dense1 = Dense(40, activation="relu")(flatten)
         dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(25, activation="relu")(dense1)
         dense1 = Dropout(0.3)(dense1)
@@ -98,23 +98,23 @@ class PixelModel():
 
     def train(self):
 
-        (x_, y_, _, _) = get_data(
-            self.config["jsonfile"], num_neighbor=self.config['num_neighbor'])
-        num_val_imgs = 28
-        x_train = x_[num_val_imgs:]
-        y_train = y_[num_val_imgs:]
-        x_val = x_[:num_val_imgs]
-        y_val = y_[:num_val_imgs]
+        dp = PixelDataPreparer(
+            '../data/images_train/', neighbour_pixels=self.num_neighbor
+        )
+        dp.iterate()
+        x = np.array(dp.dataset)
+        print('input shape', x.shape)
+        y = np.array(dp.labels)
+        print('label shape', y.shape)
+        x, y = unison_shuffled_copies(x, y)
 
-        print(len(x_))
+        # x_train = np.concatenate(tuple(x_train), axis=0)
+        # y_train = np.concatenate(tuple(y_train), axis=0)
+        # x_val = np.concatenate(tuple(x_val), axis=0)
+        # y_val = np.concatenate(tuple(y_val), axis=0)
 
-        x_train = np.concatenate(tuple(x_train), axis=0)
-        y_train = np.concatenate(tuple(y_train), axis=0)
-        x_val = np.concatenate(tuple(x_val), axis=0)
-        y_val = np.concatenate(tuple(y_val), axis=0)
-
-        x_train, y_train = unison_shuffled_copies(x_train, y_train)
-        x_val, y_val = unison_shuffled_copies(x_val, y_val)
+        # x_train, y_train = unison_shuffled_copies(x_train, y_train)
+        # x_val, y_val = unison_shuffled_copies(x_val, y_val)
 
         # x_train = np.concatenate(tuple(x_train), axis=0)
         # y_train = np.concatenate(tuple(y_train), axis=0)
@@ -122,20 +122,20 @@ class PixelModel():
         # y_val = np.concatenate(tuple(y_val), axis=0)
 
         self.model.compile(
-            optimizer=optimizers.Adam(lr=0.01, beta_1=0.9, beta_2=0.999, epsilon=None, decay=0.01, amsgrad=False),
+            optimizer="adam",
             loss="binary_crossentropy",
             metrics=["accuracy", "mae"]
         )
         print(self.model.summary())
 
         self.model.fit(
-            x_train,
-            y_train,
+            x,
+            y,
             nb_epoch=self.config["num_epoch"],
             batch_size=self.config["batch_size"],
             callbacks=self.callbacks,
-            validation_data=[x_val, y_val],
-            shuffle=True
+            validation_split=0.30,
+            shuffle=True,
         )
 
     def save_model(self):
@@ -156,10 +156,10 @@ class UNetModel():
 
         inputs = Input(input_size)
 
-        conv1 = Conv2D(12, 3, activation='relu', padding='same',
+        conv1 = Conv2D(20, 3, activation='relu', padding='same',
                        kernel_initializer='he_normal')(inputs)
         pool1 = MaxPooling2D(pool_size=(2, 2))(conv1)
-        conv2 = Conv2D(16, 3, activation='relu', padding='same',
+        conv2 = Conv2D(32, 3, activation='relu', padding='same',
                kernel_initializer='he_normal')(pool1)
 
         # conv1 = Conv2D(64, 3, activation='relu', padding='same',
@@ -286,3 +286,26 @@ class UNetModel():
     def save_model(self):
 
         self.model.save(self.savepath)
+
+
+def unison_shuffled_copies(a, b):
+    """
+    shuffle a,b in unison and return shuffled a,b
+
+    Args:
+        a (list/array): data a
+        b (list/array): data a
+
+    Returns:
+        TYPE: a,b shuffled and resampled
+    """
+    assert len(a) == len(b)
+    p = np.random.permutation(len(a))
+
+    # return balanced_subsample(a[p], b[p])
+    return a[p], b[p]
+
+
+def histogram_equalize(img):
+    # return img
+    return cv2.equalizeHist(img.astype('uint8'))

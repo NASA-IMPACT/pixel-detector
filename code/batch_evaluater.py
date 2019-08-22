@@ -2,7 +2,8 @@ import matplotlib
 matplotlib.use('Agg')
 
 
-from data_preparer import PixelDataPreparer
+from glob import glob
+from data_preparer import PixelDataPreparer, PixelListPreparer
 from keras.models import load_model
 from PIL import Image
 from shape_utils import (
@@ -53,11 +54,17 @@ class Evaluate:
     def __init__(self, num_n):
         """init for Evaluate class
         """
-        self.dataset = PixelDataPreparer(
-            "../data/images_val", neighbour_pixels=num_n)
-        self.dataset.iterate()
         self.model = load_model("../models/smokev3_7.h5")
-        self.save_dir = "../data/eval_outputs_smoke_yellow"
+        self.save_dir = "../data/eval_gif"
+        path = "../data/gif_images"
+        path_list = glob(path+'/*.tif')
+        step_num = 3
+        paths_lists = [path_list[x:x+step_num] for x in range(0, len(path_list), step_num)]
+        for paths in paths_lists:
+
+            self.dataset = PixelListPreparer(paths, neighbour_pixels=num_n)
+            self.dataset.iterate()
+            self.evaluate()
 
     def evaluate(self):
         """
@@ -104,7 +111,7 @@ class Evaluate:
         Returns:
             TYPE: Description
         """
-        pred_bmp = self.model.predict(np.array(data), batch_size=50000)
+        pred_bmp = self.model.predict(np.array(data), batch_size=50000, verbose=1)
         return pred_bmp
 
     def plot_predictions(self, dataset, predictions, ):

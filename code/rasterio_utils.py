@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-25 12:45:00
+# @Last Modified time: 2019-07-25 16:33:11
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -63,9 +63,11 @@ def rasterio_meta(src, extent, count):
                 driver='GTiff',
                 crs={'init': 'epsg:4326'},
                 transform=new_transform,
-                width=height,
-                height=width,
-                nodata=0,)
+                width=width,
+                height=height,
+                nodata=0,
+                dtype='uint8',
+                )
     return meta
 
 
@@ -120,20 +122,21 @@ def generate_subsets(ncfile, center, cache_path, side_size):
 def wgs84_group_transform(src_array, reference_ncfile, extent, save_path):
 
     temp_ncfile = f'NetCDF:{reference_ncfile}:Rad'
-
+    dest_res = ()
     with rasterio.open(temp_ncfile, 'r') as src:
-        dest_meta = rasterio_meta(src, extent, src_array.shape(2))
+        dest_meta = rasterio_meta(src, extent, src_array.shape[2])
         with rasterio.open(save_path, 'w', **dest_meta) as dst:
-            for i in range(1, src.count + 1):
-                reproject(src=np.flip(src_array[:, :, i - 1], axis=0),
+            for i in range(1, src_array.shape[2] + 1):
+                reproject(source=np.flip(src_array[:, :, i - 1].astype('uint8'), axis=0),
                           destination=rasterio.band(dst, i),
                           src_transform=src.transform,
                           src_crs=src.crs,
                           dst_transform=dest_meta['transform'],
                           dst_crs=dest_meta['crs'],
-                          resampling=Resampling.nearest,
+                          resampling=Resampling.bilinear,
                           )
-    return (dest_meta['width'], dest_meta['height']), dest_meta['transform']
+        dest_res = dest_meta['height'], dest_meta['width']
+    return dest_res, dest_meta['transform']
 
 
 def wgs84_transform(src_array, ncfile, extent):

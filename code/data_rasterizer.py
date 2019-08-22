@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-22 14:42:30
+# @Last Modified time: 2019-08-22 14:49:26
 
 from config import (
     SAT_H,
@@ -177,5 +177,7 @@ class DataPreparer():
 
 if __name__ == '__main__':
 
-    dp = DataPreparer('../data/train_list.json', '../data/images_train_cza/')
-    dp = DataPreparer('../data/eval_list.json', '../data/images_val_cza/')
+    dp = DataPreparer('../data/train_list.json', '../data/images_train_cza/',
+                      cza_correct=True)
+    dp = DataPreparer('../data/eval_list.json', '../data/images_val_cza/',
+                      cza_correct=True)

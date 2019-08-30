@@ -1,6 +1,6 @@
 [
   {
-    "ncfile": "4",
+    "ncfile": "/nas/rgroup/dsig/smoke/goes_data_qc/2018/057/20",
     "nctime": "20180572000406",
     "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180226_plume2.shp",
     "extent": [

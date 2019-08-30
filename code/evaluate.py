@@ -9,6 +9,7 @@ from shape_utils import (
 )
 from config import (
     PREDICT_THRESHOLD,
+    IMG_SCALE
 )
 
 from matplotlib.colors import Normalize
@@ -41,10 +42,11 @@ class Evaluate:
         """init for Evaluate class
         """
         self.dataset = PixelDataPreparer(
-            "../data/images_val", neighbour_pixels=num_n)
+            "../data/images_val_no_cza", neighbour_pixels=num_n)
         self.dataset.iterate()
         self.model = load_model("../models/smokev3_7.h5")
-        self.save_dir = "../data/eval_outputs_smoke_yellow"
+        print(self.model.summary())
+        self.save_dir = "../data/eval_outputs_smoke_yellow_no_cza"
 
     def evaluate(self):
         """
@@ -127,11 +129,11 @@ class Evaluate:
             plt.savefig(os.path.join(self.save_dir,
                                      img_name.replace('.tif', '.png')),
                         dpi=height)
-            thres_pred = np.asarray(prediction * 255,
+            thres_pred = np.asarray(prediction * IMG_SCALE,
                                     dtype='uint8')
 
             thres_pred_masked = ma.masked_where(
-                thres_pred <= PREDICT_THRESHOLD * 255.0, thres_pred)
+                thres_pred <= PREDICT_THRESHOLD * IMG_SCALE, thres_pred)
 
             plt.imshow(thres_pred_masked, alpha=0.35, cmap='spring')
             plt.axis('off')

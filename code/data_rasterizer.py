@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-22 14:49:26
+# @Last Modified time: 2019-08-30 07:55:15
 
 from config import (
     SAT_H,
@@ -58,6 +58,7 @@ class DataPreparer():
             with xarray.open_dataset(str(ncfile), engine='h5netcdf') as ds:
                 k = ds['kappa0'].data
                 rad = ds['Rad'].data
+                rad = rad * k
                 if cza_correct:
                     geos_proj = Proj(proj='geos', h=SAT_H,
                                      lon_0=SAT_LON, sweep=SAT_SWEEP)
@@ -68,9 +69,8 @@ class DataPreparer():
                     lons, lats = geos_proj(x_mesh, y_mesh, inverse=True)
                     cza = np.zeros((rad.shape[0], rad.shape[1]))
                     cza = astronomy.cos_zen(utc_time, lons, lats)
-                    rad = rad * k * cza
-                else:
-                    rad = rad * k
+                    rad = rad * cza
+
                 ref = np.clip(rad, 0, 1)
                 if 'RadF' in ds.dataset_name:
                     res = (10848, 10848)
@@ -177,7 +177,5 @@ class DataPreparer():
 
 if __name__ == '__main__':
 
-    dp = DataPreparer('../data/train_list.json', '../data/images_train_cza/',
-                      cza_correct=True)
-    dp = DataPreparer('../data/eval_list.json', '../data/images_val_cza/',
-                      cza_correct=True)
+    dp = DataPreparer('../data/eval_list.json', '../data/images_val_no_cza/',
+                      cza_correct=False)

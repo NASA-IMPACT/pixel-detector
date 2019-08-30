@@ -4,7 +4,7 @@
     "jsonfile"      : "../data/train_list.json",
     "num_epoch"     : 500,
     "batch_size"    : 50000,
-    "model_path"    : "../models/smokev3_3.h5",
+    "model_path"    : "../models/smokev3_7_no_cza.h5",
     "eval_json"     : "../data/train_list2.json",
     "pred_json"     : "../data/train_list.json",
     "pred_shp_path" : "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/"

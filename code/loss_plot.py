@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-23 10:56:37
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-22 14:08:01
+# @Last Modified time: 2019-09-17 15:28:29
 
 import matplotlib
 matplotlib.use('agg')
@@ -33,18 +33,12 @@ class TrainingPlot(keras.callbacks.Callback):
         self.val_losses.append(logs.get('val_loss'))
         self.val_acc.append(logs.get('val_acc'))
 
-        # Before plotting ensure at least 2 epochs have passed
-        # if len(self.losses) > 0:
+        num_epochs = np.arange(0, len(self.losses))
 
-        N = np.arange(0, len(self.losses))
-
-        # You can chose the style of your preference
-        # print(plt.style.available) to see the available options
         plt.style.use("seaborn")
-
         plt.figure()
-        plt.plot(N, self.losses, label = "train_loss")
-        plt.plot(N, self.val_losses, label = "val_loss")
+        plt.plot(num_epochs, self.losses, label = "train_loss")
+        plt.plot(num_epochs, self.val_losses, label = "val_loss")
         plt.title("Training and Validation Loss".format(epoch))
         plt.xlabel("Epoch #")
         plt.ylabel("Loss")
@@ -53,8 +47,8 @@ class TrainingPlot(keras.callbacks.Callback):
         plt.close()
 
         plt.figure()
-        plt.plot(N, self.acc, label = "train_acc")
-        plt.plot(N, self.val_acc, label = "val_acc")
+        plt.plot(num_epochs, self.acc, label = "train_acc")
+        plt.plot(num_epochs, self.val_acc, label = "val_acc")
         plt.title("Training and Validation Accuracy".format(epoch))
         plt.xlabel("Epoch #")
         plt.ylabel("Accuracy")

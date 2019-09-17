@@ -33,7 +33,6 @@ class MidpointNormalize(Normalize):
         super(self, vmin, vmax, clip)
 
     def __call__(self, value, clip=None):
-
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
 
@@ -79,12 +78,13 @@ class Evaluate:
         for i, img_shape in enumerate(self.dataset.img_dims_list):
             print('predicting {} of {} images:'.format(
                 i + 1, total_images))
+            next_idx = last_idx + img_shape[0] * img_shape[1]
             img_prediction = self.__predict__(
-                input_data[last_idx:last_idx + img_shape[0] * img_shape[1]])
-            img_true = labels[last_idx:last_idx + img_shape[0] * img_shape[1]]
+                input_data[last_idx: next_idx])
+            img_true = labels[last_idx: next_idx]
             conf_mtx += confusion_matrix(img_true,
                                          img_prediction > PREDICT_THRESHOLD,)
-            last_idx += img_shape[0] * img_shape[1]
+            last_idx = next_idx
             prediction_list.append(img_prediction.reshape(
                 (img_shape[0], img_shape[1])))
         return prediction_list

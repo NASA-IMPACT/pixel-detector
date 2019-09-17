@@ -31,7 +31,7 @@ import matplotlib.pyplot as plt
 class MidpointNormalize(Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
         self.midpoint = midpoint
-        super().__init__(self, vmin, vmax, clip)
+        super(self, vmin, vmax, clip)
 
     def __call__(self, value, clip=None):
         # I'm ignoring masked values and all kinds of edge cases to make a

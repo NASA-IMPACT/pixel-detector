@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-30 07:55:15
+# @Last Modified time: 2019-09-17 15:38:35
 
 from config import (
     SAT_H,
@@ -25,7 +25,7 @@ import scipy.ndimage
 import xarray
 
 
-class DataPreparer():
+class DataRasterizer():
 
     def __init__(self, jsonfile, save_path, cza_correct):
 
@@ -177,5 +177,5 @@ class DataPreparer():
 
 if __name__ == '__main__':
 
-    dp = DataPreparer('../data/eval_list.json', '../data/images_val_no_cza/',
+    dp = DataRasterizer('../data/eval_list.json', '../data/images_val_no_cza/',
                       cza_correct=False)

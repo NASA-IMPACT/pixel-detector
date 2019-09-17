@@ -1,11 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
 
-
-from glob import glob
-from data_preparer import PixelDataPreparer, PixelListPreparer
-from keras.models import load_model
-from PIL import Image
 from shape_utils import (
     bitmap_from_shp,
 )
@@ -13,13 +8,17 @@ from config import (
     PREDICT_THRESHOLD,
     IMG_SCALE
 )
+from glob import glob
+from data_preparer import PixelDataPreparer, PixelListPreparer
+from keras.models import load_model
+from PIL import Image
+from sklearn.metrics import confusion_matrix
 from matplotlib.colors import Normalize
 
 import numpy as np
 import os
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix
 import seaborn as sn
 import pandas as pd
 import rasterio
@@ -31,11 +30,10 @@ import matplotlib.pyplot as plt
 class MidpointNormalize(Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
         self.midpoint = midpoint
-        super().__init__(self, vmin, vmax, clip)
+        super(self, vmin, vmax, clip)
 
     def __call__(self, value, clip=None):
-        # I'm ignoring masked values and all kinds of edge cases to make a
-        # simple example...
+
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
         return np.ma.masked_array(np.interp(value, x, y))
 

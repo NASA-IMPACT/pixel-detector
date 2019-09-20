@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-30 08:02:17
+# @Last Modified time: 2019-09-20 12:26:00
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -46,7 +46,7 @@ def width_height(bbox, resolution_in_km=1.0):
     return (nx, ny)
 
 
-def rasterio_meta(src, extent, count):
+def rasterio_meta(src, extent, count, dtype):
     """Form the meta for the new projection using source profile
 
     Args:
@@ -66,7 +66,7 @@ def rasterio_meta(src, extent, count):
                 width=width,
                 height=height,
                 nodata=0,
-                dtype='uint8',
+                dtype=dtype,
                 )
     return meta
 
@@ -140,7 +140,7 @@ def wgs84_group_transform(src_array, reference_ncfile, extent, save_path):
     return dest_res, dest_meta['transform']
 
 
-def wgs84_transform(src_array, ncfile, extent):
+def wgs84_transform(src_array, ncfile, dtype, extent, save_path):
     """ returns array in wgs84 projection
 
     Args:
@@ -153,14 +153,13 @@ def wgs84_transform(src_array, ncfile, extent):
     """
     temp_ncfile = f'NetCDF:{ncfile}:Rad'
     with rasterio.open(temp_ncfile, 'r') as src:
-        dest_meta = rasterio_meta(src, extent)
-        dest_array = np.zeros((dest_meta['width'], dest_meta['height']))
-        reproject(np.flip(src_array, axis=0),
-                  dest_array,
-                  src_transform=src.transform,
-                  src_crs=src.crs,
-                  dst_transform=dest_meta['transform'],
-                  dst_crs=dest_meta['crs'],
-                  resampling=Resampling.nearest,
-                  )
-        return dest_array, dest_meta['transform']
+        dest_meta = rasterio_meta(src, extent, 1, dtype)
+        with rasterio.open(save_path, 'w', **dest_meta) as dst:
+            reproject(source=src_array,
+                      destination=rasterio.band(dst, 1),
+                      src_transform=src.transform,
+                      src_crs=src.crs,
+                      dst_transform=dest_meta['transform'],
+                      dst_crs=dest_meta['crs'],
+                      resampling=Resampling.cubic,
+                      )

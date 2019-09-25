@@ -39,7 +39,7 @@ class MidpointNormalize(Normalize):
 
 class Evaluate:
 
-    def __init__(self, num_n):
+    def __init__(self, num_n, batch_size = 50000):
         """init for Evaluate class
         """
         self.model = load_model("../models/smokev3_7.h5")
@@ -49,6 +49,7 @@ class Evaluate:
         step_num = 3
         paths_lists = [path_list[x:x + step_num] for x in range(
             0, len(path_list), step_num)]
+        self.batch_size = batch_size
         for paths in paths_lists:
 
             self.dataset = PixelListPreparer(paths, neighbour_pixels=num_n)
@@ -95,7 +96,7 @@ class Evaluate:
             TYPE: Description
         """
         pred_bmp = self.model.predict(
-            np.array(data), batch_size=50000, verbose=1
+            np.array(data), batch_size=self.batch_size
         )
         return pred_bmp
 
@@ -155,5 +156,6 @@ class Evaluate:
 if __name__ == '__main__':
     import json
     config = json.load(open('config.json'))
-    ev = Evaluate(num_n=7)
+    batch_size = config['batch_size']
+    ev = Evaluate(num_n=7, batch_size)
     ev.evaluate()

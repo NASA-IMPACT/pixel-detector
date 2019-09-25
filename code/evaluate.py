@@ -29,7 +29,7 @@ import seaborn as sn
 class MidpointNormalize(Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
         self.midpoint = midpoint
-        Normalize.__init__(self, vmin, vmax, clip)
+        super(self, vmin, vmax, clip)
 
     def __call__(self, value, clip=None):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
@@ -71,15 +71,15 @@ class Evaluate:
         for i, img_shape in enumerate(self.dataset.img_dims_list):
             print('predicting {} of {} images:'.format(
                 i + 1, total_images))
+            next_idx = last_idx + img_shape[0] * img_shape[1]
             img_prediction = self.__predict__(
-                input_data[last_idx:last_idx + img_shape[0] * img_shape[1]])
-            img_true = labels[last_idx:last_idx + img_shape[0] * img_shape[1]]
+                input_data[last_idx: next_idx])
+            img_true = labels[last_idx: next_idx]
             conf_mtx += confusion_matrix(img_true,
                                          img_prediction > PREDICT_THRESHOLD,)
-            last_idx += img_shape[0] * img_shape[1]
+            last_idx = next_idx
             prediction_list.append(img_prediction.reshape(
                 (img_shape[0], img_shape[1])))
-
         return prediction_list
 
     def __predict__(self, data):
@@ -98,7 +98,6 @@ class Evaluate:
             predictions (TYPE): numpy arrays of predictions
         """
         x_path = dataset.img_path_list
-        transforms = dataset.raster_transforms
 
         assert len(x_path) == len(predictions)
         for i, prediction in enumerate(predictions):
@@ -110,12 +109,6 @@ class Evaluate:
                 blue = rast.read(1)
                 pseudo_green = rast.read(3)
                 height, width = red.shape
-                true_green = np.array((0.45 * red.astype('float32')) +
-                                      (0.1 * pseudo_green.astype('float32')) +
-                                      (0.45 * blue.astype('float32')),
-                                      dtype='uint8',
-                                      )
-
                 img = np.moveaxis(
                     np.array([red, pseudo_green, blue]), 0, -1
                 )

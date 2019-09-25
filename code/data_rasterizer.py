@@ -2,27 +2,24 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-09-17 15:38:35
+# @Last Modified time: 2019-09-25 12:22:22
 
-from config import (
-    SAT_H,
-    SAT_LON,
-    SAT_SWEEP
+from rasterio_utils import (
+    wgs84_transform_memory,
+    combine_rasters,
 )
+
 from glob import glob
 from PIL import Image
 from config import BANDS_LIST
-from rasterio_utils import wgs84_group_transform
 from shape_utils import bitmap_from_shp
-from pyproj import Proj
 from pyorbital import astronomy
 
-import json
 import numpy as np
+import xarray
+import json
 import os
 import sys
-import scipy.ndimage
-import xarray
 
 
 class DataRasterizer():
@@ -36,17 +33,17 @@ class DataRasterizer():
     def prepare_data(self, cza_correct):
 
         for item in self.jsondict:
-            ncpath = item["ncfile"]
-            nctime = item["nctime"]
+            ncpath = item['ncfile']
+            nctime = item['nctime']
             nclist = self.list_bands(ncpath, BANDS_LIST, nctime)
-            extent = item["extent"]
-            shapefile_path = item["shp"]
-            ext_str = "time-{}-loc-{}_{}_{}_{}".format(
+            extent = item['extent']
+            shapefile_path = item['shp']
+            ext_str = 'time-{}-loc-{}_{}_{}_{}'.format(
                 nctime, extent[0], extent[1], extent[2], extent[3])
-            img_path = os.path.join(self.save_path, ext_str + '.tif')
             bmp_path = os.path.join(self.save_path, ext_str + '.bmp')
-            res, transform = self.rasterize_ncfiles(
-                nclist, extent, img_path, cza_correct,
+            tif_path = os.path.join(self.save_path, ext_str + '.tif')
+            transform, res = self.rasterize_ncfiles(
+                nclist, extent, tif_path, cza_correct,
             )
             bitmap_array = bitmap_from_shp(shapefile_path, transform, res)
             self.save_image(bitmap_array.astype('uint8') * 255, bmp_path)
@@ -54,40 +51,45 @@ class DataRasterizer():
     def rasterize_ncfiles(self, nclist, extent, img_path, cza_correct):
 
         ref_list = list()
-        for i, ncfile in enumerate(nclist):
-            with xarray.open_dataset(str(ncfile), engine='h5netcdf') as ds:
-                k = ds['kappa0'].data
-                rad = ds['Rad'].data
-                rad = rad * k
-                if cza_correct:
-                    geos_proj = Proj(proj='geos', h=SAT_H,
-                                     lon_0=SAT_LON, sweep=SAT_SWEEP)
-                    x = ds['x'].data * SAT_H
-                    y = ds['y'].data * SAT_H
-                    utc_time = ds['t'].data
-                    x_mesh, y_mesh = np.meshgrid(x, y)
-                    lons, lats = geos_proj(x_mesh, y_mesh, inverse=True)
-                    cza = np.zeros((rad.shape[0], rad.shape[1]))
-                    cza = astronomy.cos_zen(utc_time, lons, lats)
-                    rad = rad * cza
+        tf_list = list()
+        for ncfile in nclist:
 
-                ref = np.clip(rad, 0, 1)
-                if 'RadF' in ds.dataset_name:
-                    res = (10848, 10848)
-                else:
-                    res = (3000, 5000)
-                gamma = 2.0
-                if i == 3 or i == 5:  # if BAND_4 or BAND_6, then upsample
-                    ref = scipy.ndimage.zoom(ref, 2, order=0)
-                if i == 1:  # if BAND_2 then downsample
-                    ref = self.rebin(ref, [res[0], res[1]])
-                ref_255 = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
-                ref_list.append(ref_255)
-        ref_stack = np.dstack(ref_list)
-        res, transform = wgs84_group_transform(ref_stack, nclist[0],
-                                               extent, img_path
-                                               )
-        return res, transform
+            ref, tf = self.rasterize_ncfile(
+                ncfile, extent, cza_correct
+            )
+
+            ref_list.append(ref)
+            tf_list.append(tf)
+        assert len(set(tf_list)) == 1  # check if all transforms are equal
+        combine_rasters(ref_list, tf_list[0], img_path)
+
+        return tf, ref.shape
+
+    def rasterize_ncfile(self, ncfile, extent, cza_correct):
+
+        ds = xarray.open_dataset(str(ncfile), engine='h5netcdf')
+        k = ds['kappa0'].data
+        utc_time = ds['t'].data
+        ds.close()
+        mem_file = wgs84_transform_memory(ncfile, 'float32', extent)
+        ref, transform = self.rad_to_ref(mem_file, k, utc_time, cza_correct)
+        return ref, transform
+
+    def rad_to_ref(self, mem_file, k, utc_time, cza_correct, gamma=2.0):
+
+        with mem_file.open() as memfile:
+            data_array = xarray.open_rasterio(memfile)
+            rad = data_array[0].data * k
+            print(rad.shape)
+            transform = data_array.transform
+            if cza_correct:
+                x, y = np.meshgrid(data_array['x'], data_array['y'])
+                cza = astronomy.cos_zen(utc_time, x, y)
+                rad = rad * cza
+            data_array.close()
+            ref = np.clip(rad, 0, 1)
+            ref_clipped = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
+            return ref_clipped.astype('uint8'), transform
 
     def rebin(self, arr, shape):
         """ rebins band 2 to 1KM resolution
@@ -100,7 +102,7 @@ class DataRasterizer():
             TYPE: Description
         """
         shape = shape[0], arr.shape[0] // shape[0], shape[1], \
-        arr.shape[1] // shape[1]
+            arr.shape[1] // shape[1]
         return arr.reshape(shape).mean(-1).mean(1)
 
     def list_bands(self, loc, band_array, time):
@@ -177,5 +179,5 @@ class DataRasterizer():
 
 if __name__ == '__main__':
 
-    dp = DataRasterizer('../data/eval_list.json', '../data/images_val_no_cza/',
-                      cza_correct=False)
+    dp = DataRasterizer('../data/train_list2.json', '../data/images_fastcza/',
+                        cza_correct=False)

@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-09-20 12:26:00
+# @Last Modified time: 2019-09-25 11:37:18
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -10,16 +10,17 @@ Functions based on rasterio library: https://github.com/mapbox/rasterio
 
 from rasterio.warp import reproject, Resampling, aligned_target
 from rasterio.transform import Affine
+from rasterio.io import MemoryFile
 from pyproj import Proj
 
+import numpy as np
 import rasterio
 import xarray
 import fiona
 import json
 import math
-import numpy as np
-import os
 import sys
+import os
 
 
 def width_height(bbox, resolution_in_km=1.0):
@@ -140,7 +141,7 @@ def wgs84_group_transform(src_array, reference_ncfile, extent, save_path):
     return dest_res, dest_meta['transform']
 
 
-def wgs84_transform(src_array, ncfile, dtype, extent, save_path):
+def wgs84_transform(ncfile, dtype, extent):
     """ returns array in wgs84 projection
 
     Args:
@@ -151,15 +152,66 @@ def wgs84_transform(src_array, ncfile, dtype, extent, save_path):
     Returns:
         TYPE: numpy array
     """
+    save_path = ncfile.replace('.nc', '.tif')
     temp_ncfile = f'NetCDF:{ncfile}:Rad'
     with rasterio.open(temp_ncfile, 'r') as src:
         dest_meta = rasterio_meta(src, extent, 1, dtype)
         with rasterio.open(save_path, 'w', **dest_meta) as dst:
-            reproject(source=src_array,
+            reproject(source=rasterio.band(src, 1),
                       destination=rasterio.band(dst, 1),
                       src_transform=src.transform,
                       src_crs=src.crs,
                       dst_transform=dest_meta['transform'],
                       dst_crs=dest_meta['crs'],
-                      resampling=Resampling.cubic,
+                      resampling=Resampling.bilinear,
                       )
+    return save_path
+
+
+def wgs84_transform_memory(ncfile, dtype, extent):
+    """ returns a memory file in wgs84 projection
+
+    Args:
+        src_array (numpy array): source array
+        ncfile (string): BAND 1 path
+        extent (list): subset extent
+
+    Returns:
+        TYPE: numpy array
+    """
+    save_path = ncfile.replace('.nc', '.tif')
+    temp_ncfile = f'NetCDF:{ncfile}:Rad'
+    memfile = MemoryFile()
+    with rasterio.open(temp_ncfile, 'r') as src:
+        dest_meta = rasterio_meta(src, extent, 1, dtype)
+        with memfile.open(**dest_meta) as dst:
+            reproject(source=rasterio.band(src, 1),
+                      destination=rasterio.band(dst, 1),
+                      src_transform=src.transform,
+                      src_crs=src.crs,
+                      )
+    return memfile
+
+
+def read_tif(path, band=1):
+    with rasterio.open(path, 'r') as ds:
+        array = rasterio.band(ds, band)
+        transform = ds.transform
+    return array, transform
+
+
+def combine_rasters(img_list, transform, save_path):
+
+    meta = dict()
+    meta['count'] = len(img_list)
+    meta['driver'] = 'GTiff'
+    meta['crs'] = {'init': 'epsg:4326'}
+    meta['transform'] = transform
+    meta['width'] = img_list[0].shape[0]
+    meta['height'] = img_list[0].shape[1]
+    meta['nodata'] = 0
+    meta['dtype'] = 'uint8'
+
+    with rasterio.open(save_path, 'w', **meta) as dest:
+        for band_num, band in enumerate(img_list):
+            dest.write(band, band_num + 1)

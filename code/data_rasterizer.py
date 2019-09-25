@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-09-25 12:22:22
+# @Last Modified time: 2019-09-25 12:31:57
 
 from rasterio_utils import (
     wgs84_transform_memory,
@@ -80,7 +80,6 @@ class DataRasterizer():
         with mem_file.open() as memfile:
             data_array = xarray.open_rasterio(memfile)
             rad = data_array[0].data * k
-            print(rad.shape)
             transform = data_array.transform
             if cza_correct:
                 x, y = np.meshgrid(data_array['x'], data_array['y'])

@@ -47,6 +47,7 @@ class Evaluate:
         self.model = load_model("../models/smokev3_7.h5")
         print(self.model.summary())
         self.save_dir = "../data/eval_outputs_smoke_yellow_no_cza"
+        self.batch_size = batch_size
 
     def evaluate(self):
         """
@@ -87,7 +88,9 @@ class Evaluate:
         Returns:
             TYPE: Description
         """
-        pred_bmp = self.model.predict(np.array(data), batch_size=50000)
+        pred_bmp = self.model.predict(
+            np.array(data), batch_size=self.batch_size
+        )
         return pred_bmp
 
     def plot_predictions(self, dataset, predictions, ):
@@ -139,5 +142,6 @@ class Evaluate:
 if __name__ == '__main__':
     import json
     config = json.load(open('config.json'))
-    ev = Evaluate(num_n=7)
+    batch_size = config['batch_size']
+    ev = Evaluate(num_n=7, batch_size)
     ev.evaluate()

@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-09-25 12:31:57
+# @Last Modified time: 2019-09-26 13:25:17
 
 from rasterio_utils import (
     wgs84_transform_memory,
@@ -71,7 +71,7 @@ class DataRasterizer():
         k = ds['kappa0'].data
         utc_time = ds['t'].data
         ds.close()
-        mem_file = wgs84_transform_memory(ncfile, 'float32', extent)
+        mem_file = wgs84_transform_memory(ds['Rad'].data, ncfile, extent)
         ref, transform = self.rad_to_ref(mem_file, k, utc_time, cza_correct)
         return ref, transform
 
@@ -179,4 +179,4 @@ class DataRasterizer():
 if __name__ == '__main__':
 
     dp = DataRasterizer('../data/train_list2.json', '../data/images_fastcza/',
-                        cza_correct=False)
+                        cza_correct=True)

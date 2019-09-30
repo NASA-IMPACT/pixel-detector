@@ -14,13 +14,13 @@ class PixelListPreparer:
         self.dataset = list()
         self.labels = list()
         self.neighbour_pixels = neighbour_pixels
-        self.img_path_list = list()
         self.raster_transforms = list()
 
     def iterate(self):
         """iterate through list of images in directory
         """
         neighborhood = 2 * self.neighbour_pixels
+
         for file in self.img_path_list:
             with rasterio.open(file) as rast:
                 img = np.moveaxis(rast.read(), 0, -1)
@@ -58,9 +58,8 @@ class PixelListPreparer:
 class PixelDataPreparer(PixelListPreparer):
 
     def __init__(self, path, neighbour_pixels=4):
-        paths = glob(self.path + "/*.tif")
-        super(self, img_path_list=paths, neighbour_pixels=neighbour_pixels)
-
+        paths = glob(path + "/*.tif")
+        super().__init__(paths, neighbour_pixels)
 
 if __name__ == '__main__':
     dp = PixelDataPreparer('../data/images/', neighbour_pixels=4)

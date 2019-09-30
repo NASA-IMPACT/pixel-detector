@@ -12,18 +12,16 @@ from config import (
     IMG_SCALE
 )
 
+import os
+import rasterio
+import numpy as np
+import pandas as pd
+import seaborn as sn
+import numpy.ma as ma
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
 from matplotlib.colors import Normalize
 from sklearn.metrics import confusion_matrix
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
-import matplotlib.pyplot as plt
-import numpy as np
-import numpy as np
-import numpy.ma as ma
-import os
-import pandas as pd
-import rasterio
-import seaborn as sn
 
 
 class MidpointNormalize(Normalize):
@@ -38,15 +36,15 @@ class MidpointNormalize(Normalize):
 
 class Evaluate:
 
-    def __init__(self, num_n):
+    def __init__(self, batch_size, num_n):
         """init for Evaluate class
         """
         self.dataset = PixelDataPreparer(
-            "../data/images_val_no_cza", neighbour_pixels=num_n)
+            "../data/images_fastcza", neighbour_pixels=num_n)
         self.dataset.iterate()
-        self.model = load_model("../models/smokev3_7.h5")
+        self.model = load_model("../models/smokev3_7_cza_3.h5")
         print(self.model.summary())
-        self.save_dir = "../data/eval_outputs_smoke_yellow_no_cza"
+        self.save_dir = "../data/eval_outputs_smoke_fastcza/"
         self.batch_size = batch_size
 
     def evaluate(self):
@@ -56,7 +54,7 @@ class Evaluate:
         input_data = self.dataset.dataset
         labels = self.dataset.labels
         predicted_pixels = self.get_predictions(input_data, labels)
-        self.plot_predictions(self.dataset, predicted_pixels)
+        self.visualize_predictions(self.dataset, predicted_pixels)
 
     def get_predictions(self, input_data, labels):
         """return predictions for given input data
@@ -93,7 +91,44 @@ class Evaluate:
         )
         return pred_bmp
 
-    def plot_predictions(self, dataset, predictions, ):
+    def convert_rgb(self, img_path):
+        with rasterio.open(img_path) as rast:
+            red = rast.read(2)
+            blue = rast.read(1)
+            pseudo_green = rast.read(3)
+            height, width = red.shape
+            img = np.moveaxis(
+                np.array([red, pseudo_green, blue]), 0, -1
+            )
+        return img
+
+    def plot_figures(self, img, prediction, tif_name):
+
+            width, height = img[0].shape
+            fig = plt.figure()
+            fig.set_size_inches(width / height, 1, forward=False)
+            ax = plt.Axes(fig, [0., 0., 1., 1.])
+            ax.set_axis_off()
+            fig.add_axes(ax)
+            plt.imshow(img)
+            plt.axis('off')
+            plt.savefig(os.path.join(self.save_dir,
+                                     tif_name.replace('.tif', '.png')),
+                        dpi=height)
+            thres_pred = np.asarray(prediction * IMG_SCALE,
+                                    dtype='uint8')
+
+            thres_pred_masked = ma.masked_where(
+                thres_pred <= PREDICT_THRESHOLD * IMG_SCALE, thres_pred)
+
+            plt.imshow(thres_pred_masked, alpha=0.35, cmap='spring')
+            plt.axis('off')
+
+            plt.savefig(os.path.join(self.save_dir,
+                                     tif_name.replace('.tif', '_masked.png')),
+                        dpi=height)
+
+    def visualize_predictions(self, dataset, predictions, ):
         """plot  prediction heatmaps along with original image
         for evaluation purposes
         Args:
@@ -107,41 +142,13 @@ class Evaluate:
             img_name = os.path.basename(x_path[i])
             print('plotting {} of {} images:'.format(i + 1, len(predictions)))
 
-            with rasterio.open(x_path[i]) as rast:
-                red = rast.read(2)
-                blue = rast.read(1)
-                pseudo_green = rast.read(3)
-                height, width = red.shape
-                img = np.moveaxis(
-                    np.array([red, pseudo_green, blue]), 0, -1
-                )
-            fig = plt.figure()
-            fig.set_size_inches(width / height, 1, forward=False)
-            ax = plt.Axes(fig, [0., 0., 1., 1.])
-            ax.set_axis_off()
-            fig.add_axes(ax)
-            plt.imshow(img)
-            plt.axis('off')
-            plt.savefig(os.path.join(self.save_dir,
-                                     img_name.replace('.tif', '.png')),
-                        dpi=height)
-            thres_pred = np.asarray(prediction * IMG_SCALE,
-                                    dtype='uint8')
-
-            thres_pred_masked = ma.masked_where(
-                thres_pred <= PREDICT_THRESHOLD * IMG_SCALE, thres_pred)
-
-            plt.imshow(thres_pred_masked, alpha=0.35, cmap='spring')
-            plt.axis('off')
-
-            plt.savefig(os.path.join(self.save_dir,
-                                     img_name.replace('.tif', '_masked.png')),
-                        dpi=height)
+            img = self.convert_rgb(x_path[i])
+            self.plot_figures(img, prediction, img_name)
 
 
 if __name__ == '__main__':
     import json
     config = json.load(open('config.json'))
     batch_size = config['batch_size']
-    ev = Evaluate(num_n=7, batch_size)
+    ev = Evaluate(batch_size, num_n=7)
     ev.evaluate()

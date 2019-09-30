@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-15 13:49:38
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-09-26 14:29:23
+# @Last Modified time: 2019-09-30 15:47:43
 
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
@@ -135,14 +135,15 @@ def read_tif(path, band=1):
 def combine_rasters(img_list, transform, save_path):
 
     meta = dict()
-    meta['count'] = len(img_list)
-    meta['driver'] = 'GTiff'
-    meta['crs'] = {'init': 'epsg:4326'}
-    meta['transform'] = transform
-    meta['width'] = img_list[0].shape[1]
-    meta['height'] = img_list[0].shape[0]
-    meta['nodata'] = 0
-    meta['dtype'] = 'uint8'
+    meta = {'count' = len(img_list)
+            'driver' = 'GTiff',
+            'crs' = {'init': 'epsg:4326'},
+            'transform' = transform,
+            'width' = img_list[0].shape[1],
+            'height' = img_list[0].shape[0],
+            'nodata' = 0,
+            'dtype' = 'uint8',
+            }
 
     with rasterio.open(save_path, 'w', **meta) as dest:
         for band_num, band in enumerate(img_list):

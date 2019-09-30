@@ -1,10 +1,20 @@
 [
   {
-    "ncfile": "../data/ncfiles",
-    "nctime": "20192041850428",
+    "ncfile": "../data/048/18",
+    "nctime": "20190481822131",
     "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180729_plume1.shp",
     "extent": [
-        -169.804688,45.911033,-71.191406,72.746966
+        -99, 18.5, -96, 21
+    ],
+    "start": "2018210 0045",
+    "end": "2018210 0045"
+  },
+    {
+    "ncfile": "../data/048/19",
+    "nctime": "20190481922131",
+    "shp": "/nas/rgroup/dsig/smoke/goes_data_qc/shapefiles/hms_smoke20180729_plume1.shp",
+    "extent": [
+        -99, 18.5, -96, 21
     ],
     "start": "2018210 0045",
     "end": "2018210 0045"

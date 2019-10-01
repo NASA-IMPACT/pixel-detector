@@ -9,7 +9,8 @@ from shape_utils import (
 )
 from config import (
     PREDICT_THRESHOLD,
-    IMG_SCALE
+    IMG_SCALE,
+
 )
 
 import os
@@ -36,16 +37,22 @@ class MidpointNormalize(Normalize):
 
 class Evaluate:
 
-    def __init__(self, batch_size, num_n):
+    def __init__(self, config, num_n):
         """init for Evaluate class
         """
-        self.dataset = PixelDataPreparer(
-            "../data/images_fastcza", neighbour_pixels=num_n)
+        self.batch_size = config['batch_size']
+        self.num_n = config['num_neighbor']
+        self.model_path = config['model_path']
+        self.val_dir = config['val_dir']
+
+        self.dataset = PixelDataPreparer(self.val_dir,
+                                         neighbour_pixels=self.num_n
+                                         )
         self.dataset.iterate()
-        self.model = load_model("../models/smokev3_7_cza_3.h5")
+        self.model = load_model(self.model_path)
         print(self.model.summary())
-        self.save_dir = "../data/eval_outputs_smoke_fastcza/"
-        self.batch_size = batch_size
+        self.save_dir = config['val_output_dir']
+        self.evaluate
 
     def evaluate(self):
         """
@@ -149,6 +156,4 @@ class Evaluate:
 if __name__ == '__main__':
     import json
     config = json.load(open('config.json'))
-    batch_size = config['batch_size']
-    ev = Evaluate(batch_size, num_n=7)
-    ev.evaluate()
+    ev = Evaluate(config, num_n=7)

@@ -37,7 +37,7 @@ class MidpointNormalize(Normalize):
 
 class Evaluate:
 
-    def __init__(self, config, num_n):
+    def __init__(self, config):
         """init for Evaluate class
         """
         self.batch_size = config['batch_size']

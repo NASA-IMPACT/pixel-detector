@@ -2,24 +2,25 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-09-26 13:25:17
+# @Last Modified time: 2019-10-02 11:19:51
+
+import os
+import sys
+import json
+import xarray
+import numpy as np
+
+from glob import glob
+from PIL import Image
+from itertools import repeat
+from config import BANDS_LIST
+from pyorbital import astronomy
+from shape_utils import bitmap_from_shp
 
 from rasterio_utils import (
     wgs84_transform_memory,
     combine_rasters,
 )
-
-from glob import glob
-from PIL import Image
-from config import BANDS_LIST
-from shape_utils import bitmap_from_shp
-from pyorbital import astronomy
-
-import numpy as np
-import xarray
-import json
-import os
-import sys
 
 
 class DataRasterizer():
@@ -52,27 +53,27 @@ class DataRasterizer():
 
         ref_list = list()
         tf_list = list()
-        for ncfile in nclist:
-
-            ref, tf = self.rasterize_ncfile(
-                ncfile, extent, cza_correct
-            )
-
-            ref_list.append(ref)
-            tf_list.append(tf)
+        ref_list, tf_list = map(
+            self.rasterize_ncfile,
+            nclist,
+            repeat(extent),
+            repeat(cza_correct),
+        )
         assert len(set(tf_list)) == 1  # check if all transforms are equal
         combine_rasters(ref_list, tf_list[0], img_path)
 
-        return tf, ref.shape
+        return tf_list[0], ref_list[0].shape
 
     def rasterize_ncfile(self, ncfile, extent, cza_correct):
 
-        ds = xarray.open_dataset(str(ncfile), engine='h5netcdf')
-        k = ds['kappa0'].data
-        utc_time = ds['t'].data
-        ds.close()
-        mem_file = wgs84_transform_memory(ds['Rad'].data, ncfile, extent)
-        ref, transform = self.rad_to_ref(mem_file, k, utc_time, cza_correct)
+        dataset = xarray.open_dataset(str(ncfile), engine='h5netcdf')
+        kappa0 = dataset['kappa0'].data
+        utc_time = dataset['t'].data
+        dataset.close()
+        mem_file = wgs84_transform_memory(dataset['Rad'].data, ncfile, extent)
+        ref, transform = self.rad_to_ref(
+            mem_file, kappa0, utc_time, cza_correct
+        )
         return ref, transform
 
     def rad_to_ref(self, mem_file, k, utc_time, cza_correct, gamma=2.0):
@@ -88,21 +89,8 @@ class DataRasterizer():
             data_array.close()
             ref = np.clip(rad, 0, 1)
             ref_clipped = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
+
             return ref_clipped.astype('uint8'), transform
-
-    def rebin(self, arr, shape):
-        """ rebins band 2 to 1KM resolution
-
-        Args:
-            a (TYPE): array to rebin
-            shape (TYPE): Description
-
-        Returns:
-            TYPE: Description
-        """
-        shape = shape[0], arr.shape[0] // shape[0], shape[1], \
-            arr.shape[1] // shape[1]
-        return arr.reshape(shape).mean(-1).mean(1)
 
     def list_bands(self, loc, band_array, time):
         """
@@ -113,8 +101,9 @@ class DataRasterizer():
 
         print('checking for nc in ', loc)
         for band in band_array:
-            fname = glob('{}/*{}*s{}*.nc'.format(loc, band, time))
-            print('{}/*{}*s{}*.nc'.format(loc, band, time))
+            ncfile_string = '{}/*{}*s{}*.nc'
+            fname = glob(ncfile_string.format(loc, band, time))
+            print(ncfile_string.format(loc, band, time))
             print(fname)
             if fname == []:
                 print('Nc Files not Found')
@@ -125,7 +114,7 @@ class DataRasterizer():
         return path_list
 
     def parse_json(self, jsonfile):
-        self.jsondict = {}
+
         with open(jsonfile) as js:
             self.jsondict = json.loads(js.read())
 
@@ -178,5 +167,8 @@ class DataRasterizer():
 
 if __name__ == '__main__':
 
-    dp = DataRasterizer('../data/train_list2.json', '../data/images_fastcza/',
-                        cza_correct=True)
+    DataRasterizer(
+        '../data/train_list2.json',
+        '../data/images_fastcza/',
+        cza_correct=True
+    )

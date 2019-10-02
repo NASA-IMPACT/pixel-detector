@@ -8,14 +8,14 @@ from data_preparer import PixelListPreparer
 
 class BatchEvaluate(Evaluate):
 
-    def __init__(self, config, step_num=3):
+    def __init__(self, config, step_num=3, batch_size=50000):
         """init for Evaluate class
         """
 
         self.batch_size = config['batch_size']
         self.num_n = config['num_neighbor']
         self.model_path = config['model_path']
-        self.val_dir = config['val_input_dir']
+        self.val_dir = config['val_dir']
         self.save_dir = config['val_output_dir']
         self.model = load_model(self.model_path)
         print(self.model.summary())
@@ -29,9 +29,3 @@ class BatchEvaluate(Evaluate):
             )
             self.dataset.iterate()
             self.evaluate()
-
-
-if __name__ == '__main__':
-    import json
-    config = json.load(open('config.json'))
-    ev = BatchEvaluate(config)

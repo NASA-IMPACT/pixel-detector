@@ -2,14 +2,12 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-23 10:56:37
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-09-30 16:12:51
+# @Last Modified time: 2019-10-03 13:51:28
 
-import matplotlib
-matplotlib.use('agg')
-
-import matplotlib.pyplot as plt
+import matplotlib; matplotlib.use('agg')
 import keras
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class TrainingPlot(keras.callbacks.Callback):
@@ -32,27 +30,33 @@ class TrainingPlot(keras.callbacks.Callback):
         self.acc.append(logs.get('acc'))
         self.val_losses.append(logs.get('val_loss'))
         self.val_acc.append(logs.get('val_acc'))
-
         self.num_epochs = np.arange(0, len(self.losses))
+        self.make_plots()
 
-    def loss_plot(self, epoch):
+    def make_plots(self):
+
+        self.make_plot(
+            self.losses,
+            self.val_losses,
+            "Loss",
+            "Loss_plot_2.png"
+        )
+        self.make_plot(
+            self.acc,
+            self.val_acc,
+            "Accuracy",
+            "Accuracy_plot_2.png"
+        )
+
+    def make_plot(self, train_metric, val_metric, ylabel, save_path):
+
         plt.style.use("seaborn")
         plt.figure()
-        plt.plot(self.num_epochs, self.losses, label="train_loss")
-        plt.plot(self.num_epochs, self.val_losses, label="val_loss")
-        plt.title("Training and Validation Loss".format(epoch))
+        plt.plot(self.num_epochs, train_metric, label="training")
+        plt.plot(self.num_epochs, val_metric, label="validation")
+        plt.title(f"Training and Validation {ylabel}")
         plt.xlabel("Epoch #")
-        plt.ylabel("Loss")
+        plt.ylabel(ylabel)
         plt.legend()
-        plt.savefig('loss_plot_2.png'.format(epoch))
-        plt.close()
-
-        plt.figure()
-        plt.plot(self.num_epochs, self.acc, label="train_acc")
-        plt.plot(self.num_epochs, self.val_acc, label="val_acc")
-        plt.title("Training and Validation Accuracy".format(epoch))
-        plt.xlabel("Epoch #")
-        plt.ylabel("Accuracy")
-        plt.legend()
-        plt.savefig('acc_plot_2.png'.format(epoch))
+        plt.savefig(save_path)
         plt.close()

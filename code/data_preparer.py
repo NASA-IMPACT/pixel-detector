@@ -59,7 +59,7 @@ class PixelDataPreparer(PixelListPreparer):
 
     def __init__(self, path, neighbour_pixels=4):
         paths = glob(path + "/*.tif")
-        super(self, paths, neighbour_pixels)
+        super().__init__(paths, neighbour_pixels=neighbour_pixels)
 
 
 if __name__ == '__main__':

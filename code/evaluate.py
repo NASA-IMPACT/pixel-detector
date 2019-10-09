@@ -13,14 +13,13 @@ from keras.models import load_model
 from config import (
     PREDICT_THRESHOLD,
     IMG_SCALE,
-
 )
 
 
 class MidpointNormalize(Normalize):
     def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
         self.midpoint = midpoint
-        super(self, vmin, vmax, clip)
+        super().__init__(vmin, vmax, clip)
 
     def __call__(self, value, clip=None):
         x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
@@ -37,7 +36,7 @@ class Evaluate:
         self.batch_size = config['batch_size']
         self.num_n = config['num_neighbor']
         self.model_path = config['model_path']
-        self.val_dir = config['val_dir']
+        self.val_dir = config['val_input_dir']
         self.dataset = PixelDataPreparer(
             self.val_dir,
             neighbour_pixels=self.num_n
@@ -116,8 +115,7 @@ class Evaluate:
         use matplotlib to plot prediictions as overlay over the
         pseudo rgb image
         """
-
-        width, height = img[0].shape
+        width, height, _ = img.shape
         fig = plt.figure()
         fig.set_size_inches(width / height, 1, forward=False)
         ax = plt.Axes(fig, [0., 0., 1., 1.])
@@ -167,4 +165,4 @@ class Evaluate:
 if __name__ == '__main__':
     import json
     config = json.load(open('config.json'))
-    ev = Evaluate(config, num_n=7)
+    ev = Evaluate(config)

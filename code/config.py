@@ -1,7 +1,7 @@
 # Model Constants
 SCALE_FACTOR = 1.0
 PREDICT_THRESHOLD = 0.50
-IMG_SCALE = 255.0
+IMG_SCALE = 255
 BANDS_LIST = ['C01', 'C02', 'C03', 'C04', 'C05', 'C06']
 
 # Satellite information constants

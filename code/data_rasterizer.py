@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-10-02 11:19:51
+# @Last Modified time: 2019-10-08 14:21:26
 
 import os
 import sys
@@ -53,11 +53,14 @@ class DataRasterizer():
 
         ref_list = list()
         tf_list = list()
-        ref_list, tf_list = map(
-            self.rasterize_ncfile,
-            nclist,
-            repeat(extent),
-            repeat(cza_correct),
+        num_bands = len(nclist)
+        ref_list, tf_list = zip(
+            *map(
+                self.rasterize_ncfile,
+                nclist,
+                repeat(extent, num_bands),
+                repeat(cza_correct, num_bands),
+            )
         )
         assert len(set(tf_list)) == 1  # check if all transforms are equal
         combine_rasters(ref_list, tf_list[0], img_path)
@@ -67,10 +70,11 @@ class DataRasterizer():
     def rasterize_ncfile(self, ncfile, extent, cza_correct):
 
         dataset = xarray.open_dataset(str(ncfile), engine='h5netcdf')
+        data = dataset['Rad'].data
         kappa0 = dataset['kappa0'].data
         utc_time = dataset['t'].data
         dataset.close()
-        mem_file = wgs84_transform_memory(dataset['Rad'].data, ncfile, extent)
+        mem_file = wgs84_transform_memory(data, ncfile, extent)
         ref, transform = self.rad_to_ref(
             mem_file, kappa0, utc_time, cza_correct
         )
@@ -89,7 +93,6 @@ class DataRasterizer():
             data_array.close()
             ref = np.clip(rad, 0, 1)
             ref_clipped = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
-
             return ref_clipped.astype('uint8'), transform
 
     def list_bands(self, loc, band_array, time):
@@ -169,6 +172,6 @@ if __name__ == '__main__':
 
     DataRasterizer(
         '../data/train_list2.json',
-        '../data/images_fastcza/',
+        '../data/volcano_images/',
         cza_correct=True
     )

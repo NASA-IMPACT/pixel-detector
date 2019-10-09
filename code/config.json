@@ -5,8 +5,8 @@
     "num_epoch"     : 500,
     "batch_size"    : 50000,
     "model_path"    : "../models/smokev3_7_cza_3.h5",
-    "val_input_dir" : "../data/gif_images",
-    "val_output_dir": "../data/eval_gif/",
+    "val_input_dir" : "../data/volcano_images/",
+    "val_output_dir": "../data/volcano_predictions/",
     "eval_json"     : "../data/train_list2.json",
     "pred_json"     : "../data/train_list.json",
     "pred_shp_path" : "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/"

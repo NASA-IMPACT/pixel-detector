@@ -1,5 +1,6 @@
 import matplotlib; matplotlib.use('Agg')
 import os
+import json
 import rasterio
 import numpy as np
 import numpy.ma as ma
@@ -163,6 +164,5 @@ class Evaluate:
 
 
 if __name__ == '__main__':
-    import json
     config = json.load(open('config.json'))
     ev = Evaluate(config)

@@ -1,185 +1,168 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
-# @Date:   2019-04-02 12:13:51
-# @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-16 10:52:03
+import matplotlib; matplotlib.use('Agg')
+import os
+import json
+import rasterio
+import numpy as np
+import numpy.ma as ma
+import matplotlib.pyplot as plt
+from matplotlib.colors import Normalize
+from sklearn.metrics import confusion_matrix
+
+from data_preparer import PixelDataPreparer
+from keras.models import load_model
 
 from config import (
     PREDICT_THRESHOLD,
-    OUTPUT_DIR,
-)
-from data_helper import (
-    get_data,
+    IMG_SCALE,
 )
 
-import matplotlib
-matplotlib.use('Agg')
 
-from keras.models import load_model
-from PIL import Image
+class MidpointNormalize(Normalize):
+    def __init__(self, vmin=None, vmax=None, midpoint=None, clip=False):
+        self.midpoint = midpoint
+        super().__init__(vmin, vmax, clip)
 
-import json
-import numpy as np
-import os
-import matplotlib.image as mpimg
-import matplotlib.pyplot as plt
+    def __call__(self, value, clip=None):
+        x, y = [self.vmin, self.midpoint, self.vmax], [0, 0.5, 1]
+        return np.ma.masked_array(np.interp(value, x, y))
 
 
 class Evaluate:
 
     def __init__(self, config):
         """
-            config = {
-                'type'          : < choice of 'pixel' or 'deconv'>,
-                'num_neighbor'  : < n of the n*n matrix to take as
-                                    input to the model>
-
-                'jsonfile'      : <json containing ncfile, extent
-                                    to subset ncfile and shapefile
-                                    for training >
-
-                'num_epoch'     : keras num_epoch
-
-                'model_path'    : path to the keras model
-
-                'batch_size'    : keras batch_size
-
-                'eval_jrefacson'     : <json containing ncfile, extent
-                                    to subset ncfile and shapefile
-                                    for evaluation >
-
-                'pred_json'     : <json containing ncfile and extent
-                                    to subset for prediction>
-            }
+        init for Evaluate class
         """
-        self.config = config
-        self.predict_thres = PREDICT_THRESHOLD
-        self.output_path = OUTPUT_DIR
-        self.eval_img_path = 'evaluation_plot.png'
-        self.band1_img_path = 'band1.png'
-        self.band2_img_path = 'band2.png'
-        self.band3_img_path = 'band3.png'
-        self.pix_bmp_path = 'pred_pix_bitmap.bmp'
-        self.t_bmp_path = 'true_bitmap.bmp'
+
+        self.batch_size = config['batch_size']
+        self.num_n = config['num_neighbor']
+        self.model_path = config['model_path']
+        self.val_dir = config['val_input_dir']
+        self.dataset = PixelDataPreparer(
+            self.val_dir,
+            neighbour_pixels=self.num_n
+        )
+        self.dataset.iterate()
+        self.model = load_model(self.model_path)
+        print(self.model.summary())
+        self.save_dir = config['val_output_dir']
+        self.evaluate()
 
     def evaluate(self):
         """
-        Description: evaluation workflow
+        evaluate workflow
         """
-        print('looking for model in', str(self.config['model_path']))
-        self.model = load_model(str(self.config['model_path']))
 
-        x_list, y_list, b_list, transforms = get_data(
-            str(self.config['eval_json']),
-            self.config['num_neighbor']
-        )
+        input_data = self.dataset.dataset
+        labels = self.dataset.labels
+        predicted_pixels = self.get_predictions(input_data, labels)
+        self.visualize_predictions(self.dataset, predicted_pixels)
 
-        for _id, (x, y, b_list, transform) in \
-                enumerate(zip(x_list, y_list, b_list, transforms)):
-
-            # make output folder
-            output_folder = os.path.join(self.output_path, str(_id))
-            if not os.path.exists(output_folder):
-                os.makedirs(output_folder)
-
-            # make prediction
-            y_pred = self.model.predict(
-                x, batch_size=self.config['batch_size'])
-            y_pred = y
-            y_pred = (y_pred > PREDICT_THRESHOLD) * 1.0
-            y_mat = self.reshape_array_to_image(
-                (y_pred) * 255.0,
-                b_list.shape[0],
-                b_list.shape[1])
-            y_true = self.reshape_array_to_image(
-                y * 255.0, b_list.shape[0], b_list.shape[1])
-
-            # save predicted images
-            self.save_image(y_mat, os.path.join(
-                output_folder, self.pix_bmp_path))
-            self.save_image(y_true, os.path.join(
-                output_folder, self.t_bmp_path))
-
-            # plot images and predictions
-            self.plot_rgb(b_list[:, :, 1],
-                          b_list[:, :, 2],
-                          b_list[:, :, 0],
-                          y_true,
-                          y_mat,
-                          output_folder).savefig(
-                os.path.join(output_folder, self.eval_img_path))
-
-    def reshape_array_to_image(self, dim1_array, x_shape, y_shape):
-        """
-        desc: reshape given 1D array to a 2D array of
-                given x,y Dimensions
-        """
-        return np.asarray(dim1_array, dtype='uint8').reshape(
-            (x_shape, y_shape), order='C')
-
-    def plot_rgb(self, RL1, GL1, BL1, y_true, y_pred, output_folder):
-        """Summary
-
+    def get_predictions(self, input_data, labels):
+        """return predictions for given input data
         Args:
-            RL1 (TYPE): Description
-            GL1 (TYPE): Description
-            BL1 (TYPE): Description
-            y_true (numpy array): true feature
-            y_pred (numpy array): predicted feature
-            output_folder (string): folder to store plots
+            input_data (TYPE): input data
+        Returns:
+            TYPE: prediction array list
+        """
 
+        last_idx = 0
+        prediction_list = []
+        conf_mtx = np.zeros((2, 2))
+        total_images = len(self.dataset.img_dims_list)
+        for i, img_shape in enumerate(self.dataset.img_dims_list):
+            print('predicting {} of {} images:'.format(
+                i + 1, total_images))
+            next_idx = last_idx + img_shape[0] * img_shape[1]
+            img_prediction = self.__predict__(
+                input_data[last_idx: next_idx])
+            img_true = labels[last_idx: next_idx]
+            conf_mtx += confusion_matrix(
+                img_true,
+                img_prediction > PREDICT_THRESHOLD,
+            )
+            last_idx = next_idx
+            prediction_list.append(img_prediction.reshape(
+                (img_shape[0], img_shape[1])))
+
+        return prediction_list
+
+    def __predict__(self, data):
+        """give out predictions for the given image
         Returns:
             TYPE: Description
-
         """
-        print('b_list[1] shape', RL1)
 
-        # normalization to true RGB
-        GL1_true = 0.45 * ((RL1 / 25.5)**2 / 100) + 0.1 * \
-            ((GL1 / 25.5)**2 / 100) + 0.45 * ((BL1 / 25.5)**2 / 100)
-        GL1_true = np.maximum(GL1_true, 0)
-        GL1_true = np.minimum(GL1_true, 1)
-        RGBL1_veggie = np.dstack(
-            [((RL1 / 25.5) ** 2 / 100),
-             ((GL1 / 25.5) ** 2 / 100),
-             ((BL1 / 25.5) ** 2 / 100)])
+        pred_bmp = self.model.predict(
+            np.array(data), batch_size=self.batch_size
+        )
+        return pred_bmp
 
-        # plotting RGB
-        fig, axes = plt.subplots(2, 3, figsize=(16, 8), dpi=250)
-        axes[0, 0].imshow(RL1, cmap='Reds', vmax=255, vmin=0)
-        axes[0, 0].set_title('Red', fontweight='semibold')
-        axes[0, 0].axis('off')
-        axes[0, 1].imshow(GL1, cmap='Greens', vmax=255, vmin=0)
-        axes[0, 1].set_title('Veggie', fontweight='semibold')
-        axes[0, 1].axis('off')
-        axes[0, 2].imshow(BL1, cmap='Blues', vmax=255, vmin=0)
-        axes[0, 2].set_title('Blue', fontweight='semibold')
-        axes[0, 2].axis('off')
-        plt.subplots_adjust(wspace=.02)
-        axes[1, 0].imshow(RGBL1_veggie)
-        axes[1, 0].axis('off')
-        axes[1, 1].imshow(RGBL1_veggie)
+    def convert_rgb(self, img_path):
 
-        self.save_image(RL1, os.path.join(output_folder, 'r.bmp'))
-        self.save_image(GL1, os.path.join(output_folder, 'g.bmp'))
-        self.save_image(BL1, os.path.join(output_folder, 'b.bmp'))
-        axes[1, 1].imshow(y_true, alpha=0.15,)
-        axes[1, 1].axis('off')
+        with rasterio.open(img_path) as rast:
+            red = rast.read(2)
+            blue = rast.read(1)
+            pseudo_green = rast.read(3)
+            height, width = red.shape
+            img = np.moveaxis(
+                np.array([red, pseudo_green, blue]), 0, -1
+            )
 
-        axes[1, 2].imshow(y_pred)
-        axes[1, 2].imshow(y_true, alpha=0.15,)
-        axes[1, 2].axis('off')
-        return plt
+        return img
 
-    def save_image(self, img_array, loc):
+    def plot_figures(self, img, prediction, tif_name):
         """
-        Desc    : save given 'img_array' as image in the given 'loc' location
+        use matplotlib to plot prediictions as overlay over the
+        pseudo rgb image
         """
-        Image.fromarray(img_array).convert('L').save(loc)
+        width, height, _ = img.shape
+        fig = plt.figure()
+        fig.set_size_inches(width / height, 1, forward=False)
+        ax = plt.Axes(fig, [0., 0., 1., 1.])
+        ax.set_axis_off()
+        fig.add_axes(ax)
+        plt.imshow(img)
+        plt.axis('off')
+        plt.savefig(
+            os.path.join(
+                self.save_dir,
+                tif_name.replace('.tif', '.png')
+            ),
+            dpi=height
+        )
+        thres_pred = np.asarray(prediction * IMG_SCALE, dtype='uint8')
+        thres_pred_masked = ma.masked_where(
+            thres_pred <= PREDICT_THRESHOLD * IMG_SCALE,
+            thres_pred,
+        )
+        plt.imshow(thres_pred_masked, alpha=0.35, cmap='spring')
+        plt.axis('off')
+        plt.savefig(
+            os.path.join(
+                self.save_dir,
+                tif_name.replace('.tif', '_masked.png')
+            ),
+            dpi=height
+        )
+
+    def visualize_predictions(self, dataset, predictions, ):
+        """plot  prediction heatmaps along with original image
+        for evaluation purposes
+        Args:
+            x_path (TYPE): list of image paths
+            predictions (TYPE): numpy arrays of predictions
+        """
+
+        x_path = dataset.img_path_list
+        assert len(x_path) == len(predictions)
+        for i, prediction in enumerate(predictions):
+            img_name = os.path.basename(x_path[i])
+            print('plotting {} of {} images:'.format(i + 1, len(predictions)))
+            img = self.convert_rgb(x_path[i])
+            self.plot_figures(img, prediction, img_name)
 
 
 if __name__ == '__main__':
-
-    ev = Evaluate(json.load(open('config.json')))
-    ev.evaluate()
-
+    config = json.load(open('config.json'))
+    ev = Evaluate(config)

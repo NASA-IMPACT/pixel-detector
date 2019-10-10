@@ -2,18 +2,16 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-05-02 11:57:13
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-05-02 14:53:16
+# @Last Modified time: 2019-08-22 12:05:17
 # @ Desc: utility methods to handle reprojections from GeoProjection
 
 from rasterio.warp import (
     calculate_default_transform,
     reproject,
-    Resampling,
-    transform,)
+)
 from rasterio.io import MemoryFile
 
 import rasterio
-import numpy as np
 
 
 def reproject_ncfile(ncifle_path, extent, projection='epsg:4326'):

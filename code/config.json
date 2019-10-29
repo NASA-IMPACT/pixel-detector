@@ -4,7 +4,7 @@
     "jsonfile"      : "../data/train_list.json",
     "num_epoch"     : 500,
     "batch_size"    : 50000,
-    "model_path"    : "../models/smokev3_7_cza_3.h5",
+    "model_path"    : "../models/smokev3_7_cza_band123456.h5",
     "val_input_dir" : "../data/volcano_images/",
     "val_output_dir": "../data/volcano_predictions/",
     "eval_json"     : "../data/train_list2.json",

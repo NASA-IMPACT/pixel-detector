@@ -2,7 +2,7 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-07-02 15:33:11
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-10-08 14:21:26
+# @Last Modified time: 2019-10-18 14:50:26
 
 import os
 import sys
@@ -171,7 +171,7 @@ class DataRasterizer():
 if __name__ == '__main__':
 
     DataRasterizer(
-        '../data/train_list2.json',
-        '../data/volcano_images/',
+        '../data/test_list.json',
+        '../data/images_val_b123456/',
         cza_correct=True
     )

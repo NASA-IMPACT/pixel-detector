@@ -74,7 +74,7 @@ class PixelModel():
     def train(self):
 
         dp = PixelDataPreparer(
-            '../data/images_train_no_cza/', neighbour_pixels=self.num_neighbor
+            '../data/images_train_cza/', neighbour_pixels=self.num_neighbor
         )
         dp.iterate()
         x = np.array(dp.dataset)

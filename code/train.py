@@ -2,16 +2,16 @@
 # @Author: Muthukumaran R.
 # @Date:   2019-04-02 04:31:43
 # @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-08-23 13:25:21
+# @Last Modified time: 2019-10-16 11:17:46
 
 import json
 
-from models import PixelModel, UNetModel
-
+from models import PixelModel
+from coeff_models import SVMModel
 
 MODELS = {
     'pixel': PixelModel,
-    'unet': UNetModel,
+    'svm': SVMModel,
 }
 
 

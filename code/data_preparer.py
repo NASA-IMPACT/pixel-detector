@@ -62,6 +62,28 @@ class PixelDataPreparer(PixelListPreparer):
         super().__init__(paths, neighbour_pixels=neighbour_pixels)
 
 
+class PixelPreparer(PixelListPreparer):
+
+    def __init__(self, path, neighbour_pixels=4):
+        paths = glob(path + "/*.tif")
+        super().__init__(paths, neighbour_pixels=neighbour_pixels)
+
+    def iterate(self):
+        for image_path in self.img_path_list:
+            with rasterio.open(image_path) as rast:
+                img = np.moveaxis(rast.read(), 0, -1)
+                self.raster_transforms.append(rast.transform)
+                width, height, channels = img.shape
+                self.img_dims_list.append(img.shape)
+                bitmap_file = image_path.replace('.tif', '.bmp')
+                if os.path.exists(bitmap_file):
+                    labels = np.array(Image.open(bitmap_file))
+                else:
+                    labels = np.zeros((width, height))
+                self.dataset.append(img.reshape(width * height, channels))
+                self.labels.append(labels.flatten())
+
+
 if __name__ == '__main__':
     dp = PixelDataPreparer('../data/images/', neighbour_pixels=4)
     dp.iterate()

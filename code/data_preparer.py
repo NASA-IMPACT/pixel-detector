@@ -42,8 +42,9 @@ class PixelListPreparer:
                        self.neighbour_pixels:-self.neighbour_pixels, :] = img
             self.add_to_dataset(padded_img, labels)
 
-    def add_to_dataset(self, image, labels):
-        """Loops through a single image and creates a matched dataset of image chunks and labels. 
+    def add_to_dataset(self, image, labels, bands=[0, 1, 2, 3, 4, 5]):
+        """Loops through a single image and creates a matched dataset of image segments and labels
+        from a particular set of bands.
 
         Args:
             image (np.array(dtype='unit8')): Numpy array resulting from the conversion of a GeoTIFF
@@ -52,8 +53,11 @@ class PixelListPreparer:
             labels (np.array(dtype='unit8')): Binary array of the same dimensions as the input image
                 where 1 represents a smoke pixel and 0 represents non-smoke pixel
 
+            bands (list): List containing integer band labels. This will be used to determine which
+                bands are added to self.dataset. Default: [0, 1, 2, 3, 4, 5] (all six bands)
+
         Returns:
-            No direct return, but modifies self.dataset and self.labels. self.dataset will be 
+            No direct return, but modifies self.dataset and self.labels. self.dataset will be
             a list of neighbour_pixels*2 x neighbour_pixels*2 np.arrays with a corresponding self.
             labels that contains the label for smoke or nonsmoke
         """
@@ -64,7 +68,7 @@ class PixelListPreparer:
             for column in range(0, width):
                 self.dataset.append(
                     image[row:(row + number_of_pixels),
-                          column:(column + number_of_pixels), :])
+                          column:(column + number_of_pixels), bands)
                 label = 1 if labels[row, column] == 255 else 0
                 self.labels.append(label)
 

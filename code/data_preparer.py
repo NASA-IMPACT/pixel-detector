@@ -68,7 +68,7 @@ class PixelListPreparer:
             for column in range(0, width):
                 self.dataset.append(
                     image[row:(row + number_of_pixels),
-                          column:(column + number_of_pixels), bands)
+                          column:(column + number_of_pixels), bands])
                 label = 1 if labels[row, column] == 255 else 0
                 self.labels.append(label)
 

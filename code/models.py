@@ -3,6 +3,7 @@ import numpy as np
 from keras.callbacks import (
     EarlyStopping,
     ModelCheckpoint,
+    CSVLogger,
 )
 from keras.layers import (
     Input,
@@ -68,7 +69,7 @@ class PixelModel():
                           verbose=1, mode="auto"),
             ModelCheckpoint(filepath=self.savepath,
                             verbose=1, save_best_only=True),
-            TrainingPlot(),
+            CSVLogger(self.savepath.replace('h5', 'log'), append=True),
         ]
 
     def train(self):

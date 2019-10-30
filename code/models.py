@@ -13,7 +13,6 @@ from keras.layers import (
     Dropout,
 )
 from keras.models import Model
-from config import BANDS_LIST
 from loss_plot import TrainingPlot
 from data_preparer import PixelDataPreparer
 
@@ -23,6 +22,7 @@ class PixelModel():
     def __init__(self, config):
 
         self.config = config
+        self.bands = self.config["bands"]
         self.num_neighbor = self.config["num_neighbor"]
         self.savepath = str(self.config["model_path"])
         self.make_model()
@@ -35,7 +35,7 @@ class PixelModel():
 
         visible = Input(shape=(self.num_neighbor * 2,
                                self.num_neighbor * 2,
-                               len(BANDS_LIST)
+                               len(self.bands)
                                )
                         )
         conv1 = Conv2D(32, kernel_size=2, activation="relu",
@@ -74,9 +74,10 @@ class PixelModel():
     def train(self):
 
         dp = PixelDataPreparer(
-            '../data/images_train_no_cza/', neighbour_pixels=self.num_neighbor
+            path=self.config["train_img_path"],
+            neighbour_pixels=self.num_neighbor
         )
-        dp.iterate()
+        dp.iterate(self.bands)
         x = np.array(dp.dataset)
         print('input shape', x.shape)
         y = np.array(dp.labels)

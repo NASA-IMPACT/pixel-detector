@@ -6,12 +6,12 @@
 
 import json
 
-from models import PixelModel, UNetModel
+from models import PixelModel  # , UNetModel
 
 
 MODELS = {
     'pixel': PixelModel,
-    'unet': UNetModel,
+    # 'unet': UNetModel,
 }
 
 

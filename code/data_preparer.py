@@ -16,7 +16,7 @@ class PixelListPreparer:
         self.neighbour_pixels = neighbour_pixels
         self.raster_transforms = list()
 
-    def iterate(self):
+    def iterate(self, bands):
         """iterate through list of images in directory
         """
 
@@ -40,9 +40,9 @@ class PixelListPreparer:
                 ), dtype='uint8')
             padded_img[self.neighbour_pixels:-self.neighbour_pixels,
                        self.neighbour_pixels:-self.neighbour_pixels, :] = img
-            self.add_to_dataset(padded_img, labels)
+            self.add_to_dataset(padded_img, labels, bands)
 
-    def add_to_dataset(self, image, labels, bands=[0, 1, 2, 3, 4, 5]):
+    def add_to_dataset(self, image, labels, bands):
         """Loops through a single image and creates a matched dataset of image segments and labels
         from a particular set of bands.
 
@@ -54,7 +54,7 @@ class PixelListPreparer:
                 where 1 represents a smoke pixel and 0 represents non-smoke pixel
 
             bands (list): List containing integer band labels. This will be used to determine which
-                bands are added to self.dataset. Default: [0, 1, 2, 3, 4, 5] (all six bands)
+                bands are added to self.dataset.
 
         Returns:
             No direct return, but modifies self.dataset and self.labels. self.dataset will be
@@ -82,5 +82,5 @@ class PixelDataPreparer(PixelListPreparer):
 
 if __name__ == '__main__':
     dp = PixelDataPreparer('../data/images/', neighbour_pixels=4)
-    dp.iterate()
+    dp.iterate([0, 1, 2, 3, 4, 5])
     print('done')

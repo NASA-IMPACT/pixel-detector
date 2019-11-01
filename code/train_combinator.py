@@ -1,5 +1,6 @@
 from train import Trainer
 import json
+import gc
 
 experiment = {'drop_1': [1, 2, 3, 4, 5],
               'drop_2': [0, 2, 3, 4, 5],
@@ -15,7 +16,12 @@ with open("config.json", 'r') as file:
 
 model_path = config["model_path"].replace('.h5', '')
 
-for title, bands in experiment:
+for title, bands in experiment.items():
+    print("experiment, {}:".format(title))
     config["bands"] = bands
     config["model_path"] = model_path+"_"+title+".h5"
-    Trainer(config).train()
+    trainer = Trainer(config)
+    trainer.train()
+    del trainer
+    gc.collect()
+

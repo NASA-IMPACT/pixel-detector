@@ -39,10 +39,10 @@ def experiment_input_generator(bands, method='just', baseline=[0, 1, 2, 3, 4, 5]
     if not all([band in baseline for band in bands]):
         raise ValueError("all bands must be contained in baseline")
 
-    name = f"{method}_{''.join([str(band) for band in bands])}"
+    name = f"{method}_{''.join(str(band) for band in bands)}"
 
     if method == 'drop':
-        final_bands = [band for band in baseline if band not in bands]
+        final_bands = list(set(baseline) - set(bands))
 
     elif method == 'just':
         final_bands = bands

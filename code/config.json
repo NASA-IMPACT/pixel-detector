@@ -1,13 +1,15 @@
 {
-    "type"          : "pixel",
-    "num_neighbor"  : 7,
-    "jsonfile"      : "../data/train_list.json",
-    "num_epoch"     : 500,
-    "batch_size"    : 50000,
-    "model_path"    : "../models/smokev3_7_cza_3.h5",
-    "val_input_dir" : "../data/volcano_images/",
-    "val_output_dir": "../data/volcano_predictions/",
-    "eval_json"     : "../data/train_list2.json",
-    "pred_json"     : "../data/train_list.json",
-    "pred_shp_path" : "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/"
+  "type": "pixel",
+  "num_neighbor": 7,
+  "jsonfile": "../data/train_list.json",
+  "num_epoch": 500,
+  "batch_size": 50000,
+  "model_path": "../models/smokev3_7_cza.h5",
+  "val_input_dir": "../data/volcano_images/",
+  "val_output_dir": "../data/volcano_predictions/",
+  "eval_json": "../data/train_list2.json",
+  "pred_json": "../data/train_list.json",
+  "pred_shp_path": "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/",
+  "bands": [0, 1, 2, 3, 4, 5],
+  "train_img_path": "../data/images_train_cza/"
 }

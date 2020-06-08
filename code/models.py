@@ -238,54 +238,6 @@ class UNetModel(BaseModel):
         self.model = model
 
     def train(self):
-        # data_gen_args = dict(featurewise_center=True,
-        #                      featurewise_std_normalization=True,
-        #                      rotation_range=90.,
-        #                      width_shift_range=0.1,
-        #                      height_shift_range=0.1,
-        #                      zoom_range=0.2)
-
-        # train_datagen = ImageDataGenerator(**data_gen_args)
-
-        # val_datagen = ImageDataGenerator(rescale=1. / 255)
-
-        # train_image_generator = train_datagen.flow_from_directory(
-        #     '../unet_master/train/frames/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=8,
-        #     seed=SEED
-        # )
-
-        # train_mask_generator = train_datagen.flow_from_directory(
-        #     '../unet_master/train/masks/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=8,
-        #     color_mode='grayscale',
-        #     seed=SEED
-        # )
-
-        # val_image_generator = val_datagen.flow_from_directory(
-        #     '../unet_master/val/frames/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=4,
-        #     seed=SEED,
-        # )
-
-        # val_mask_generator = val_datagen.flow_from_directory(
-        #     '../unet_master/val/masks/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=4,
-        #     color_mode='grayscale',
-        #     seed=SEED,
-        # )
-
-        # train_generator = zip(train_image_generator, train_mask_generator)
-        # val_generator = zip(val_image_generator, val_mask_generator)
-        # # vis_res(val_generator, 1, 2)
 
         train_generator = UnetGenerator('../unet_master/train/frames/data/')
         val_generator = UnetGenerator('../unet_master/val/frames/data/')
@@ -362,20 +314,6 @@ def convert_rgb(img):
     )
 
     return img
-
-
-def vis_res_predict(val_generator, i, j, model):
-    import matplotlib.pyplot as plt
-    f, ax = plt.subplots(2)
-    import numpy.ma as ma
-    for h in range(j):
-        (modis_data, bmp_data) = next(val_generator)
-    ax[0].imshow(modis_data[i])
-    ax[1].imshow(modis_data[i])
-    bmp_data = model.predict(modis_data)
-    ax[1].imshow(ma.masked_where(bmp_data < 0.1, bmp_data)[i, :,:,0],alpha=0.25,cmap='winter')
-    ax[0].imshow(bmp_data[i, :,:,0], alpha=0.25,cmap='winter')
-    plt.show()
 
 
 if __name__ == '__main__':

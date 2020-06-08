@@ -302,7 +302,9 @@ class UNetModel(BaseModel):
 
 def infer(model_path):
     model = load_model(model_path)
-    val_generator = UnetGenerator('../unet_master/val/frames/data/', batch_size=4)
+    val_generator = UnetGenerator(
+        '../unet_master/val/frames/data/', batch_size=4
+    )
     vis_res(val_generator, model)
 
 

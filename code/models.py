@@ -239,8 +239,8 @@ class UNetModel(BaseModel):
 
     def train(self):
 
-        train_generator = UnetGenerator('../unet_master/train/frames/data/')
-        val_generator = UnetGenerator('../unet_master/val/frames/data/')
+        train_generator = UnetGenerator(TRAIN_DATA)
+        val_generator = UnetGenerator(VAL_DATA)
         results = self.model.fit_generator(
             train_generator,
             epochs=200,
@@ -255,7 +255,7 @@ class UNetModel(BaseModel):
 def infer(model_path):
     model = load_model(model_path)
     val_generator = UnetGenerator(
-        '../unet_master/val/frames/data/', batch_size=4
+        VAL_DATA, batch_size=4
     )
     vis_res(val_generator, model)
 

@@ -1,35 +1,32 @@
 import numpy as np
+import tensorflow as tf
 
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.layers import (
-    Input,
-    Dense,
-    Conv2D,
-    UpSampling2D,
-    MaxPooling2D,
-    Dropout,
-    concatenate,
-    Conv2DTranspose,
-    BatchNormalization,
-    Flatten
-)
-from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import (
+    CSVLogger,
     EarlyStopping,
     ModelCheckpoint,
-    CSVLogger,
     TensorBoard,
 )
-#from loss_plot import TrainingPlot
-from data_preparer import PixelDataPreparer
-from numpy.random import seed
-from unet_generator import UnetGenerator
-seed(1)
-import tensorflow as tf
-#tf.random.set_seed(2)
-#set_random_seed(2)
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.layers import (
+    BatchNormalization,
+    concatenate,
+    Conv2D,
+    Conv2DTranspose,
+    Dense,
+    Dropout,
+    Flatten,
+    Input,
+    MaxPooling2D,
+    UpSampling2D,
+)
 
-SEED = 1
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+from data_preparer import PixelDataPreparer
+from unet_generator import UnetGenerator
+
+np.random.seed(1)
 
 
 class PixelModel():

@@ -326,13 +326,27 @@ def vis_res(val_generator, model):
         (modis_batch, bmp_batch) = batch_data
         bmp_predict_batch = model.predict(modis_batch)
         for j in range(len(modis_batch)):
-                ax[0].imshow(convert_rgb(modis_batch[j]).astype('uint8'))
-                ax[1].imshow(convert_rgb(modis_batch[j]).astype('uint8'))
-                bmp_data = bmp_batch[j].astype('uint8')
-                ax[0].imshow(ma.masked_where(bmp_data != 1, bmp_data)[:,:,0],alpha=0.35,cmap='Purples')
+            ax[0].imshow(
+                convert_rgb(modis_batch[j]).astype('uint8')
+            )
+            ax[1].imshow(convert_rgb(modis_batch[j]).astype('uint8'))
+            bmp_data = bmp_batch[j].astype('uint8')
+            ax[0].imshow(
+                ma.masked_where(
+                    bmp_data != 1, bmp_data
+                )[:, :, 0],
+                alpha=0.35,
+                cmap='Purples'
+            )
 
-                ax[1].imshow(ma.masked_where(bmp_predict_batch[j] < 0.5, bmp_predict_batch[j])[:,:,0],alpha=0.45,cmap='spring')
-                plt.savefig(f'../unet_master/results/{i}_{j}.png')
+            ax[1].imshow(
+                ma.masked_where(
+                    bmp_predict_batch[j] < 0.5, bmp_predict_batch[j]
+                )[:, :, 0],
+                alpha=0.45,
+                cmap='spring'
+            )
+            plt.savefig(f'../unet_master/results/{i}_{j}.png')
 
 
 def convert_rgb(img):

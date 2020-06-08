@@ -1,8 +1,10 @@
+import numpy as np
 import os
 import rasterio
-import numpy as np
-from PIL import Image
+import time
+
 from glob import glob
+from PIL import Image
 
 
 class PixelListPreparer:

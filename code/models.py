@@ -316,10 +316,6 @@ def convert_rgb(img):
     return img
 
 
-if __name__ == '__main__':
-
-    infer('../models/smoke_unet.h5')
-
 
 def unison_shuffled_copies(a, b):
     """

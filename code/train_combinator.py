@@ -19,7 +19,7 @@ def experiment_input_generator(bands, method='just', baseline=[0, 1, 2, 3, 4, 5]
         bands ([ints]): List of integers representing bands to include or exclude
         method (str, optional): Use 'just' to only use bands included in bands, or 'drop' to use
             the baseline with the bands excluded. Defaults to 'just'.
-        baseline ([ints], optional): List of integers representing bands in the baseline. 
+        baseline ([ints], optional): List of integers representing bands in the baseline.
             Defaults to [0,1,2,3,4,5].
 
     Returns:
@@ -59,7 +59,7 @@ model_path = config["model_path"].replace('.h5', '')
 for title, bands in experiment.items():
     print("experiment, {}:".format(title))
     config["bands"] = bands
-    config["model_path"] = model_path+"_"+title+".h5"
+    config["model_path"] = f'{model_path}_{title}.h5'
     trainer = Trainer(config)
     trainer.train()
     del trainer

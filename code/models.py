@@ -132,12 +132,15 @@ class BaseModel:
         self.build_model()
 
     def build_callbacks(self):
+        log_path = self.model_save_path
+        base_path = os.path.splitext(log_path)[0]
+        log_path = os.rename(my_file, base_path + '.log')
         self.callbacks = [
             EarlyStopping(monitor="val_loss", patience=20,
                           verbose=1, mode="auto"),
             ModelCheckpoint(filepath=self.model_save_path,
                             verbose=1, save_best_only=True),
-            CSVLogger(self.model_save_path.replace('h5', 'log'), append=True),
+            CSVLogger(log_path, append=True),
 
         ]
 

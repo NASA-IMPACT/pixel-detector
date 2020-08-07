@@ -1,7 +1,7 @@
 import numpy as np
-import tensorflow as tf
-import matplotlib.pyplot as plt
 import numpy.ma as ma
+import matplotlib.pyplot as plt
+import tensorflow as tf
 
 from tensorflow.keras.callbacks import (
     CSVLogger,

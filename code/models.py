@@ -321,7 +321,7 @@ def convert_rgb(img):
 
 def unison_shuffled_copies(a, b):
     """
-    shuffle a,b in unison and return shuffled a,b
+    shuffle a,b in unison and return shuffled a, b
 
     Args:
         a (list/array): data a

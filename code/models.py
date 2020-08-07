@@ -302,7 +302,7 @@ def visualize_results(val_generator, model):
                 alpha=0.45,
                 cmap='spring'
             )
-            plt.savefig(f'../unet_master/results/{i}_{j}.png')
+            plt.savefig(os.path.join(save_path, f'{i}_{j}.png'))
 
 
 def convert_rgb(img):

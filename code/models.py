@@ -257,7 +257,7 @@ def infer(model_path):
     val_generator = UnetGenerator(
         self.config['val_input_dir'], batch_size=4
     )
-    vis_res(val_generator, model)
+    visualize_results(val_generator, model)
 
 
 def bn_conv_relu(input, filters, bachnorm_momentum, **conv2d_args):
@@ -272,12 +272,14 @@ def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
     return x
 
 
-def vis_res(val_generator, model):
-    import matplotlib.pyplot as plt
-    import numpy.ma as ma
+def visualize_results(val_generator, model):
+
+    save_path = f'../unet_master/results/'
+    if not os.path.exists:
+        os.mkdirs(save_path)
     f, ax = plt.subplots(1, 2)
     for i, batch_data in enumerate(val_generator):
-        (modis_batch, bmp_batch) = batch_data
+        modis_batch, bmp_batch = batch_data
         bmp_predict_batch = model.predict(modis_batch)
         for j in range(len(modis_batch)):
             ax[0].imshow(

@@ -38,7 +38,9 @@ class UnetGenerator(tf.keras.utils.Sequence):
     def __getitem__(self, index):
         '''Generate one batch of data'''
         # Generate indexes of the batch
-        indexes = self.indexes[index*self.batch_size: (index+1)*self.batch_size]
+        indexes = self.indexes[
+            index * self.batch_size: (index + 1) * self.batch_size
+        ]
 
         # Find list of IDs
         tif_list_temp = [self.tif_list[k] for k in indexes]

@@ -26,17 +26,17 @@ class UnetGenerator(tf.keras.utils.Sequence):
         self.on_epoch_end()
 
     def __len__(self):
-        'Denotes the number of batches per epoch'
+        '''Denotes the number of batches per epoch'''
         return int(np.floor(len(self.tif_list) / self.batch_size))
 
     def on_epoch_end(self):
-        'Updates indexes after each epoch'
+        '''Updates indexes after each epoch'''
         self.indexes = np.arange(len(self.tif_list))
         if self.shuffle is True:
             np.random.shuffle(self.indexes)
 
     def __getitem__(self, index):
-        'Generate one batch of data'
+        '''Generate one batch of data'''
         # Generate indexes of the batch
         indexes = self.indexes[index*self.batch_size: (index+1)*self.batch_size]
 
@@ -53,7 +53,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
             return X
 
     def _generate_X(self, tif_list_temp):
-        'Generates data containing batch_size images'
+        '''Generates data containing batch_size images'''
         # Initialization
         X = np.empty((self.batch_size, *self.dim, self.n_channels))
 
@@ -65,7 +65,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
         return X
 
     def _generate_y(self, tif_list_temp):
-        'Generates data containing batch_size masks'
+        '''Generates data containing batch_size masks'''
         y = np.empty((self.batch_size, *self.dim, 1), dtype=int)
 
         # Generate data
@@ -85,7 +85,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
         return result
 
 def _load_grayscale_image(image_path, dim):
-    'Load grayscale image'
+    '''Load grayscale image'''
     img = cv2.imread(image_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     img = img / 255
@@ -93,7 +93,7 @@ def _load_grayscale_image(image_path, dim):
 
 
 def _load_tif_image(image_path, dim):
-    'load tif image'
+    '''load tif image'''
 
     with rasterio.open(image_path, 'r') as data:
         return cv2.resize(

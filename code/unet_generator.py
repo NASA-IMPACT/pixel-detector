@@ -1,7 +1,8 @@
+import cv2
 import numpy as np
 import rasterio
-import cv2
 import tensorflow as tf
+
 from glob import glob
 
 

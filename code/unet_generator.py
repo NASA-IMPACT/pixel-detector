@@ -22,7 +22,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
         self.n_channels = n_channels
         self.shuffle = shuffle
         self.n = 0
-        self.max = self.__len__()
+        self.max = len(self)
         self.on_epoch_end()
 
     def __len__(self):

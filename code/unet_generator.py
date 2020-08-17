@@ -86,6 +86,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
         self.n += 1
         return result
 
+
 def _load_grayscale_image(image_path, dim):
     '''Load grayscale image'''
     img = cv2.imread(image_path)

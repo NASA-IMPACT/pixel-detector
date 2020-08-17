@@ -1,15 +1,18 @@
-from train import Trainer
 import json
 import gc
 
-experiment = {'drop_1': [1, 2, 3, 4, 5],
-              'drop_2': [0, 2, 3, 4, 5],
-              'drop_3': [0, 1, 3, 4, 5],
-              'just_1': [0, 3, 4, 5],
-              'just_2': [1, 3, 4, 5],
-              'just_3': [2, 3, 4, 5],
-              'drop_56': [0, 1, 2, 3],
-              'baseline': [0, 1, 2, 3, 4, 5]}
+from train import Trainer
+
+experiment = {
+    'drop_1': [1, 2, 3, 4, 5],
+    'drop_2': [0, 2, 3, 4, 5],
+    'drop_3': [0, 1, 3, 4, 5],
+    'just_1': [0, 3, 4, 5],
+    'just_2': [1, 3, 4, 5],
+    'just_3': [2, 3, 4, 5],
+    'drop_56': [0, 1, 2, 3],
+    'baseline': [0, 1, 2, 3, 4, 5]
+}
 
 
 def experiment_input_generator(bands, method='just', baseline=[0, 1, 2, 3, 4, 5]):
@@ -40,7 +43,7 @@ def experiment_input_generator(bands, method='just', baseline=[0, 1, 2, 3, 4, 5]
     if not all([band in baseline for band in bands]):
         raise ValueError("all bands must be contained in baseline")
 
-    name = f'{method}_{''.join(str(band) for band in bands)}'
+    name = f"{method}_{''.join(str(band) for band in bands)}"
 
     if method == 'drop':
         final_bands = list(set(baseline) - set(bands))
@@ -58,9 +61,12 @@ model_path = config["model_path"].replace('.h5', '')
 
 for title, bands in experiment.items():
     print("experiment, {}:".format(title))
+
     config["bands"] = bands
     config["model_path"] = f'{model_path}_{title}.h5'
     trainer = Trainer(config)
     trainer.train()
+
     del trainer
+
     gc.collect()

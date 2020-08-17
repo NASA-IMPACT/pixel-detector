@@ -45,25 +45,35 @@ class PixelModel():
             Make the model
         """
 
-        visible = Input(shape=(self.num_neighbor * 2,
-                               self.num_neighbor * 2,
-                               len(self.bands)
-                               )
-                        )
-        conv1 = Conv2D(32, kernel_size=2, activation="relu",
-                       padding="same")(visible)
+        visible = Input(
+            shape=(
+                self.num_neighbor * 2,
+                self.num_neighbor * 2,
+                len(self.bands)
+            )
+        )
+
+        conv1 = Conv2D(
+            32, kernel_size=2, activation="relu",
+            padding="same"
+        )(visible)
+
         pool1 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv1)
         conv2 = Conv2D(64, kernel_size=2, activation="relu",
                        padding="same")(pool1)
+
         pool2 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv2)
         flatten = Flatten()(pool2)
+
         dense1 = Dense(40, activation="relu")(flatten)
         dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(25, activation="relu")(dense1)
         dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(10, activation="relu")(dense1)
         dense1 = Dropout(0.3)(dense1)
+
         dense2 = Dense(5, activation="relu")(dense1)
+
         output = Dense(1, activation="sigmoid")(dense2)
 
         self.model = Model(inputs=visible, outputs=output)
@@ -90,10 +100,13 @@ class PixelModel():
             neighbour_pixels=self.num_neighbor
         )
         dp.iterate(self.bands)
+
         x = np.array(dp.dataset)
         print('input shape', x.shape)
+
         y = np.array(dp.labels)
         print('label shape', y.shape)
+
         x, y = unison_shuffled_copies(x, y)
 
         self.model.compile(
@@ -101,6 +114,7 @@ class PixelModel():
             loss="binary_crossentropy",
             metrics=["accuracy", "mae"]
         )
+
         print(self.model.summary())
 
         self.model.fit(
@@ -235,7 +249,8 @@ class UNetModel(BaseModel):
             kernel_size=(1, 1),
             strides=(1, 1),
             activation=output_activation,
-            padding='valid')(x)
+            padding='valid'
+        )(x)
 
         model = Model(inputs=[inputs], outputs=[outputs])
         self.model = model
@@ -252,6 +267,7 @@ class UNetModel(BaseModel):
             callbacks=self.callbacks,
             validation_steps=24,
         )
+
         return results
 
 
@@ -278,12 +294,16 @@ def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
 def visualize_results(val_generator, model):
 
     save_path = f'../unet_master/results/'
+
     if not os.path.exists:
         os.mkdirs(save_path)
+
     f, ax = plt.subplots(1, 2)
+
     for i, batch_data in enumerate(val_generator):
         modis_batch, bmp_batch = batch_data
         bmp_predict_batch = model.predict(modis_batch)
+
         for j in range(len(modis_batch)):
             ax[0].imshow(
                 convert_rgb(modis_batch[j]).astype('uint8')
@@ -305,6 +325,7 @@ def visualize_results(val_generator, model):
                 alpha=0.45,
                 cmap='spring'
             )
+
             plt.savefig(os.path.join(save_path, f'{i}_{j}.png'))
 
 
@@ -314,12 +335,12 @@ def convert_rgb(img):
     blue = img[:, :, 0]
     pseudo_green = img[:, :, 2]
     height, width = red.shape
+
     img = np.moveaxis(
         np.array([red, pseudo_green, blue]), 0, -1
     )
 
     return img
-
 
 
 def unison_shuffled_copies(a, b):
@@ -333,8 +354,11 @@ def unison_shuffled_copies(a, b):
     Returns:
         TYPE: a,b shuffled and resampled
     """
+
     assert len(a) == len(b)
+
     indices = np.random.permutation(len(a))
+
     return [
            [a[index] for index in indices],
            [b[index] for index in indices]

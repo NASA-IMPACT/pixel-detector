@@ -23,23 +23,29 @@ class PixelListPreparer:
         """
 
         neighborhood = 2 * self.neighbour_pixels
+
         for image_path in self.img_path_list:
             with rasterio.open(image_path) as rast:
                 img = np.moveaxis(rast.read(), 0, -1)
                 self.raster_transforms.append(rast.transform)
+
             width, height, channels = img.shape
             self.img_dims_list.append(img.shape)
             bitmap_file = image_path.replace('.tif', '.bmp')
+
             if os.path.exists(bitmap_file):
                 labels = np.array(Image.open(bitmap_file))
             else:
                 labels = np.zeros((width, height))
+
             padded_img = np.zeros(
                 (
                     width + neighborhood,
                     height + neighborhood,
                     channels
-                ), dtype='uint8')
+                ),
+                dtype='uint8'
+            )
             padded_img[self.neighbour_pixels:-self.neighbour_pixels,
                        self.neighbour_pixels:-self.neighbour_pixels, :] = img
             self.add_to_dataset(padded_img, labels, bands)
@@ -66,6 +72,7 @@ class PixelListPreparer:
 
         height, width = labels.shape
         number_of_pixels = 2 * self.neighbour_pixels
+
         for row in range(0, height):
             for column in range(0, width):
                 self.dataset.append(

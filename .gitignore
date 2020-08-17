@@ -1,8 +1,7 @@
 *.pyc
 *.png
 *.json
-*.tiff
-*.tif
+*.tif[f]
 *.bmp
 data/
 model/

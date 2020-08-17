@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
-# @Date:   2019-05-15 13:49:38
-# @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-10-08 10:55:36
-
 """
 Functions based on rasterio library: https://github.com/mapbox/rasterio
 """
@@ -33,11 +27,14 @@ def width_height(bbox, resolution_in_km=1.0):
     Returns:
         TYPE: Description
     """
+
     res = resolution_in_km
 
     lons = bbox[::2]
     lats = bbox[1::2]
+
     print(lats, lons)
+
     km_per_deg_at_eq = 111.
     km_per_deg_at_lat = km_per_deg_at_eq * np.cos(np.pi * np.mean(lats) / 180.)
 
@@ -58,19 +55,23 @@ def wgs84_transform(ncfile, dtype, extent):
     Returns:
         TYPE: numpy array
     """
+
     save_path = ncfile.replace('.nc', '.tif')
     temp_ncfile = f'NetCDF:{ncfile}:Rad'
+
     with rasterio.open(temp_ncfile, 'r') as src:
         dest_meta = rasterio_meta(src, extent, 1, dtype)
         with rasterio.open(save_path, 'w', **dest_meta) as dst:
-            reproject(source=rasterio.band(src, 1),
-                      destination=rasterio.band(dst, 1),
-                      src_transform=src.transform,
-                      src_crs=src.crs,
-                      dst_transform=dest_meta['transform'],
-                      dst_crs=dest_meta['crs'],
-                      resampling=Resampling.bilinear,
-                      )
+            reproject(
+                source=rasterio.band(src, 1),
+                destination=rasterio.band(dst, 1),
+                src_transform=src.transform,
+                src_crs=src.crs,
+                dst_transform=dest_meta['transform'],
+                dst_crs=dest_meta['crs'],
+                resampling=Resampling.bilinear,
+            )
+
     return save_path
 
 
@@ -88,15 +89,17 @@ def rasterio_meta(src, extent, count):
     width, height = width_height(extent)
     new_transform = rasterio.transform.from_bounds(*extent, width, height)
     print('old meta:', meta)
-    meta.update(count=count,
-                driver='GTiff',
-                crs={'init': 'epsg:4326'},
-                transform=new_transform,
-                width=width,
-                height=height,
-                nodata=0,
-                dtype='float32'
-                )
+    meta.update(
+        count=count,
+        driver='GTiff',
+        crs={'init': 'epsg:4326'},
+        transform=new_transform,
+        width=width,
+        height=height,
+        nodata=0,
+        dtype='float32'
+    )
+
     return meta
 
 
@@ -111,17 +114,21 @@ def wgs84_transform_memory(data, ncfile, extent):
     Returns:
         TYPE: numpy array
     """
+
     save_path = ncfile.replace('.nc', '.tif')
     temp_ncfile = f'NetCDF:{ncfile}:Rad'
     memfile = MemoryFile()
+
     with rasterio.open(temp_ncfile, 'r') as src:
         dest_meta = rasterio_meta(src, extent, 1)
         with memfile.open(**dest_meta) as dst:
-            reproject(source=np.flip(data, axis=0),
-                      destination=rasterio.band(dst, 1),
-                      src_transform=src.transform,
-                      src_crs=src.crs,
-                      )
+            reproject(
+                source=np.flip(data, axis=0),
+                destination=rasterio.band(dst, 1),
+                src_transform=src.transform,
+                src_crs=src.crs,
+            )
+
     return memfile
 
 
@@ -129,20 +136,22 @@ def read_tif(path, band=1):
     with rasterio.open(path, 'r') as ds:
         array = rasterio.band(ds, band)
         transform = ds.transform
+
     return array, transform
 
 
 def combine_rasters(img_list, transform, save_path):
 
-    meta = {'count': len(img_list),
-            'driver': 'GTiff',
-            'crs': {'init': 'epsg:4326'},
-            'transform': transform,
-            'width': img_list[0].shape[1],
-            'height': img_list[0].shape[0],
-            'nodata': 0,
-            'dtype': 'uint8',
-            }
+    meta = {
+        'count': len(img_list),
+        'driver': 'GTiff',
+        'crs': {'init': 'epsg:4326'},
+        'transform': transform,
+        'width': img_list[0].shape[1],
+        'height': img_list[0].shape[0],
+        'nodata': 0,
+        'dtype': 'uint8',
+    }
 
     with rasterio.open(save_path, 'w', **meta) as dest:
         for band_num, band in enumerate(img_list):

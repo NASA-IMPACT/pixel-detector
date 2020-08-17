@@ -1,14 +1,18 @@
-from train import Trainer
 import json
+import gc
 
-experiment = {'drop_1': [1, 2, 3, 4, 5],
-              'drop_2': [0, 2, 3, 4, 5],
-              'drop_3': [0, 1, 3, 4, 5],
-              'just_1': [0, 3, 4, 5],
-              'just_2': [1, 3, 4, 5],
-              'just_3': [2, 3, 4, 5],
-              'drop_56': [0, 1, 2, 3],
-              'baseline': [0, 1, 2, 3, 4, 5]}
+from train import Trainer
+
+experiment = {
+    'drop_1': [1, 2, 3, 4, 5],
+    'drop_2': [0, 2, 3, 4, 5],
+    'drop_3': [0, 1, 3, 4, 5],
+    'just_1': [0, 3, 4, 5],
+    'just_2': [1, 3, 4, 5],
+    'just_3': [2, 3, 4, 5],
+    'drop_56': [0, 1, 2, 3],
+    'baseline': [0, 1, 2, 3, 4, 5]
+}
 
 
 def experiment_input_generator(bands, method='just', baseline=[0, 1, 2, 3, 4, 5]):
@@ -18,7 +22,7 @@ def experiment_input_generator(bands, method='just', baseline=[0, 1, 2, 3, 4, 5]
         bands ([ints]): List of integers representing bands to include or exclude
         method (str, optional): Use 'just' to only use bands included in bands, or 'drop' to use
             the baseline with the bands excluded. Defaults to 'just'.
-        baseline ([ints], optional): List of integers representing bands in the baseline. 
+        baseline ([ints], optional): List of integers representing bands in the baseline.
             Defaults to [0,1,2,3,4,5].
 
     Returns:
@@ -55,7 +59,14 @@ with open("config.json", 'r') as file:
 
 model_path = config["model_path"].replace('.h5', '')
 
-for title, bands in experiment:
+for title, bands in experiment.items():
+    print("experiment, {}:".format(title))
+
     config["bands"] = bands
     config["model_path"] = f'{model_path}_{title}.h5'
-    Trainer(config).train()
+    trainer = Trainer(config)
+    trainer.train()
+
+    del trainer
+
+    gc.collect()

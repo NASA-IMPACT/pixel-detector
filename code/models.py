@@ -293,7 +293,7 @@ def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
 
 def visualize_results(val_generator, model):
 
-    save_path = f'../unet_master/results/'
+    save_path = os.path.join(self.val_output_dir,'results')
 
     if not os.path.exists:
         os.mkdirs(save_path)

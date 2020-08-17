@@ -7,7 +7,7 @@ from glob import glob
 
 
 class UnetGenerator(tf.keras.utils.Sequence):
-    'Generates data for Keras'
+    '''Generates data for Keras'''
     def __init__(self, data_path,
                  to_fit=True, batch_size=8, dim=(256, 256),
                  n_channels=6, shuffle=True):

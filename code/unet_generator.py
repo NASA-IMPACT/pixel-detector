@@ -14,7 +14,6 @@ class UnetGenerator(tf.keras.utils.Sequence):
         to_fit=True, batch_size=8, dim=(256, 256),
         n_channels=6, shuffle=True
     ):
-        """Initialization"""
 
         self.data_path = data_path
         self.tif_list = [filename for filename in glob(f'{data_path}*.tif')]

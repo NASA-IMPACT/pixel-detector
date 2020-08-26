@@ -1,9 +1,15 @@
 import cv2
+import imgaug as ia
 import numpy as np
 import rasterio
 import tensorflow as tf
 
+
+from imgaug import augmenters as iaa
 from glob import glob
+
+
+ia.seed(2)
 
 
 class UnetGenerator(tf.keras.utils.Sequence):
@@ -115,3 +121,42 @@ def _load_tif_image(image_path, dim):
         return cv2.resize(
             np.moveaxis(data.read(), 0, -1), dim
         )
+
+
+def sometimes(aug, drop_freq=0.5):
+    """add augmentations only 'sometimes' to images
+
+    Args:
+        aug (iaa.aug): ImageAugmentor augmentations
+
+    Returns:
+        iaa.aug: ImageAugmentor augmentations, but only sometimes
+    """
+    return iaa.Sometimes(drop_freq, aug)
+
+
+def make_augmentations():
+    """create the augmentation stack to be applied
+
+    Returns:
+        iaa.aug: ImageAugmentor augmentations
+    """
+    return iaa.Sequential([
+        sometimes(iaa.CoarseDropout(0.1, size_percent=0.2)),
+        sometimes(
+            iaa.Affine(
+                scale={"x": (0.9, 1.1), "y": (0.9, 1.1)},
+                # scale images to 80-120% of their size,
+                # individually per axis
+                translate_percent={
+                    "x": (-0.1, 0.1), "y": (-0.1, 0.1)},
+                # translate by -20 to +20 percent (per axis)
+                # rotate by -45 to +45 degrees
+                rotate=(-10, 10),
+                shear=(-5, 5),  # shear by -16 to +16 degrees
+            ),
+        ),
+        sometimes(iaa.ElasticTransformation(alpha=10, sigma=1))
+    ],
+        random_order=True
+    )

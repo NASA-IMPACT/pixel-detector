@@ -172,7 +172,11 @@ class UNetModel(BaseModel):
 
     def create_model(self):
         num_layers = 1
-        input_shape = (self.config['input_size'], self.config['input_size'], 6)
+        input_shape = (
+            self.config['input_size'],
+            self.config['input_size'],
+            self.config['band_num']
+        )
         inputs = Input(input_shape)
 
         filters = 24
@@ -257,8 +261,14 @@ class UNetModel(BaseModel):
 
     def train(self):
 
-        train_generator = UnetGenerator(self.config['train_dir'])
-        val_generator = UnetGenerator(self.config['val_input_dir'])
+        train_generator = UnetGenerator(
+            self.config['train_dir'],
+            n_channels=self.config['band_num']
+        )
+        val_generator = UnetGenerator(
+            self.config['val_input_dir'],
+            n_channels=self.config['band_num']
+        )
         results = self.model.fit_generator(
             train_generator,
             epochs=200,
@@ -293,7 +303,7 @@ def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
 
 def visualize_results(val_generator, model):
 
-    save_path = os.path.join(self.val_output_dir,'results')
+    save_path = os.path.join(self.val_output_dir, 'results')
 
     if not os.path.exists:
         os.mkdirs(save_path)

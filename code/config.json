@@ -1,7 +1,7 @@
 {
   "type": "pixel",
   "num_neighbor": 7,
-  "band_num": 3,
+  "total_bands": 3,
   "jsonfile": "../data/train_list.json",
   "num_epoch": 500,
   "batch_size": 50000,

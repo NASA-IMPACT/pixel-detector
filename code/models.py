@@ -175,7 +175,7 @@ class UNetModel(BaseModel):
         input_shape = (
             self.config['input_size'],
             self.config['input_size'],
-            self.config['band_num']
+            self.config['total_bands']
         )
         inputs = Input(input_shape)
 
@@ -263,11 +263,11 @@ class UNetModel(BaseModel):
 
         train_generator = UnetGenerator(
             self.config['train_dir'],
-            n_channels=self.config['band_num']
+            n_channels=self.config['total_bands']
         )
         val_generator = UnetGenerator(
             self.config['val_input_dir'],
-            n_channels=self.config['band_num']
+            n_channels=self.config['total_bands']
         )
         results = self.model.fit_generator(
             train_generator,

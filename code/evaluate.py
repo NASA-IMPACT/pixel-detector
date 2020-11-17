@@ -1,4 +1,5 @@
 import matplotlib; matplotlib.use('Agg')
+
 import os
 import json
 import rasterio
@@ -44,7 +45,9 @@ class Evaluate:
         )
         self.dataset.iterate()
         self.model = load_model(self.model_path)
+
         print(self.model.summary())
+
         self.save_dir = config['val_output_dir']
         self.evaluate()
 
@@ -70,9 +73,11 @@ class Evaluate:
         prediction_list = []
         conf_mtx = np.zeros((2, 2))
         total_images = len(self.dataset.img_dims_list)
+
         for i, img_shape in enumerate(self.dataset.img_dims_list):
             print('predicting {} of {} images:'.format(
                 i + 1, total_images))
+
             next_idx = last_idx + img_shape[0] * img_shape[1]
             img_prediction = self.__predict__(
                 input_data[last_idx: next_idx])
@@ -81,6 +86,7 @@ class Evaluate:
                 img_true,
                 img_prediction > PREDICT_THRESHOLD,
             )
+
             last_idx = next_idx
             prediction_list.append(img_prediction.reshape(
                 (img_shape[0], img_shape[1])))
@@ -96,6 +102,7 @@ class Evaluate:
         pred_bmp = self.model.predict(
             np.array(data), batch_size=self.batch_size
         )
+
         return pred_bmp
 
     def convert_rgb(self, img_path):
@@ -116,12 +123,16 @@ class Evaluate:
         use matplotlib to plot prediictions as overlay over the
         pseudo rgb image
         """
+
         width, height, _ = img.shape
+
         fig = plt.figure()
         fig.set_size_inches(width / height, 1, forward=False)
+
         ax = plt.Axes(fig, [0., 0., 1., 1.])
         ax.set_axis_off()
         fig.add_axes(ax)
+
         plt.imshow(img)
         plt.axis('off')
         plt.savefig(
@@ -131,11 +142,13 @@ class Evaluate:
             ),
             dpi=height
         )
+
         thres_pred = np.asarray(prediction * IMG_SCALE, dtype='uint8')
         thres_pred_masked = ma.masked_where(
             thres_pred <= PREDICT_THRESHOLD * IMG_SCALE,
             thres_pred,
         )
+
         plt.imshow(thres_pred_masked, alpha=0.35, cmap='spring')
         plt.axis('off')
         plt.savefig(
@@ -156,9 +169,12 @@ class Evaluate:
 
         x_path = dataset.img_path_list
         assert len(x_path) == len(predictions)
+
         for i, prediction in enumerate(predictions):
             img_name = os.path.basename(x_path[i])
+
             print('plotting {} of {} images:'.format(i + 1, len(predictions)))
+            
             img = self.convert_rgb(x_path[i])
             self.plot_figures(img, prediction, img_name)
 

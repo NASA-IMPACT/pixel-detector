@@ -18,10 +18,14 @@ class BatchEvaluate(Evaluate):
         self.val_dir = config['val_dir']
         self.save_dir = config['val_output_dir']
         self.model = load_model(self.model_path)
+
         print(self.model.summary())
+
         path_list = glob(self.val_dir + '/*.tif')
-        paths_lists = [path_list[x:x + step_num] for x in range(
-            0, len(path_list), step_num)]
+        paths_lists = [
+            path_list[x:x + step_num] for x in range( 0, len(path_list), step_num)
+        ]
+
         for paths in paths_lists:
             self.dataset = PixelListPreparer(
                 paths,

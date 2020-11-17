@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
-# @Date:   2019-04-02 04:31:43
-# @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2020-04-24 01:31:47
-
 import json
 
 from models import PixelModel, UNetModel
@@ -33,12 +27,14 @@ class Trainer:
         """
         Alias to model holder train method
         """
+
         self.model_holder.train()
 
     def load(self):
         """
         Alias to model holder load method
         """
+
         self.model_holder.load()
 
 

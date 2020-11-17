@@ -41,6 +41,7 @@ class TrainingPlot(keras.callbacks.Callback):
             "Loss",
             "Loss_plot_2.png"
         )
+
         self.make_plot(
             self.acc,
             self.val_acc,
@@ -52,11 +53,16 @@ class TrainingPlot(keras.callbacks.Callback):
 
         plt.style.use("seaborn")
         plt.figure()
+
         plt.plot(self.num_epochs, train_metric, label="training")
         plt.plot(self.num_epochs, val_metric, label="validation")
+
         plt.title(f"Training and Validation {ylabel}")
+
         plt.xlabel("Epoch #")
         plt.ylabel(ylabel)
+        
         plt.legend()
         plt.savefig(save_path)
+
         plt.close()

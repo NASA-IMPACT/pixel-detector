@@ -1,35 +1,32 @@
 import numpy as np
+import numpy.ma as ma
+import matplotlib.pyplot as plt
+import tensorflow as tf
 
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.layers import (
-    Input,
-    Dense,
-    Conv2D,
-    UpSampling2D,
-    MaxPooling2D,
-    Dropout,
-    concatenate,
-    Conv2DTranspose,
-    BatchNormalization,
-    Flatten
-)
-from tensorflow.keras.models import Model, load_model
 from tensorflow.keras.callbacks import (
+    CSVLogger,
     EarlyStopping,
     ModelCheckpoint,
-    CSVLogger,
-    TensorBoard,
 )
-#from loss_plot import TrainingPlot
-from data_preparer import PixelDataPreparer
-from numpy.random import seed
-from unet_generator import UnetGenerator
-seed(1)
-import tensorflow as tf
-#tf.random.set_seed(2)
-#set_random_seed(2)
+from tensorflow.keras.models import Model, load_model
+from tensorflow.keras.layers import (
+    BatchNormalization,
+    concatenate,
+    Conv2D,
+    Conv2DTranspose,
+    Dense,
+    Dropout,
+    Flatten,
+    Input,
+    MaxPooling2D,
+    UpSampling2D,
+)
 
-SEED = 1
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
+from data_preparer import PixelDataPreparer
+from unet_generator import UnetGenerator
+np.random.seed(1)
 
 
 class PixelModel():
@@ -48,25 +45,35 @@ class PixelModel():
             Make the model
         """
 
-        visible = Input(shape=(self.num_neighbor * 2,
-                               self.num_neighbor * 2,
-                               len(self.bands)
-                               )
-                        )
-        conv1 = Conv2D(32, kernel_size=2, activation="relu",
-                       padding="same")(visible)
+        visible = Input(
+            shape=(
+                self.num_neighbor * 2,
+                self.num_neighbor * 2,
+                len(self.bands)
+            )
+        )
+
+        conv1 = Conv2D(
+            32, kernel_size=2, activation="relu",
+            padding="same"
+        )(visible)
+
         pool1 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv1)
         conv2 = Conv2D(64, kernel_size=2, activation="relu",
                        padding="same")(pool1)
+
         pool2 = MaxPooling2D(pool_size=(2, 2), padding="same")(conv2)
         flatten = Flatten()(pool2)
+
         dense1 = Dense(40, activation="relu")(flatten)
         dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(25, activation="relu")(dense1)
         dense1 = Dropout(0.3)(dense1)
         dense1 = Dense(10, activation="relu")(dense1)
         dense1 = Dropout(0.3)(dense1)
+
         dense2 = Dense(5, activation="relu")(dense1)
+
         output = Dense(1, activation="sigmoid")(dense2)
 
         self.model = Model(inputs=visible, outputs=output)
@@ -93,10 +100,13 @@ class PixelModel():
             neighbour_pixels=self.num_neighbor
         )
         dp.iterate(self.bands)
+
         x = np.array(dp.dataset)
         print('input shape', x.shape)
+
         y = np.array(dp.labels)
         print('label shape', y.shape)
+
         x, y = unison_shuffled_copies(x, y)
 
         self.model.compile(
@@ -104,6 +114,7 @@ class PixelModel():
             loss="binary_crossentropy",
             metrics=["accuracy", "mae"]
         )
+
         print(self.model.summary())
 
         self.model.fit(
@@ -135,12 +146,15 @@ class BaseModel:
         self.build_model()
 
     def build_callbacks(self):
+        log_path = self.model_save_path
+        base_path = os.path.splitext(log_path)[0]
+        log_path = os.rename(my_file, base_path + '.log')
         self.callbacks = [
             EarlyStopping(monitor="val_loss", patience=20,
                           verbose=1, mode="auto"),
             ModelCheckpoint(filepath=self.model_save_path,
                             verbose=1, save_best_only=True),
-            CSVLogger(self.model_save_path.replace('h5', 'log'), append=True),
+            CSVLogger(log_path, append=True),
 
         ]
 
@@ -235,63 +249,16 @@ class UNetModel(BaseModel):
             kernel_size=(1, 1),
             strides=(1, 1),
             activation=output_activation,
-            padding='valid')(x)
+            padding='valid'
+        )(x)
 
         model = Model(inputs=[inputs], outputs=[outputs])
         self.model = model
 
     def train(self):
-        # data_gen_args = dict(featurewise_center=True,
-        #                      featurewise_std_normalization=True,
-        #                      rotation_range=90.,
-        #                      width_shift_range=0.1,
-        #                      height_shift_range=0.1,
-        #                      zoom_range=0.2)
 
-        # train_datagen = ImageDataGenerator(**data_gen_args)
-
-        # val_datagen = ImageDataGenerator(rescale=1. / 255)
-
-        # train_image_generator = train_datagen.flow_from_directory(
-        #     '../unet_master/train/frames/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=8,
-        #     seed=SEED
-        # )
-
-        # train_mask_generator = train_datagen.flow_from_directory(
-        #     '../unet_master/train/masks/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=8,
-        #     color_mode='grayscale',
-        #     seed=SEED
-        # )
-
-        # val_image_generator = val_datagen.flow_from_directory(
-        #     '../unet_master/val/frames/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=4,
-        #     seed=SEED,
-        # )
-
-        # val_mask_generator = val_datagen.flow_from_directory(
-        #     '../unet_master/val/masks/',
-        #     class_mode=None,
-        #     target_size=(self.config['input_size'], self.config['input_size']),
-        #     batch_size=4,
-        #     color_mode='grayscale',
-        #     seed=SEED,
-        # )
-
-        # train_generator = zip(train_image_generator, train_mask_generator)
-        # val_generator = zip(val_image_generator, val_mask_generator)
-        # # vis_res(val_generator, 1, 2)
-
-        train_generator = UnetGenerator('../unet_master/train/frames/data/')
-        val_generator = UnetGenerator('../unet_master/val/frames/data/')
+        train_generator = UnetGenerator(self.config['train_dir'])
+        val_generator = UnetGenerator(self.config['val_input_dir'])
         results = self.model.fit_generator(
             train_generator,
             epochs=200,
@@ -300,13 +267,16 @@ class UNetModel(BaseModel):
             callbacks=self.callbacks,
             validation_steps=24,
         )
+
         return results
 
 
 def infer(model_path):
     model = load_model(model_path)
-    val_generator = UnetGenerator('../unet_master/val/frames/data/', batch_size=4)
-    vis_res(val_generator, model)
+    val_generator = UnetGenerator(
+        self.config['val_input_dir'], batch_size=4
+    )
+    visualize_results(val_generator, model)
 
 
 def bn_conv_relu(input, filters, bachnorm_momentum, **conv2d_args):
@@ -321,21 +291,42 @@ def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
     return x
 
 
-def vis_res(val_generator, model):
-    import matplotlib.pyplot as plt
-    import numpy.ma as ma
-    f, ax = plt.subplots(1, 2)
-    for i, batch_data in enumerate(val_generator):
-        (modis_batch, bmp_batch) = batch_data
-        bmp_predict_batch = model.predict(modis_batch)
-        for j in range(len(modis_batch)):
-                ax[0].imshow(convert_rgb(modis_batch[j]).astype('uint8'))
-                ax[1].imshow(convert_rgb(modis_batch[j]).astype('uint8'))
-                bmp_data = bmp_batch[j].astype('uint8')
-                ax[0].imshow(ma.masked_where(bmp_data != 1, bmp_data)[:,:,0],alpha=0.35,cmap='Purples')
+def visualize_results(val_generator, model):
 
-                ax[1].imshow(ma.masked_where(bmp_predict_batch[j] < 0.5, bmp_predict_batch[j])[:,:,0],alpha=0.45,cmap='spring')
-                plt.savefig(f'../unet_master/results/{i}_{j}.png')
+    save_path = os.path.join(self.val_output_dir,'results')
+
+    if not os.path.exists:
+        os.mkdirs(save_path)
+
+    f, ax = plt.subplots(1, 2)
+
+    for i, batch_data in enumerate(val_generator):
+        modis_batch, bmp_batch = batch_data
+        bmp_predict_batch = model.predict(modis_batch)
+
+        for j in range(len(modis_batch)):
+            ax[0].imshow(
+                convert_rgb(modis_batch[j]).astype('uint8')
+            )
+            ax[1].imshow(convert_rgb(modis_batch[j]).astype('uint8'))
+            bmp_data = bmp_batch[j].astype('uint8')
+            ax[0].imshow(
+                ma.masked_where(
+                    bmp_data != 1, bmp_data
+                )[:, :, 0],
+                alpha=0.35,
+                cmap='Purples'
+            )
+
+            ax[1].imshow(
+                ma.masked_where(
+                    bmp_predict_batch[j] < 0.5, bmp_predict_batch[j]
+                )[:, :, 0],
+                alpha=0.45,
+                cmap='spring'
+            )
+
+            plt.savefig(os.path.join(save_path, f'{i}_{j}.png'))
 
 
 def convert_rgb(img):
@@ -344,6 +335,7 @@ def convert_rgb(img):
     blue = img[:, :, 0]
     pseudo_green = img[:, :, 2]
     height, width = red.shape
+
     img = np.moveaxis(
         np.array([red, pseudo_green, blue]), 0, -1
     )
@@ -351,28 +343,9 @@ def convert_rgb(img):
     return img
 
 
-def vis_res_predict(val_generator, i, j, model):
-    import matplotlib.pyplot as plt
-    f, ax = plt.subplots(2)
-    import numpy.ma as ma
-    for h in range(j):
-        (modis_data, bmp_data) = next(val_generator)
-    ax[0].imshow(modis_data[i])
-    ax[1].imshow(modis_data[i])
-    bmp_data = model.predict(modis_data)
-    ax[1].imshow(ma.masked_where(bmp_data < 0.1, bmp_data)[i, :,:,0],alpha=0.25,cmap='winter')
-    ax[0].imshow(bmp_data[i, :,:,0], alpha=0.25,cmap='winter')
-    plt.show()
-
-
-if __name__ == '__main__':
-
-    infer('../models/smoke_unet.h5')
-
-
 def unison_shuffled_copies(a, b):
     """
-    shuffle a,b in unison and return shuffled a,b
+    shuffle a,b in unison and return shuffled a, b
 
     Args:
         a (list/array): data a
@@ -381,8 +354,11 @@ def unison_shuffled_copies(a, b):
     Returns:
         TYPE: a,b shuffled and resampled
     """
+
     assert len(a) == len(b)
+
     indices = np.random.permutation(len(a))
+
     return [
            [a[index] for index in indices],
            [b[index] for index in indices]

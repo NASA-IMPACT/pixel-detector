@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
-# @Date:   2019-07-02 15:33:11
-# @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-10-08 14:21:26
-
 import os
 import sys
 import json
@@ -70,14 +64,18 @@ class DataRasterizer():
     def rasterize_ncfile(self, ncfile, extent, cza_correct):
 
         dataset = xarray.open_dataset(str(ncfile), engine='h5netcdf')
+
         data = dataset['Rad'].data
         kappa0 = dataset['kappa0'].data
         utc_time = dataset['t'].data
+
         dataset.close()
+
         mem_file = wgs84_transform_memory(data, ncfile, extent)
         ref, transform = self.rad_to_ref(
             mem_file, kappa0, utc_time, cza_correct
         )
+
         return ref, transform
 
     def rad_to_ref(self, mem_file, k, utc_time, cza_correct, gamma=2.0):
@@ -86,13 +84,17 @@ class DataRasterizer():
             data_array = xarray.open_rasterio(memfile)
             rad = data_array[0].data * k
             transform = data_array.transform
+
             if cza_correct:
                 x, y = np.meshgrid(data_array['x'], data_array['y'])
                 cza = astronomy.cos_zen(utc_time, x, y)
                 rad = rad * cza
+
             data_array.close()
+
             ref = np.clip(rad, 0, 1)
             ref_clipped = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
+
             return ref_clipped.astype('uint8'), transform
 
     def list_bands(self, loc, band_array, time):
@@ -103,11 +105,14 @@ class DataRasterizer():
         path_list = []
 
         print('checking for nc in ', loc)
+
         for band in band_array:
             ncfile_string = '{}/*{}*s{}*.nc'
             fname = glob(ncfile_string.format(loc, band, time))
+
             print(ncfile_string.format(loc, band, time))
             print(fname)
+
             if fname == []:
                 print('Nc Files not Found')
                 sys.exit(1)
@@ -131,15 +136,17 @@ class DataRasterizer():
             TYPE: Description
         """
         red, green, blue = img[:, :, 1], img[:, :, 2], img[:, :, 0]
+
         green_true = 0.45 * ((red / 25.5)**2 / 100) + 0.1 * \
             ((green / 25.5)**2 / 100) + 0.45 * ((blue / 25.5)**2 / 100)
+        
         green_true = np.maximum(green_true, 0)
         green_true = np.minimum(green_true, 1)
 
-        rgb_true = np.dstack([red,
-                              green_true,
-                              blue]
-                             )
+        rgb_true = np.dstack(
+            [red, green_true, blue]
+        )
+
         return rgb_true
 
     def save_image(self, img_array, loc):

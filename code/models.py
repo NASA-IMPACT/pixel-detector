@@ -1,7 +1,9 @@
 import numpy as np
 import numpy.ma as ma
 import matplotlib.pyplot as plt
+import os
 import tensorflow as tf
+
 
 from tensorflow.keras.callbacks import (
     CSVLogger,
@@ -148,7 +150,7 @@ class BaseModel:
     def build_callbacks(self):
         log_path = self.model_save_path
         base_path = os.path.splitext(log_path)[0]
-        log_path = os.rename(my_file, base_path + '.log')
+        log_path = base_path + '.log'
         self.callbacks = [
             EarlyStopping(monitor="val_loss", patience=20,
                           verbose=1, mode="auto"),
@@ -272,10 +274,14 @@ class UNetModel(BaseModel):
         results = self.model.fit_generator(
             train_generator,
             epochs=200,
-            steps_per_epoch=64,
+            steps_per_epoch=np.floor(
+                train_generator.num_samples / train_generator.batch_size
+            ),
             validation_data=val_generator,
+            validation_steps=np.floor(
+                val_generator.num_samples / val_generator.batch_size
+            ),
             callbacks=self.callbacks,
-            validation_steps=24,
         )
 
         return results

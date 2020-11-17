@@ -24,7 +24,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
         self.data_path = data_path
         self.tif_list = [filename for filename in glob(f'{data_path}*.tif')]
         self.mask_list = []
-
+        self.num_samples = len(self.tif_list)
         self.to_fit = to_fit
         self.batch_size = batch_size
         self.dim = dim
@@ -118,8 +118,9 @@ def _load_tif_image(image_path, dim):
     """load tif image"""
 
     with rasterio.open(image_path, 'r') as data:
+        # remove alpha channel
         return cv2.resize(
-            np.moveaxis(data.read(), 0, -1), dim
+            np.moveaxis(data.read()[:-1], 0, -1), dim
         )
 
 

@@ -1,16 +1,17 @@
 {
-  "type": "pixel",
-  "num_neighbor": 7,
-  "total_bands": 3,
+  "type": "unet",
+  "num_neighbor": 6,
+  "total_bands": 6,
   "jsonfile": "../data/train_list.json",
   "num_epoch": 500,
   "batch_size": 50000,
-  "model_path": "../models/smokev3_7_cza.h5",
-  "val_input_dir": "../data/volcano_images/",
-  "val_output_dir": "../data/volcano_predictions/",
+  "model_path": "../models/smokev4_6b_ref.h5",
+  "val_input_dir": "../wmts_processed_val/",
+  "val_output_dir": "../data/wmts_processed/",
   "eval_json": "../data/train_list2.json",
   "pred_json": "../data/train_list.json",
   "pred_shp_path": "/nas/rhome/mramasub/smoke_pixel_detector/data/prod_level/",
   "bands": [0, 1, 2, 3, 4, 5],
-  "train_dir": "../data/images_train_cza/"
+  "train_dir": "../wmts_processed_train/",
+  "input_size": 256
 }

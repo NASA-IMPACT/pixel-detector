@@ -283,33 +283,18 @@ class UNetModel(BaseModel):
             ),
             callbacks=self.callbacks,
         )
-
+        self.infer(self.model_save_path)
         return results
 
 
-def infer(model_path):
+def infer(model_path, val_input_path, val_output_path):
     model = load_model(model_path)
     val_generator = UnetGenerator(
-        self.config['val_input_dir'], batch_size=4
+        val_input_path, batch_size=4
     )
-    visualize_results(val_generator, model)
+    visualize_results(val_generator, model, val_output_path)
 
-
-def bn_conv_relu(input, filters, bachnorm_momentum, **conv2d_args):
-    x = BatchNormalization(momentum=bachnorm_momentum)(input)
-    x = Conv2D(filters, **conv2d_args)(x)
-    return x
-
-
-def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
-    x = BatchNormalization(momentum=bachnorm_momentum)(input)
-    x = Conv2DTranspose(filters, **conv2d_trans_args)(x)
-    return x
-
-
-def visualize_results(val_generator, model):
-
-    save_path = os.path.join(self.val_output_dir, 'results')
+def visualize_results(val_generator, model, save_path):
 
     if not os.path.exists:
         os.mkdirs(save_path)
@@ -317,14 +302,14 @@ def visualize_results(val_generator, model):
     f, ax = plt.subplots(1, 2)
 
     for i, batch_data in enumerate(val_generator):
-        modis_batch, bmp_batch = batch_data
-        bmp_predict_batch = model.predict(modis_batch)
+        input_batch, bmp_batch = batch_data
+        bmp_predict_batch = model.predict(input_batch)
 
-        for j in range(len(modis_batch)):
+        for j in range(len(input_batch)):
             ax[0].imshow(
-                convert_rgb(modis_batch[j]).astype('uint8')
+                convert_rgb(input_batch[j]).astype('uint8')
             )
-            ax[1].imshow(convert_rgb(modis_batch[j]).astype('uint8'))
+            ax[1].imshow(convert_rgb(input_batch[j]).astype('uint8'))
             bmp_data = bmp_batch[j].astype('uint8')
             ax[0].imshow(
                 ma.masked_where(
@@ -345,11 +330,22 @@ def visualize_results(val_generator, model):
             plt.savefig(os.path.join(save_path, f'{i}_{j}.png'))
 
 
+def bn_conv_relu(input, filters, bachnorm_momentum, **conv2d_args):
+    x = BatchNormalization(momentum=bachnorm_momentum)(input)
+    x = Conv2D(filters, **conv2d_args)(x)
+    return x
+
+
+def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
+    x = BatchNormalization(momentum=bachnorm_momentum)(input)
+    x = Conv2DTranspose(filters, **conv2d_trans_args)(x)
+    return x
+
 def convert_rgb(img):
 
-    red = img[:, :, 1]
-    blue = img[:, :, 0]
-    pseudo_green = img[:, :, 2]
+    red = img[:, :, 1].astype('uint8')
+    blue = img[:, :, 0].astype('uint8')
+    pseudo_green = img[:, :, 2].astype('uint8')
     height, width = red.shape
 
     img = np.moveaxis(
@@ -379,3 +375,6 @@ def unison_shuffled_copies(a, b):
            [a[index] for index in indices],
            [b[index] for index in indices]
     ]
+
+if __name__ == '__main__':
+    infer('../models/smokev4_6b_ref.h5', '../wmts_processed_val/', '../data/wmts_processed/')

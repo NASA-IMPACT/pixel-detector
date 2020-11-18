@@ -31,10 +31,16 @@ KAPPA0 = [
 
 
 class DataRasterizerWmts(DataRasterizer):
-    def __init__(self, *args, **kwargs):
-        super(DataRasterizerWmts, self).__init__(*args, **kwargs)
+    def __init__(self, jsonfile, save_path, pre_process):
+        self.pre_process = pre_process
+        self.cza_correct = False
+        super(DataRasterizerWmts, self).__init__(
+            jsonfile=jsonfile,
+            save_path=save_path,
+            cza_correct=self.cza_correct
+        )
 
-    def prepare_data(self, cza_correct):
+    def prepare_data(self):
         count = 0
         for item in self.jsondict:
 
@@ -121,7 +127,7 @@ class DataRasterizerWmts(DataRasterizer):
                 response = requests.get(tile_url)
                 if response.status_code != 500:
                     rio_tiff = rasterio.io.MemoryFile(response.content).open()
-                    if preprocess_flag:
+                    if self.pre_process:
                         rio_data = self.rad_to_ref(rio_tiff, nctime)
                     else:
                         rio_data = rio_tiff.read()
@@ -129,17 +135,24 @@ class DataRasterizerWmts(DataRasterizer):
                     rio_tiles_and_info.append(
                         (rio_data, rio_tiff.meta, f'{scene_id}_{y}_{x}')
                     )
+                else:
+                    with open('failed_links.txt', 'a') as file:
+                        file.write(tile_url)
 
         return rio_tiles_and_info
 
-    def rad_to_ref(self, mem_file, nctime, cza_correct=True, gamma=2.0):
+    def rad_to_ref(self, mem_file, nctime, gamma=2.0):
 
         # utc_time = convert_to_utc_format(nctime)
         xarray_dataset = xarray.open_rasterio(mem_file)
 
         # move band axis to the end for vector multiplication
-        rad = np.dot(np.moveaxis(xarray_dataset.data, 0, -1), KAPPA0)
-        if cza_correct:
+        rad = np.array(
+            [band * KAPPA0[b_num] for b_num, band in enumerate(
+                xarray_dataset.data
+            )]
+        )
+        if self.cza_correct:
             x, y = np.meshgrid(xarray_dataset['x'], xarray_dataset['y'])
             cza = astronomy.cos_zen(utc_time, x, y)
             rad = rad * cza
@@ -147,7 +160,7 @@ class DataRasterizerWmts(DataRasterizer):
         ref_clipped = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
 
         # move band axis back to leading axis for rasterio format
-        return np.moveaxis(ref_clipped, -1, 0).astype('uint8')
+        return ref_clipped
 
 
 def calculate_new_bbox(start_x, start_y, end_x, end_y):
@@ -174,6 +187,6 @@ def calculate_tile_xy(extent):
 if __name__ == '__main__':
     drw = DataRasterizerWmts(
         '../data/train_val_test_list-v3.1.json',
-        '../wmts_tiles/',
-        cza_correct=True
+        '../wmts_processed/',
+        pre_process=True
     )

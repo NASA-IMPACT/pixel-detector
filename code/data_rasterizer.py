@@ -23,9 +23,9 @@ class DataRasterizer():
 
         self.save_path = save_path
         self.parse_json(jsonfile)
-        self.prepare_data(cza_correct)
+        self.prepare_data()
 
-    def prepare_data(self, cza_correct):
+    def prepare_data(self, cza_correct=False):
 
         for item in self.jsondict:
             ncpath = item['ncfile']
@@ -139,7 +139,7 @@ class DataRasterizer():
 
         green_true = 0.45 * ((red / 25.5)**2 / 100) + 0.1 * \
             ((green / 25.5)**2 / 100) + 0.45 * ((blue / 25.5)**2 / 100)
-        
+
         green_true = np.maximum(green_true, 0)
         green_true = np.minimum(green_true, 1)
 

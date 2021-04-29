@@ -5,7 +5,7 @@
   "jsonfile": "../data/train_list.json",
   "num_epoch": 500,
   "batch_size": 50000,
-  "model_path": "../models/smokev4_6b_ref.h5",
+  "model_path": "../models/smokev4_6b_ref_extended.h5",
   "val_input_dir": "../wmts_processed_val/",
   "val_output_dir": "../data/wmts_processed/",
   "eval_json": "../data/train_list2.json",

@@ -290,7 +290,7 @@ class UNetModel(BaseModel):
 def infer(model_path, val_input_path, val_output_path):
     model = load_model(model_path)
     val_generator = UnetGenerator(
-        val_input_path, batch_size=4
+        val_input_path, batch_size=4, to_fit=False
     )
     visualize_results(val_generator, model, val_output_path)
 
@@ -302,7 +302,7 @@ def visualize_results(val_generator, model, save_path):
     f, ax = plt.subplots(1, 2)
 
     for i, batch_data in enumerate(val_generator):
-        input_batch, bmp_batch = batch_data
+        input_batch, bmp_batch = batch_data, batch_data
         bmp_predict_batch = model.predict(input_batch)
 
         for j in range(len(input_batch)):
@@ -377,4 +377,4 @@ def unison_shuffled_copies(a, b):
     ]
 
 if __name__ == '__main__':
-    infer('../models/smokev4_6b_ref.h5', '../wmts_processed_val/', '../data/wmts_processed/')
+    infer('../models/smokev4_6b_ref_extended.h5', '../wmts_processed_251/', '../data/wmts_vis/')

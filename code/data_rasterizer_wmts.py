@@ -69,7 +69,7 @@ class DataRasterizerWmts(DataRasterizer):
                 print(f'processed and saved: {scene_id}')
         print(f'total tiles saved: {count}')
 
-    def generate_tiles(self, nctime, extent, preprocess_flag=True):
+    def generate_tiles(self, nctime, extent, preprocess_flag=False):
         """generate wmts tiles from nctime time and extent (bounbing box)
         information and store it in self.save_path
 
@@ -82,7 +82,6 @@ class DataRasterizerWmts(DataRasterizer):
             TYPE: Description
         """
         nctime = nctime[:9]  # subsetting nctime to remove minute strings
-
         def increment_if_low(start_num, end_num):
             """ increment start tile number if end tile number is lesser than
             start
@@ -186,7 +185,7 @@ def calculate_tile_xy(extent):
 
 if __name__ == '__main__':
     drw = DataRasterizerWmts(
-        '../data/train_val_test_list-v3.1.json',
-        '../wmts_processed/',
+        'test_unet.json',
+        '../wmts_processed_251/',
         pre_process=True
     )

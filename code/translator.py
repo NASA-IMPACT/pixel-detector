@@ -2,7 +2,6 @@
 import datetime
 import os
 from typing import Dict
-import click
 import numpy
 import rasterio
 from affine import Affine
@@ -15,6 +14,7 @@ from rasterio.transform import array_bounds
 from rasterio.warp import calculate_default_transform, reproject
 from rio_cogeo.profiles import cog_profiles
 from rasterio.rio.overview import get_maximum_overview_level
+
 # From https://github.com/Solcast/netcdf-tiff
 def get_goes_transform(resolution: str) -> Affine:
     """Return GOES16 geotransform for corresponding resolution."""
@@ -47,9 +47,7 @@ def get_goes_transform(resolution: str) -> Affine:
         )
     else:
         raise Exception(f"Invalid resolution: {resolution}")
-@click.command()
-@click.argument('src_path', type=str)
-@click.argument('out_path', type=str)
+
 def create_cogeo(src_path: str, out_path: str):
     """Convert a GOES netcdf to COG."""
     dataset = "Rad",
@@ -145,8 +143,5 @@ def create_cogeo(src_path: str, out_path: str):
                 mem.update_tags(1, **attrs)
                 mem._set_all_scales([attrs["scale_factor"]])
                 mem._set_all_offsets([attrs["add_offset"]])
-                # Create COG from the memoryfile and upload to S3
-                with MemoryFile() as out_dst:
-                    copy(mem, out_path, copy_src_overviews=True, **cogeo_profile)
-if __name__ == '__main__':
-    main()
+                # return the open mem file
+                return mem

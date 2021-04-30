@@ -51,7 +51,8 @@ class DataRasterizerWmts(DataRasterizer):
             nctime = item['nctime']
             extent = item['extent']
             shapefile_path = item['shp']
-            rio_tiles = self.generate_tiles(nctime, extent)
+            # rio_tiles = self.generate_tiles(nctime, extent)
+            rio_tiles = self.generate_tiles_netcdf(ncpath, nctime, extent)
             for rio_data, rio_meta, scene_id in rio_tiles:
 
                 # save tiffs
@@ -140,6 +141,81 @@ class DataRasterizerWmts(DataRasterizer):
                 else:
                     with open('failed_links.txt', 'a') as file:
                         file.write(tile_url)
+
+        return rio_tiles_and_info
+
+    def generate_tiles_netcdf(self, ncfile, nctime, extent, preprocess_flag=False):
+        """generate wmts tiles from nctime time and extent (bounbing box)
+        information and store it in self.save_path
+
+        Args:
+            nctime (str): netcdf namestring denoting time of scene
+            extent (list): bounding box of the scene
+            preprocess_flag (bool, optional): rad_to_ref convert flag
+
+        Returns:
+            TYPE: Description
+        """
+        nctime = nctime[:9]  # subsetting nctime to remove minute strings
+        def increment_if_low(start_num, end_num):
+            """ increment start tile number if end tile number is lesser than
+            start
+
+            Args:
+                start_num
+                end_num
+
+            Returns:
+                start_num, end_num
+            """
+            if start_num > end_num:
+                start_num = end_num
+            return start_num, end_num
+
+        rio_tiles_and_info = list()
+        # format scene_id with the correct `m` string variation
+        scene_id = SCENE_ID_FORMAT.format(
+            M_STRING_VARIATIONS[int(int(nctime[:7]) > 2019092)],
+            nctime,
+        )
+
+        start_x, start_y, end_x, end_y = calculate_tile_xy(extent)
+        # increment start tile number if end tile number is lesser than start
+        start_x, end_x = increment_if_low(start_x, end_x)
+        start_y, end_y = increment_if_low(start_y, end_y)
+        extent = calculate_new_bbox(start_x, start_y, end_x, end_y)
+        height = (end_x - start_x + 1) * TILE_SIZE
+        width = (end_y - start_y + 1) * TILE_SIZE
+
+        # Create a in-memory cogeo list from all netcdf bands
+        raster_tif_list = zip(*map(
+            create_cogeo,
+            self.list_bands(
+                ncfile, BANDS_LIST, nctime
+            )
+        ))
+        # loop through the tile range
+        # TODO: parallelize the double loop tiler
+        for y in range(start_y, end_y + 1):
+            start_index_y = (y - start_y) * TILE_SIZE
+            for x in range(start_x, end_x + 1):
+                start_index_x = (x - start_x) * TILE_SIZE
+
+                # response = requests.get(tile_url)
+                tile = tiles(ZOOM_LEVEL, x, y, raster_tif_list)
+                rio_tiff = tile
+                if tile:
+                    if self.pre_process:
+                        rio_data = self.rad_to_ref(rio_tiff, nctime)
+                    else:
+                        rio_data = rio_tiff.read()
+                    rio_meta = rio_tiff.meta
+                    rio_tiles_and_info.append(
+                        (rio_data, rio_tiff.meta, f'{scene_id}_{y}_{x}')
+                    )
+                else:
+                    with open('failed_links.txt', 'a') as file:
+                        file.write(f"{ZOOM_LEVEL}, {x}, {y}")
 
         return rio_tiles_and_info
 

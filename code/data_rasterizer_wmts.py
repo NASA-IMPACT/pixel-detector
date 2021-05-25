@@ -186,7 +186,6 @@ class DataRasterizerWmts(DataRasterizer):
         extent = calculate_new_bbox(start_x, start_y, end_x, end_y)
         height = (end_x - start_x + 1) * TILE_SIZE
         width = (end_y - start_y + 1) * TILE_SIZE
-
         # Create a in-memory cogeo list from all netcdf bands
         raster_tif_list = zip(*map(
             create_cogeo,
@@ -264,7 +263,7 @@ def calculate_tile_xy(extent):
 
 if __name__ == '__main__':
     drw = DataRasterizerWmts(
-        'test_unet.json',
-        '../wmts_processed_251/',
+        '../data/train_val_list-v3.1.json',
+        '../data/wmts_processed_train_val/',
         pre_process=True
     )

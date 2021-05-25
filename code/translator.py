@@ -48,11 +48,11 @@ def get_goes_transform(resolution: str) -> Affine:
     else:
         raise Exception(f"Invalid resolution: {resolution}")
 
-def create_cogeo(src_path: str, out_path: str):
+def create_cogeo(src_path: str):
     """Convert a GOES netcdf to COG."""
-    dataset = "Rad",
-    profile  = "deflate",
-    profile_options = {"blockxsize": 128, "blockysize": 128},
+    dataset = "Rad"
+    profile  = "deflate"
+    profile_options = {"blockxsize": 128, "blockysize": 128}
     ds = Dataset(src_path, "r")
     # Get Projection Info from NetCDF Variables
     proj_name = ds.variables[dataset].getncattr("grid_mapping")

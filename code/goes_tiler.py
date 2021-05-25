@@ -11,9 +11,8 @@ from rasterio.crs import CRS
 from rasterio.transform import from_bounds
 from rasterio.warp import transform_bounds
 
-from rio_tiler.utils import array_to_image, tile_read
+from rio_tiler.utils import tile_read
 from rio_tiler.profiles import img_profiles
-
 
 
 def _cog_path(sceneid, band):
@@ -82,9 +81,7 @@ def tiles(
         sio.seek(0)
         return ("OK", "application/x-binary", sio.getvalue())
     else:
-        return array_to_image(
-                rtile, mask, img_format=driver, **options
-            )
+        return None
 
 def tile(
     src_dst,

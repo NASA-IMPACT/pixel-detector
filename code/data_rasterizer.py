@@ -104,14 +104,9 @@ class DataRasterizer():
 
         path_list = []
 
-        print('checking for nc in ', loc)
-
         for band in band_array:
             ncfile_string = '{}/*{}*s{}*.nc'
             fname = glob(ncfile_string.format(loc, band, time))
-
-            print(ncfile_string.format(loc, band, time))
-            print(fname)
 
             if fname == []:
                 print('Nc Files not Found')

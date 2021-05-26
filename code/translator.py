@@ -117,31 +117,31 @@ def create_cogeo(src_path: str):
         )
         # Reproject the input file to WGS84 into a MemoryFile
         with MemoryFile() as memfile:
-            with memfile.open(**output_profile) as mem:
-                reproject(
-                    extracted_data,
-                    rasterio.band(mem, 1),
-                    src_transform=transform,
-                    src_crs=crs,
-                    src_nodata=attrs["_FillValue"],
-                    resampling=Resampling.nearest,
-                    warp_mem_limit=0.1,
-                    num_threads=8,
-                )
-                del extracted_data
-                overview_level = get_maximum_overview_level(mem.width, mem.height, minsize=tilesize)
-                overviews = [2 ** j for j in range(1, overview_level + 1)]
-                mem.build_overviews(overviews, Resampling.nearest)
-                tags = dict(
-                    OVR_RESAMPLING_ALG="NEAREST",
-                    kappa0=kappa0,
-                    t=t,
-                    esun=esun,
-                    goes_scene=os.path.basename(src_path),
-                )
-                mem.update_tags(**tags)
-                mem.update_tags(1, **attrs)
-                mem._set_all_scales([attrs["scale_factor"]])
-                mem._set_all_offsets([attrs["add_offset"]])
-                # return the open mem file
-                return mem
+            mem = memfile.open(**output_profile)
+            reproject(
+                extracted_data,
+                rasterio.band(mem, 1),
+                src_transform=transform,
+                src_crs=crs,
+                src_nodata=attrs["_FillValue"],
+                resampling=Resampling.nearest,
+                warp_mem_limit=0.1,
+                num_threads=8,
+            )
+            del extracted_data
+            overview_level = get_maximum_overview_level(mem.width, mem.height, minsize=tilesize)
+            overviews = [2 ** j for j in range(1, overview_level + 1)]
+            mem.build_overviews(overviews, Resampling.nearest)
+            tags = dict(
+                OVR_RESAMPLING_ALG="NEAREST",
+                kappa0=kappa0,
+                t=t,
+                esun=esun,
+                goes_scene=os.path.basename(src_path),
+            )
+            mem.update_tags(**tags)
+            mem.update_tags(1, **attrs)
+            mem._set_all_scales([attrs["scale_factor"]])
+            mem._set_all_offsets([attrs["add_offset"]])
+            # return the open mem file
+            return mem

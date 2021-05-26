@@ -173,7 +173,7 @@ class BaseModel:
 class UNetModel(BaseModel):
 
     def create_model(self):
-        num_layers = 1
+        num_layers = 3
         input_shape = (
             self.config['input_size'],
             self.config['input_size'],
@@ -377,4 +377,4 @@ def unison_shuffled_copies(a, b):
     ]
 
 if __name__ == '__main__':
-    infer('../models/smokev4_6b_ref_extended.h5', '../wmts_processed_251/', '../data/wmts_vis/')
+    infer('../models/smoke_wmts_ref.h5', '../wmts_processed_251/', '../data/wmts_vis/')

@@ -46,7 +46,7 @@ class DataRasterizerWmts(DataRasterizer):
 
     def prepare_data(self):
         count = 0
-        for item in self.jsondict:
+        for item in tqdm(self.jsondict):
 
             ncpath = item['ncfile']
             nctime = item['nctime']
@@ -157,6 +157,7 @@ class DataRasterizerWmts(DataRasterizer):
         Returns:
             TYPE: Description
         """
+        nctime_long = nctime
         nctime = nctime[:9]  # subsetting nctime to remove minute strings
         def increment_if_low(start_num, end_num):
             """ increment start tile number if end tile number is lesser than
@@ -177,7 +178,7 @@ class DataRasterizerWmts(DataRasterizer):
         # format scene_id with the correct `m` string variation
         scene_id = SCENE_ID_FORMAT.format(
             M_STRING_VARIATIONS[int(int(nctime[:7]) > 2019092)],
-            nctime,
+            nctime_long,
         )
 
         start_x, start_y, end_x, end_y = calculate_tile_xy(extent)
@@ -188,10 +189,10 @@ class DataRasterizerWmts(DataRasterizer):
         height = (end_x - start_x + 1) * TILE_SIZE
         width = (end_y - start_y + 1) * TILE_SIZE
         # Create a in-memory cogeo list from all netcdf bands
-        raster_tif_list = zip(*map(
+        raster_tif_list = list(map(
             create_cogeo,
             self.list_bands(
-                ncfile, BANDS_LIST, nctime
+                ncfile, BANDS_LIST, nctime_long
             )
         ))
         # loop through the tile range
@@ -200,16 +201,13 @@ class DataRasterizerWmts(DataRasterizer):
             start_index_y = (y - start_y) * TILE_SIZE
             for x in range(start_x, end_x + 1):
                 start_index_x = (x - start_x) * TILE_SIZE
-
-                # response = requests.get(tile_url)
-                tile = tiles(ZOOM_LEVEL, x, y, raster_tif_list)
-                rio_tiff = tile
+                tile, options = tiles(ZOOM_LEVEL, x, y, raster_tif_list, sceneid=scene_id)
+                rio_tiff = rasterio.io.MemoryFile(tile).open()
                 if tile:
                     if self.pre_process:
-                        rio_data = self.rad_to_ref(rio_tiff, nctime)
+                        rio_data = self.rad_to_ref(rio_tiff, options)
                     else:
                         rio_data = rio_tiff.read()
-                    rio_meta = rio_tiff.meta
                     rio_tiles_and_info.append(
                         (rio_data, rio_tiff.meta, f'{scene_id}_{y}_{x}')
                     )
@@ -219,27 +217,25 @@ class DataRasterizerWmts(DataRasterizer):
 
         return rio_tiles_and_info
 
-    def rad_to_ref(self, mem_file, nctime, gamma=2.0):
+    def rad_to_ref(self, mem_file, auxillary_options, gamma=2.0):
 
-        # utc_time = convert_to_utc_format(nctime)
         xarray_dataset = xarray.open_rasterio(mem_file)
-
         # move band axis to the end for vector multiplication
+        # ignore last layer of xarray as it is ALPHA CHHANNEL
         rad = np.array(
-            [band * KAPPA0[b_num] for b_num, band in enumerate(
-                xarray_dataset.data
+            [band * float(auxillary_options[f'b{b_num}_kappa0']) for b_num, band in enumerate(
+                xarray_dataset.data[:-1]
             )]
         )
         if self.cza_correct:
             x, y = np.meshgrid(xarray_dataset['x'], xarray_dataset['y'])
-            cza = astronomy.cos_zen(utc_time, x, y)
+            cza = astronomy.cos_zen(float(auxillary_options['t']), x, y)
             rad = rad * cza
         ref = np.clip(rad, 0, 1)
         ref_clipped = np.floor(np.power(ref * 100, 1 / gamma) * 25.5)
 
         # move band axis back to leading axis for rasterio format
         return ref_clipped
-
 
 def calculate_new_bbox(start_x, start_y, end_x, end_y):
     start_lon, _, _, end_lat = mercantile.bounds(
@@ -248,7 +244,6 @@ def calculate_new_bbox(start_x, start_y, end_x, end_y):
     _, start_lat, end_lon, _ = mercantile.bounds(
         end_x, end_y, ZOOM_LEVEL
     )
-    # print(start_lon, start_lat, end_lon, end_lat)
     return [start_lon, start_lat, end_lon, end_lat]
 
 

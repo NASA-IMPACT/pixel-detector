@@ -1,19 +1,20 @@
+import os
+import urllib
+
 import cv2
 import mercantile
 import numpy as np
-import os
 import rasterio
 import requests
-import urllib
 import xarray
-
 from pyorbital import astronomy
-from data_rasterizer import DataRasterizer
-from shape_utils import bitmap_from_shp
-from translator import create_cogeo
-from goes_tiler import tiles
+from tqdm import tqdm
 
 from config import BANDS_LIST
+from data_rasterizer import DataRasterizer
+from goes_tiler import tiles
+from shape_utils import bitmap_from_shp
+from translator import create_cogeo
 
 TILE_SIZE = 256
 WMTS_BASE_URL = "https://ffasjnxf3l.execute-api.us-east-1.amazonaws.com/production/"

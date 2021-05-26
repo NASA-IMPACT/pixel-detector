@@ -11,7 +11,7 @@ from rasterio.crs import CRS
 from rasterio.transform import from_bounds
 from rasterio.warp import transform_bounds
 
-from rio_tiler.utils import tile_read
+from rio_tiler.utils import tile_read, array_to_image
 from rio_tiler.profiles import img_profiles
 
 

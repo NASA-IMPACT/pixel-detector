@@ -3,6 +3,13 @@ from glob import glob
 from PIL import Image
 
 def png2geotif(png_dir, geotif_dir):
+    """
+    Reads metadata and adds to PNG files and writes them as GeoTIFFs
+    Args:
+        png_dir (path): Model inference output dir path
+        geotif_dir (path): Model input geotiff data path
+    """
+    
     src_tif_files = glob(f'{geotif_dir}/*.tif')    
     for src_tif_file in src_tif_files:   
         src = rasterio.open(src_tif_file)
@@ -20,6 +27,12 @@ def png2geotif(png_dir, geotif_dir):
             
             
 def resize_to_256(images):
+    """
+    Resizes images to 256x256
+    Args:
+        images (path): Directory containing images
+    """
+    
     for img in images:
         with Image.open(img) as image:
             image = image.resize((256, 256), Image.ANTIALIAS)

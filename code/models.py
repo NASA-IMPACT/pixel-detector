@@ -124,6 +124,7 @@ class PixelModel():
             np.array(y),
             nb_epoch=self.config["num_epoch"],
             batch_size=self.config["batch_size"],
+            steps_per_epoch=5,
             callbacks=self.callbacks,
             validation_split=0.30,
             shuffle=True,
@@ -271,7 +272,7 @@ class UNetModel(BaseModel):
             self.config['val_input_dir'],
             n_channels=self.config['total_bands']
         )
-        results = self.model.fit_generator(
+        results = self.model.fit(
             train_generator,
             epochs=200,
             steps_per_epoch=np.floor(
@@ -287,47 +288,41 @@ class UNetModel(BaseModel):
         return results
 
 
-def infer(model_path, val_input_path, val_output_path):
+def infer(model_path, val_input_path, val_output_path, threshold):
     model = load_model(model_path)
     val_generator = UnetGenerator(
-        val_input_path, batch_size=4, to_fit=False
+        val_input_path, batch_size=1, to_fit=False
     )
-    visualize_results(val_generator, model, val_output_path)
+    visualize_results(val_generator, model, val_output_path, val_input_path, threshold)
 
-def visualize_results(val_generator, model, save_path):
+def visualize_results(val_generator, model, save_path, val_input_path, threshold):
 
     if not os.path.exists:
         os.mkdirs(save_path)
-
-    f, ax = plt.subplots(1, 2)
-
+    
+    name = sorted([i for i in os.listdir(val_input_path) if i[0] != "."])
+    fig = plt.figure()
+    plt.axis('off')
+    plt.tight_layout()
+    
     for i, batch_data in enumerate(val_generator):
         input_batch, bmp_batch = batch_data, batch_data
         bmp_predict_batch = model.predict(input_batch)
 
         for j in range(len(input_batch)):
-            ax[0].imshow(
-                convert_rgb(input_batch[j]).astype('uint8')
-            )
-            ax[1].imshow(convert_rgb(input_batch[j]).astype('uint8'))
-            bmp_data = bmp_batch[j].astype('uint8')
-            ax[0].imshow(
-                ma.masked_where(
-                    bmp_data != 1, bmp_data
-                )[:, :, 0],
-                alpha=0.35,
-                cmap='Purples'
-            )
-
-            ax[1].imshow(
-                ma.masked_where(
-                    bmp_predict_batch[j] < 0.5, bmp_predict_batch[j]
-                )[:, :, 0],
-                alpha=0.45,
+            
+            plt.imshow(convert_rgb(input_batch[j]).astype('uint8'))  
+            
+            plt.imshow(
+                ma.masked_where(bmp_predict_batch[j] < threshold, bmp_predict_batch[j])[:, :, 0],
+                alpha=0.45,   
                 cmap='spring'
-            )
-
-            plt.savefig(os.path.join(save_path, f'{i}_{j}.png'))
+            )  
+            
+            name = name[1].replace('tif', 'png')
+            plt.savefig(os.path.join(save_path, name),  dpi=fig.dpi, bbox_inches='tight', pad_inches = 0)
+            plt.clf()
+            
 
 
 def bn_conv_relu(input, filters, bachnorm_momentum, **conv2d_args):
@@ -377,4 +372,4 @@ def unison_shuffled_copies(a, b):
     ]
 
 if __name__ == '__main__':
-    infer('../models/smoke_wmts_ref.h5', '../wmts_processed_251/', '../data/wmts_vis/')
+    infer()

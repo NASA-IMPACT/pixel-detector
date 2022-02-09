@@ -1,4 +1,4 @@
-
+code/.ipynb_checkpoints
 *.*
 *_*
-/data/wmts_processed/*
+data/wmts_processed/*

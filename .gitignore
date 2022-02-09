@@ -1,5 +1,4 @@
-*
 
-!.gitignore
-!code
-!code/*.py
+*.*
+*_*
+/data/wmts_processed/*

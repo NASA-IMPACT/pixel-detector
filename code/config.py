@@ -1,6 +1,5 @@
 # Model Constants
 SCALE_FACTOR = 1.0
-PREDICT_THRESHOLD = 0.50
 IMG_SCALE = 255
 BANDS_LIST = ['01', '02', '03', '04', '05', '06']
 
@@ -13,3 +12,10 @@ SAT_SWEEP = 'x'
 LAT_LON_IDX = '../data/lat_lon_reprojected_py3.pkl'
 OUTPUT_DIR = '../data/eval_outputs_smoke_no_cza/'
 CACHE_DIR = '../data/cache'
+
+# Infer-visualization parameters
+THRESHOLD = 0.1
+MODEL_PATH = f'../models/smoke_wmts_ref.h5'
+MODEL_INPUT_DATA_DIR = f'../data/wmts_processed'
+MODEL_OUTPUT_DIR = f'../data/smoke_wmts_ref_preds_t{THRESHOLD}'
+TEMP_DIR = f'../data/temp'

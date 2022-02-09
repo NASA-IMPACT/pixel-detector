@@ -1,5 +1,6 @@
-*
+.ipynb_checkpoints
+_*
+.DS*
+*.tif
+*.bmp
 
-!.gitignore
-!code
-!code/*.py

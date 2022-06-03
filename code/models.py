@@ -5,14 +5,15 @@ import os
 import tensorflow as tf
 
 
+from lib.utils import bn_conv_relu, bn_upconv_relu
 from tensorflow.keras.callbacks import (
     CSVLogger,
     EarlyStopping,
     ModelCheckpoint,
 )
-from tensorflow.keras.models import Model, load_model
+
+from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
-    BatchNormalization,
     concatenate,
     Conv2D,
     Conv2DTranspose,
@@ -24,10 +25,7 @@ from tensorflow.keras.layers import (
     UpSampling2D,
 )
 
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-
-from data_preparer import PixelDataPreparer
-from unet_generator import UnetGenerator
+from lib.unet_generator import UnetGenerator
 
 np.random.seed(1)
 
@@ -39,6 +37,8 @@ class BaseModel:
         self.model = None
         self.config = config
         self.model_save_path = str(self.config["model_path"])
+        self.options = tf.data.Options()
+        self.options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
         self.create_model()
         self.build_callbacks()
         self.build_model()
@@ -157,120 +157,60 @@ class UNetModel(BaseModel):
         model = Model(inputs=[inputs], outputs=[outputs])
         self.model = model
 
-    def train(self):
+    def tf_dataset_from_generator(self, generator):
+        return tf.data.Dataset.from_generator(
+                generator,
+                output_signature=(
+                    tf.TensorSpec(
+                        shape=(
+                            None,
+                            self.config['input_size'],
+                            self.config['input_size'],
+                            self.config['total_bands']
+                        ),
+                        dtype=tf.float32
+                    ),
+                    tf.TensorSpec(
+                        shape=(
+                            None,
+                            self.config['input_size'],
+                            self.config['input_size'],
+                            1
+                        ), dtype=tf.int32
+                    )
+                )
+            ).with_options(self.options)
 
+
+    def train(self):
         train_generator = UnetGenerator(
             self.config['train_dir'],
+            self._fixup_shape,
             n_channels=self.config['total_bands']
         )
         val_generator = UnetGenerator(
             self.config['val_input_dir'],
+            self._fixup_shape,
             n_channels=self.config['total_bands']
         )
-        results = self.model.fit_generator(
-            train_generator,
+        train_dataset = self.tf_dataset_from_generator(train_generator)
+        val_dataset = self.tf_dataset_from_generator(val_generator)
+
+        results = self.model.fit(
+            train_dataset,
             epochs=200,
             steps_per_epoch=np.floor(
                 train_generator.num_samples / train_generator.batch_size
             ),
-            validation_data=val_generator,
+            validation_data=val_dataset,
             validation_steps=np.floor(
                 val_generator.num_samples / val_generator.batch_size
             ),
-            callbacks=self.callbacks,
+            callbacks=self.callbacks
         )
-        self.infer(self.model_save_path)
+
         return results
 
-
-def infer(model_path, val_input_path, val_output_path):
-    model = load_model(model_path)
-    val_generator = UnetGenerator(
-        val_input_path, batch_size=4, to_fit=False
-    )
-    visualize_results(val_generator, model, val_output_path)
-
-def visualize_results(val_generator, model, save_path):
-
-    if not os.path.exists:
-        os.mkdirs(save_path)
-
-    f, ax = plt.subplots(1, 2)
-
-    for i, batch_data in enumerate(val_generator):
-        input_batch, bmp_batch = batch_data, batch_data
-        bmp_predict_batch = model.predict(input_batch)
-
-        for j in range(len(input_batch)):
-            ax[0].imshow(
-                convert_rgb(input_batch[j]).astype('uint8')
-            )
-            ax[1].imshow(convert_rgb(input_batch[j]).astype('uint8'))
-            bmp_data = bmp_batch[j].astype('uint8')
-            ax[0].imshow(
-                ma.masked_where(
-                    bmp_data != 1, bmp_data
-                )[:, :, 0],
-                alpha=0.35,
-                cmap='Purples'
-            )
-
-            ax[1].imshow(
-                ma.masked_where(
-                    bmp_predict_batch[j] < 0.5, bmp_predict_batch[j]
-                )[:, :, 0],
-                alpha=0.45,
-                cmap='spring'
-            )
-
-            plt.savefig(os.path.join(save_path, f'{i}_{j}.png'))
-
-
-def bn_conv_relu(input, filters, bachnorm_momentum, **conv2d_args):
-    x = BatchNormalization(momentum=bachnorm_momentum)(input)
-    x = Conv2D(filters, **conv2d_args)(x)
-    return x
-
-
-def bn_upconv_relu(input, filters, bachnorm_momentum, **conv2d_trans_args):
-    x = BatchNormalization(momentum=bachnorm_momentum)(input)
-    x = Conv2DTranspose(filters, **conv2d_trans_args)(x)
-    return x
-
-def convert_rgb(img):
-
-    red = img[:, :, 1].astype('uint8')
-    blue = img[:, :, 0].astype('uint8')
-    pseudo_green = img[:, :, 2].astype('uint8')
-    height, width = red.shape
-
-    img = np.moveaxis(
-        np.array([red, pseudo_green, blue]), 0, -1
-    )
-
-    return img
-
-
-def unison_shuffled_copies(a, b):
-    """
-    shuffle a,b in unison and return shuffled a, b
-
-    Args:
-        a (list/array): data a
-        b (list/array): data a
-
-    Returns:
-        TYPE: a,b shuffled and resampled
-    """
-
-    assert len(a) == len(b)
-
-    indices = np.random.permutation(len(a))
-
-    return [
-           [a[index] for index in indices],
-           [b[index] for index in indices]
-    ]
 
 if __name__ == '__main__':
     infer('../models/smoke_wmts_ref.h5', '../wmts_processed_251/', '../data/wmts_vis/')

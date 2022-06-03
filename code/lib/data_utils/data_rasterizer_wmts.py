@@ -217,6 +217,7 @@ class DataRasterizerWmts(DataRasterizer):
 
         return rio_tiles_and_info
 
+
     def rad_to_ref(self, mem_file, auxillary_options, gamma=2.0):
 
         xarray_dataset = xarray.open_rasterio(mem_file)
@@ -236,6 +237,7 @@ class DataRasterizerWmts(DataRasterizer):
 
         # move band axis back to leading axis for rasterio format
         return ref_clipped
+
 
 def calculate_new_bbox(start_x, start_y, end_x, end_y):
     start_lon, _, _, end_lat = mercantile.bounds(

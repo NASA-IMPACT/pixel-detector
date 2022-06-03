@@ -4,10 +4,8 @@ import numpy as np
 import rasterio
 import tensorflow as tf
 
-
 from imgaug import augmenters as iaa
 from glob import glob
-
 
 ia.seed(2)
 
@@ -33,6 +31,15 @@ class UnetGenerator(tf.keras.utils.Sequence):
         self.n = 0
         self.max = len(self)
         self.on_epoch_end()
+
+
+    def __call__(self):
+        for i in range(self.__len__()):
+            yield self.__getitem__(i)
+
+            if i == self.__len__()-1:
+                self.on_epoch_end()
+
 
     def __len__(self):
         """Denotes the number of batches per epoch"""
@@ -62,7 +69,6 @@ class UnetGenerator(tf.keras.utils.Sequence):
         X = self._generate_X(tif_list_temp)
 
         if self.to_fit:
-            y = self._generate_y(tif_list_temp)
             return X, y
         else:
             return X

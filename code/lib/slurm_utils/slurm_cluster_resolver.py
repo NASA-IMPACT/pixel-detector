@@ -77,7 +77,7 @@ def expand_hostlist(hostlist):
       else:
         # Changing host structure to fit jusuf structure
         hosts.extend(
-          f"{prefix}{'%03d' % i}" +  for i in expand_range_expression(m.group(3))
+          f"{prefix}{'%03d' % i}" for i in expand_range_expression(m.group(3))
         )
 
   except Exception as e:

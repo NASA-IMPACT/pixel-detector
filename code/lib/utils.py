@@ -12,6 +12,7 @@ from tensorflow.keras.layers import (
 
 from .unet_generator import UnetGenerator
 
+
 np.random.seed(1)
 
 
@@ -139,10 +140,11 @@ def visualize_results(val_generator, model, save_path):
 
             ax[1].imshow(
                 ma.masked_where(
-                    bmp_predict_batch[j] < 0.5, bmp_predict_batch[j]
+                    bmp_predict_batch[batch_index] < 0.5,
+                    bmp_predict_batch[batch_index]
                 )[:, :, 0],
                 alpha=0.45,
                 cmap='spring'
             )
 
-            plt.savefig(os.path.join(save_path, f'{i}_{j}.png'))
+            plt.savefig(os.path.join(save_path, f'{index}_{batch_index}.png'))

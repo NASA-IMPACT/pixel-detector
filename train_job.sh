@@ -15,8 +15,7 @@
 
 ml CUDA/11.5
 ml cuDNN/8.3.1.22-CUDA-11.5
-echo "SLURM_JOB_ID " $SLURM_JOB_ID  "; SLURM_JOB_NAME " $SLURM_JOB_NAME "; SLURM_JOB_NODELIST " $SLURM_JOB_NODELIST "; SLURMD_NODENAME " $SLURMD_NODENAME  "; SLURM_JOB_NUM_NODES " $SLURM_JOB_NUM_NODES
-
+echo "Starting training"
 source /p/project/training2206/<username>/pixel-detector-feature-wmts_input/.env_jusuf/bin/activate
 srun python code/train.py
 echo "DONE"

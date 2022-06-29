@@ -74,6 +74,7 @@ class DataRasterizerWmts(DataRasterizer):
                 print(f'processed and saved: {scene_id}')
         print(f'total tiles saved: {count}')
 
+
     def generate_tiles(self, nctime, extent, preprocess_flag=False):
         """generate wmts tiles from nctime time and extent (bounbing box)
         information and store it in self.save_path
@@ -144,6 +145,7 @@ class DataRasterizerWmts(DataRasterizer):
                         file.write(tile_url)
 
         return rio_tiles_and_info
+
 
     def generate_tiles_netcdf(self, ncfile, nctime, extent, preprocess_flag=False):
         """generate wmts tiles from nctime time and extent (bounbing box)

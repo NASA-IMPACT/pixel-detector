@@ -6,13 +6,14 @@ import tensorflow as tf
 
 
 from lib.utils import bn_conv_relu, bn_upconv_relu
+from lib.unet_generator import UnetGenerator
+
 from tensorflow.keras.callbacks import (
     CSVLogger,
     EarlyStopping,
     ModelCheckpoint,
 )
 
-from tensorflow.keras.models import Model
 from tensorflow.keras.layers import (
     concatenate,
     Conv2D,
@@ -25,8 +26,9 @@ from tensorflow.keras.layers import (
     UpSampling2D,
 )
 
-from lib.unet_generator import UnetGenerator
+from tensorflow.keras.models import Model
 
+# ensure reproduceability
 np.random.seed(1)
 
 
@@ -43,6 +45,7 @@ class BaseModel:
         self.build_callbacks()
         self.build_model()
 
+
     def build_callbacks(self):
         log_path = self.model_save_path
         base_path = os.path.splitext(log_path)[0]
@@ -55,6 +58,7 @@ class BaseModel:
             CSVLogger(log_path, append=True),
 
         ]
+
 
     def build_model(self):
 

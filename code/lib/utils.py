@@ -84,6 +84,17 @@ def unison_shuffled_copies(a, b):
 
 
 def infer(model_path, val_input_path, val_output_path):
+    """
+    Load the model and infer on the provided examples, store the output to a directory
+
+    Args:
+        model_path (str): Model path
+        val_input_path (str): Validation data path
+        val_output_path (str): Inference storage path
+
+    Returns:
+        None
+    """
     model = load_model(model_path)
     val_generator = UnetGenerator(
         val_input_path, batch_size=4, to_fit=False
@@ -92,21 +103,32 @@ def infer(model_path, val_input_path, val_output_path):
 
 
 def visualize_results(val_generator, model, save_path):
+    """
+    Infer results and save results to a directory
+
+    Args:
+        val_generator (UnetGenerator): Data generator instance
+        model (keras.Model): Keras model
+        save_path (str): Inference storage path
+
+    Returns:
+        None
+    """
     if not os.path.exists:
         os.mkdirs(save_path)
 
     f, ax = plt.subplots(1, 2)
 
-    for i, batch_data in enumerate(val_generator):
+    for index, batch_data in enumerate(val_generator):
         input_batch, bmp_batch = batch_data, batch_data
         bmp_predict_batch = model.predict(input_batch)
 
-        for j in range(len(input_batch)):
+        for batch_index in range(len(input_batch)):
             ax[0].imshow(
-                convert_rgb(input_batch[j]).astype('uint8')
+                convert_rgb(input_batch[batch_index]).astype('uint8')
             )
-            ax[1].imshow(convert_rgb(input_batch[j]).astype('uint8'))
-            bmp_data = bmp_batch[j].astype('uint8')
+            ax[1].imshow(convert_rgb(input_batch[batch_index]).astype('uint8'))
+            bmp_data = bmp_batch[batch_index].astype('uint8')
             ax[0].imshow(
                 ma.masked_where(
                     bmp_data != 1, bmp_data

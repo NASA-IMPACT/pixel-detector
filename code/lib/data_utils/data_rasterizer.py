@@ -9,9 +9,9 @@ from PIL import Image
 from itertools import repeat
 from config import BANDS_LIST
 from pyorbital import astronomy
-from shape_utils import bitmap_from_shp
+from .shape_utils import bitmap_from_shp
 
-from rasterio_utils import (
+from .rasterio_utils import (
     wgs84_transform_memory,
     combine_rasters,
 )

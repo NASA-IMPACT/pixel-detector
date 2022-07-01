@@ -11,7 +11,8 @@ from rasterio.crs import CRS
 from rasterio.transform import from_bounds
 from rasterio.warp import transform_bounds
 
-from rio_tiler.utils import tile_read, array_to_image
+from rio_tiler.reader import part
+from rio_tiler.utils import render
 from rio_tiler.profiles import img_profiles
 
 
@@ -68,7 +69,7 @@ def goes_tile(
     dst_crs = CRS.from_epsg(epsg_code)
     tile_bounds = calculate_tile_bounds(epsg_code, x, y, z)
 
-    data, mask = tile_read(
+    data, mask = part(
         src_dst, tile_bounds, tilesize=tilesize, dst_crs=dst_crs, **kwargs
     )
 
@@ -167,6 +168,6 @@ def tiles(
         sio.seek(0)
         return ("OK", "application/x-binary", sio.getvalue())
     else:
-        return array_to_image(
+        return render(
             rtile, mask, img_format=driver, color_map=color_map, **tile_options
         ), auxillary_options

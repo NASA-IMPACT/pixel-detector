@@ -15,7 +15,7 @@ from math import floor, ceil
 from pyorbital import astronomy
 from pyproj import Proj
 
-from data_rasterizer_wmts import calculate_tile_xy
+from .data_utils.data_rasterizer_wmts import calculate_tile_xy
 
 from tensorflow.keras.models import Model, load_model
 
@@ -67,17 +67,6 @@ def calculate_new_bbox(start_x, start_y, end_x, end_y):
     )
     print(start_lon, start_lat, end_lon, end_lat)
     return [start_lon, start_lat, end_lon, end_lat]
-
-
-def calculate_tile_xy(extent):
-    start_x, start_y, _ = mercantile.tile(
-        extent[0],
-        extent[3],
-        ZOOM_LEVEL
-    )
-
-    end_x, end_y, _ = mercantile.tile(extent[2], extent[1], ZOOM_LEVEL)
-    return [start_x, start_y, end_x, end_y]
 
 
 def IoU(y_true, y_pred, eps=1e-6):

@@ -1,4 +1,4 @@
-from typing import Any, Tuple, Dict
+from typing import Any, Tuple, Dict, List
 
 import io
 import os
@@ -13,6 +13,24 @@ from rasterio.warp import transform_bounds
 
 from rio_tiler.utils import tile_read, array_to_image
 from rio_tiler.profiles import img_profiles
+
+
+def calculate_tile_bounds(epsg_code: int, x: int, y: int, z: int) -> List:
+    """
+    Calculate the tile bounds given the EPSG code and the x, y, z values
+    Args:
+        epsg_code: EPSG code
+        x: column identifier
+        y: column identifier
+
+    """
+    if epsg_code == 3857:
+        tile_bounds = mercantile.xy_bounds(mercantile.Tile(x=x, y=y, z=z))
+    elif epsg_code == 4326:
+        tile_bounds = mercantile.bounds(mercantile.Tile(x=x, y=y, z=z))
+    else:
+        raise Exception(f"epsg code {epsg_code} is not supported")
+    return list(tile_bounds)
 
 
 def goes_tile(
@@ -36,9 +54,6 @@ def goes_tile(
         tile_y : int
             Mercator tile Y index.
         tile_z : int
-            Mercator tile ZOOM level.
-        tilesize : int, optional (default: 256)
-            Output image size.
         kwargs: dict, optional
             These will be passed to the 'rio_tiler.utils._tile_read' function.
     Returns
@@ -49,19 +64,9 @@ def goes_tile(
     bounds = transform_bounds(
         src_dst.crs, "epsg:4326", *src_dst.bounds, densify_pts=21
     )
-    # if not utils.tile_exists(bounds, tile_z, tile_x, tile_y):
-    #     raise TileOutsideBounds(
-    #         "Tile {}/{}/{} is outside image bounds".format(
-    #             tile_z, tile_x, tile_y)
-    #     )
     mercator_tile = mercantile.Tile(x=tile_x, y=tile_y, z=tile_z)
     dst_crs = CRS.from_epsg(epsg_code)
-    if epsg_code == 3857:
-        tile_bounds = mercantile.xy_bounds(mercator_tile)
-    elif epsg_code == 4326:
-        tile_bounds = mercantile.bounds(mercator_tile)
-    else:
-        raise Exception(f"epsg code {epsg_code} is not supported")
+    tile_bounds = calculate_tile_bounds(epsg_code, x, y, z)
 
     data, mask = tile_read(
         src_dst, tile_bounds, tilesize=tilesize, dst_crs=dst_crs, **kwargs
@@ -83,12 +88,7 @@ def _geotiff_options(
     epsg_code: int = 3857
 ) -> Dict:
     """Return rasterio options for GeoTIFF."""
-    if epsg_code == 3857:
-        tile_bounds = mercantile.xy_bounds(mercantile.Tile(x=x, y=y, z=z))
-    elif epsg_code == 4326:
-        tile_bounds = mercantile.bounds(mercantile.Tile(x=x, y=y, z=z))
-    else:
-        raise Exception(f"epsg code {epsg_code} is not supported")
+    tile_bounds = calculate_tile_bounds(epsg_code, x, y, z)
 
     return dict(
         crs=CRS.from_epsg(epsg_code),
@@ -99,6 +99,7 @@ def _geotiff_options(
 def _cog_path(sceneid, band):
     meta = _parse_cog_sceneid(sceneid)
     return os.path.join(f"s3://{cog_bucket}", meta["key"], f"B{band}.tif")
+
 
 def tiles(
     z: int,

@@ -28,6 +28,7 @@ def delete_folder(foldername):
     else:
         print(f"Folder {foldername} doesn't exist.")
 
+
 def create_split(split, files):
     """
     Clear and create folder with new files.
@@ -37,14 +38,13 @@ def create_split(split, files):
     """
     print(f'Preparing {split} split with {len(files)} examples.')
     folder_name = f"{DATA_FOLDER}/{split}"
-    if os.path.exists(folder_name):
-        delete_folder(folder_name)
     mkdir(folder_name)
     for filename in files:
         internal_filename = filename.split('/')[-1]
         bitmap_filename = filename.replace('.tif', '.bmp')
         shutil.copyfile(filename, f"{folder_name}/{internal_filename}")
         shutil.copyfile(bitmap_filename, f"{folder_name}/{bitmap_filename.split('/')[-1]}")
+
 
 # Prepare train, val, and test splits
 def prepare_splits(source_folder, splits={'train': 0.7, 'val': 0.3}):

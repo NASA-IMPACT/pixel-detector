@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Author: Muthukumaran R.
-# @Date:   2019-07-03 15:44:51
-# @Last Modified by:   Muthukumaran R.
-# @Last Modified time: 2019-07-03 16:56:06
-
 from models import UNetModel
 from keras.models import load_model
 from data_preparer import UnetDataPreparer

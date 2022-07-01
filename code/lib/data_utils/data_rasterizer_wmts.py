@@ -75,6 +75,22 @@ class DataRasterizerWmts(DataRasterizer):
         print(f'total tiles saved: {count}')
 
 
+    def increment_if_low(self, start_num, end_num):
+        """ increment start tile number if end tile number is lesser than
+        start
+
+        Args:
+            start_num
+            end_num
+
+        Returns:
+            start_num, end_num
+        """
+        if start_num > end_num:
+            start_num = end_num
+        return start_num, end_num
+
+
     def generate_tiles(self, nctime, extent, preprocess_flag=False):
         """generate wmts tiles from nctime time and extent (bounbing box)
         information and store it in self.save_path
@@ -88,20 +104,6 @@ class DataRasterizerWmts(DataRasterizer):
             TYPE: Description
         """
         nctime = nctime[:9]  # subsetting nctime to remove minute strings
-        def increment_if_low(start_num, end_num):
-            """ increment start tile number if end tile number is lesser than
-            start
-
-            Args:
-                start_num
-                end_num
-
-            Returns:
-                start_num, end_num
-            """
-            if start_num > end_num:
-                start_num = end_num
-            return start_num, end_num
 
         rio_tiles_and_info = list()
         # format scene_id with the correct `m` string variation
@@ -112,8 +114,8 @@ class DataRasterizerWmts(DataRasterizer):
 
         start_x, start_y, end_x, end_y = calculate_tile_xy(extent)
         # increment start tile number if end tile number is lesser than start
-        start_x, end_x = increment_if_low(start_x, end_x)
-        start_y, end_y = increment_if_low(start_y, end_y)
+        start_x, end_x = self.increment_if_low(start_x, end_x)
+        start_y, end_y = self.increment_if_low(start_y, end_y)
         extent = calculate_new_bbox(start_x, start_y, end_x, end_y)
         height = (end_x - start_x + 1) * TILE_SIZE
         width = (end_y - start_y + 1) * TILE_SIZE
@@ -130,7 +132,8 @@ class DataRasterizerWmts(DataRasterizer):
                 tile_url = WMTS_URL.format(ZOOM_LEVEL, x, y, scene_id)
 
                 response = requests.get(tile_url)
-                if response.status_code != 500:
+                response.raise_for_status()
+                if response.status_code == 200:
                     rio_tiff = rasterio.io.MemoryFile(response.content).open()
                     if self.pre_process:
                         rio_data = self.rad_to_ref(rio_tiff, nctime)
@@ -161,21 +164,6 @@ class DataRasterizerWmts(DataRasterizer):
         """
         nctime_long = nctime
         nctime = nctime[:9]  # subsetting nctime to remove minute strings
-        def increment_if_low(start_num, end_num):
-            """ increment start tile number if end tile number is lesser than
-            start
-
-            Args:
-                start_num
-                end_num
-
-            Returns:
-                start_num, end_num
-            """
-            if start_num > end_num:
-                start_num = end_num
-            return start_num, end_num
-
         rio_tiles_and_info = list()
         # format scene_id with the correct `m` string variation
         scene_id = SCENE_ID_FORMAT.format(
@@ -185,8 +173,8 @@ class DataRasterizerWmts(DataRasterizer):
 
         start_x, start_y, end_x, end_y = calculate_tile_xy(extent)
         # increment start tile number if end tile number is lesser than start
-        start_x, end_x = increment_if_low(start_x, end_x)
-        start_y, end_y = increment_if_low(start_y, end_y)
+        start_x, end_x = self.increment_if_low(start_x, end_x)
+        start_y, end_y = self.increment_if_low(start_y, end_y)
         extent = calculate_new_bbox(start_x, start_y, end_x, end_y)
         height = (end_x - start_x + 1) * TILE_SIZE
         width = (end_y - start_y + 1) * TILE_SIZE

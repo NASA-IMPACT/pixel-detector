@@ -15,6 +15,8 @@ from math import floor, ceil
 from pyorbital import astronomy
 from pyproj import Proj
 
+from data_rasterizer_wmts import calculate_tile_xy
+
 from tensorflow.keras.models import Model, load_model
 
 from rasterio.windows import from_bounds
@@ -84,26 +86,6 @@ def IoU(y_true, y_pred, eps=1e-6):
     union = K.sum(y_true, axis=[1, 2, 3]) + \
         K.sum(y_pred, axis=[1, 2, 3]) - intersection
     return -K.mean((intersection + eps) / (union + eps), axis=0)
-
-
-def longlat2window(lon, lat, dataset):
-    """
-    Args:
-        lon (tuple): Tuple of min and max lon
-        lat (tuple): Tuple of min and max lat
-        dataset: Rasterio dataset
-
-    Returns:
-        rasterio.windows.Window
-    """
-    p = Proj(dataset.crs)
-    t = dataset.transform
-    xmin, ymin = p(lon[0], lat[0])
-    xmax, ymax = p(lon[1], lat[1])
-    col_min, row_min = ~t * (xmin, ymin)
-    col_max, row_max = ~t * (xmax, ymax)
-    return Window.from_slices(rows=(floor(row_max), ceil(row_min)),
-                              cols=(floor(col_min), ceil(col_max)))
 
 
 def predict(array, model):

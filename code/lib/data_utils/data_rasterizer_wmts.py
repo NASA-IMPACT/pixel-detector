@@ -44,6 +44,7 @@ class DataRasterizerWmts(DataRasterizer):
             cza_correct=self.cza_correct
         )
 
+
     def prepare_data(self):
         count = 0
         for item in tqdm(self.jsondict):
@@ -91,6 +92,17 @@ class DataRasterizerWmts(DataRasterizer):
         return start_num, end_num
 
 
+    def calculate_extents(self, extent):
+        start_x, start_y, end_x, end_y = calculate_tile_xy(extent)
+        # increment start tile number if end tile number is lesser than start
+        start_x, end_x = self.increment_if_low(start_x, end_x)
+        start_y, end_y = self.increment_if_low(start_y, end_y)
+        extent = calculate_new_bbox(start_x, start_y, end_x, end_y)
+        height = (end_x - start_x + 1) * TILE_SIZE
+        width = (end_y - start_y + 1) * TILE_SIZE
+        return start_x, start_y, end_x, end_y, width, height, extent
+
+
     def generate_tiles(self, nctime, extent, preprocess_flag=False):
         """generate wmts tiles from nctime time and extent (bounbing box)
         information and store it in self.save_path
@@ -112,17 +124,9 @@ class DataRasterizerWmts(DataRasterizer):
             nctime,
         )
 
-        start_x, start_y, end_x, end_y = calculate_tile_xy(extent)
-        # increment start tile number if end tile number is lesser than start
-        start_x, end_x = self.increment_if_low(start_x, end_x)
-        start_y, end_y = self.increment_if_low(start_y, end_y)
-        extent = calculate_new_bbox(start_x, start_y, end_x, end_y)
-        height = (end_x - start_x + 1) * TILE_SIZE
-        width = (end_y - start_y + 1) * TILE_SIZE
-
-        transform = rasterio.transform.from_bounds(
-            *extent, height, width
-        )
+        start_x, start_y, end_x, end_y, width, height, extent = self.calculate_extents(
+                extent
+            )
 
         # loop through the tile range
         for y in range(start_y, end_y + 1):
@@ -171,13 +175,9 @@ class DataRasterizerWmts(DataRasterizer):
             nctime_long,
         )
 
-        start_x, start_y, end_x, end_y = calculate_tile_xy(extent)
-        # increment start tile number if end tile number is lesser than start
-        start_x, end_x = self.increment_if_low(start_x, end_x)
-        start_y, end_y = self.increment_if_low(start_y, end_y)
-        extent = calculate_new_bbox(start_x, start_y, end_x, end_y)
-        height = (end_x - start_x + 1) * TILE_SIZE
-        width = (end_y - start_y + 1) * TILE_SIZE
+        start_x, start_y, end_x, end_y, width, height, extent = self.calculate_extents(
+                extent
+            )
         # Create a in-memory cogeo list from all netcdf bands
         raster_tif_list = list(map(
             create_cogeo,

@@ -15,7 +15,7 @@ from math import floor, ceil
 from pyorbital import astronomy
 from pyproj import Proj
 
-from .data_utils.data_rasterizer_wmts import calculate_tile_xy
+from .data_utils.data_rasterizer_wmts import calculate_new_bbox, calculate_tile_xy
 
 from tensorflow.keras.models import Model, load_model
 
@@ -56,17 +56,6 @@ WMTS_URL = f"{WMTS_BASE_URL}epsg4326/{{}}/{{}}/{{}}.tif?sceneid={{}}"
 ZOOM_LEVEL = 7
 
 META_URL = "{}{}".format(WMTS_BASE_URL, "metadata?sceneid={}")
-
-
-def calculate_new_bbox(start_x, start_y, end_x, end_y):
-    start_lon, _, _, end_lat = mercantile.bounds(
-        start_x, start_y, ZOOM_LEVEL
-    )
-    _, start_lat, end_lon, _ = mercantile.bounds(
-        end_x, end_y, ZOOM_LEVEL
-    )
-    print(start_lon, start_lat, end_lon, end_lat)
-    return [start_lon, start_lat, end_lon, end_lat]
 
 
 def IoU(y_true, y_pred, eps=1e-6):

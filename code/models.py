@@ -161,6 +161,7 @@ class UNetModel(BaseModel):
         model = Model(inputs=[inputs], outputs=[outputs])
         self.model = model
 
+
     def tf_dataset_from_generator(self, generator):
         return tf.data.Dataset.from_generator(
                 generator,
@@ -214,7 +215,3 @@ class UNetModel(BaseModel):
         )
 
         return results
-
-
-if __name__ == '__main__':
-    infer('../models/smoke_wmts_ref.h5', '../wmts_processed_251/', '../data/wmts_vis/')

@@ -9,7 +9,6 @@ from tensorflow.keras import layers
 
 
 class Trainer:
-
     def __init__(self, config):
         """
         config = {
@@ -37,6 +36,7 @@ class Trainer:
         Alias to model holder train method
         """
         self.model.train()
+
 
     def load(self):
         """

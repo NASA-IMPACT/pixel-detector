@@ -17,7 +17,6 @@ ml Stages/2022
 ml CUDA/11.5
 ml cuDNN/8.3.1.22-CUDA-11.5
 echo "Starting training"
-source /p/project/training2206/ramasub/pixel-detector/.venv/bin/activate
-echo `which python`
+source /p/project/training2206/<username>/pixel-detector/.venv/bin/activate
 srun python code/train.py
 echo "DONE"

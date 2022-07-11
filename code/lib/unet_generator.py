@@ -69,6 +69,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
         X = self._generate_X(tif_list_temp)
 
         if self.to_fit:
+            y = self._generate_y(tif_list_temp)
             return X, y
         else:
             return X

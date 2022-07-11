@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import numpy.ma as ma
 import os
@@ -190,12 +189,10 @@ class UNetModel(BaseModel):
     def train(self):
         train_generator = UnetGenerator(
             self.config['train_dir'],
-            self._fixup_shape,
             n_channels=self.config['total_bands']
         )
         val_generator = UnetGenerator(
             self.config['val_input_dir'],
-            self._fixup_shape,
             n_channels=self.config['total_bands']
         )
         train_dataset = self.tf_dataset_from_generator(train_generator)

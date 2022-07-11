@@ -1,5 +1,8 @@
 numpy
 tensorflow==2.9.1
+opencv-python-headless
+matplotlib
+imgaug
 rasterio
 rio-tiler
 pyorbital

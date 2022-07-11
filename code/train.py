@@ -22,9 +22,6 @@ class Trainer:
         # model building
         tf.keras.backend.clear_session()  # For easy reset of notebook state.
 
-        cluster, my_job_name, my_task_index = tf_config_from_slurm(
-                ps_number=1
-            )
         slurm_resolver = SlurmClusterResolver()
         mirrored_strategy = tf.distribute.MultiWorkerMirroredStrategy(
                 cluster_resolver=slurm_resolver
@@ -49,5 +46,6 @@ class Trainer:
 
 
 if __name__ == '__main__':
-    trainer = Trainer(json.load(open('config.json')))
+    trainer = Trainer(json.load(open('code/config.json'))) 
     trainer.train()
+

@@ -2,7 +2,7 @@
 SCALE_FACTOR = 1.0
 PREDICT_THRESHOLD = 0.50
 IMG_SCALE = 255
-BANDS_LIST = ['C01', 'C02', 'C03', 'C04', 'C05', 'C06']
+BANDS_LIST = ['01', '02', '03', '04', '05', '06']
 
 # Satellite information constants
 SAT_H = 35786023.0

@@ -4,10 +4,8 @@ import numpy as np
 import rasterio
 import tensorflow as tf
 
-
 from imgaug import augmenters as iaa
 from glob import glob
-
 
 ia.seed(2)
 
@@ -24,7 +22,7 @@ class UnetGenerator(tf.keras.utils.Sequence):
         self.data_path = data_path
         self.tif_list = [filename for filename in glob(f'{data_path}*.tif')]
         self.mask_list = []
-
+        self.num_samples = len(self.tif_list)
         self.to_fit = to_fit
         self.batch_size = batch_size
         self.dim = dim
@@ -33,6 +31,15 @@ class UnetGenerator(tf.keras.utils.Sequence):
         self.n = 0
         self.max = len(self)
         self.on_epoch_end()
+
+
+    def __call__(self):
+        for i in range(self.__len__()):
+            yield self.__getitem__(i)
+
+            if i == self.__len__()-1:
+                self.on_epoch_end()
+
 
     def __len__(self):
         """Denotes the number of batches per epoch"""
@@ -118,8 +125,9 @@ def _load_tif_image(image_path, dim):
     """load tif image"""
 
     with rasterio.open(image_path, 'r') as data:
+        # remove alpha channel
         return cv2.resize(
-            np.moveaxis(data.read(), 0, -1), dim
+            np.moveaxis(data.read()[:-1], 0, -1), dim
         )
 
 

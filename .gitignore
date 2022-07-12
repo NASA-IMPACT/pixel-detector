@@ -1,12 +1,5 @@
-*.pyc
-*.png
-*.json
-*.tif[f]
-*.bmp
-data/
-model/
-raw_data/
-cache/
-*.nc#
-.DS_store
-code/.DS_store
+.DS_Store
+.gitignore
+*/**/__pycache__/
+.venv
+data

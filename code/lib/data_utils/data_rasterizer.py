@@ -9,9 +9,9 @@ from PIL import Image
 from itertools import repeat
 from config import BANDS_LIST
 from pyorbital import astronomy
-from shape_utils import bitmap_from_shp
+from .shape_utils import bitmap_from_shp
 
-from rasterio_utils import (
+from .rasterio_utils import (
     wgs84_transform_memory,
     combine_rasters,
 )
@@ -23,9 +23,9 @@ class DataRasterizer():
 
         self.save_path = save_path
         self.parse_json(jsonfile)
-        self.prepare_data(cza_correct)
+        self.prepare_data()
 
-    def prepare_data(self, cza_correct):
+    def prepare_data(self, cza_correct=False):
 
         for item in self.jsondict:
             ncpath = item['ncfile']
@@ -104,14 +104,9 @@ class DataRasterizer():
 
         path_list = []
 
-        print('checking for nc in ', loc)
-
         for band in band_array:
             ncfile_string = '{}/*{}*s{}*.nc'
             fname = glob(ncfile_string.format(loc, band, time))
-
-            print(ncfile_string.format(loc, band, time))
-            print(fname)
 
             if fname == []:
                 print('Nc Files not Found')
@@ -139,7 +134,7 @@ class DataRasterizer():
 
         green_true = 0.45 * ((red / 25.5)**2 / 100) + 0.1 * \
             ((green / 25.5)**2 / 100) + 0.45 * ((blue / 25.5)**2 / 100)
-        
+
         green_true = np.maximum(green_true, 0)
         green_true = np.minimum(green_true, 1)
 

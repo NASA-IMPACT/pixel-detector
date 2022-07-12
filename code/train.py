@@ -1,16 +1,14 @@
 import json
+import tensorflow as tf
 
-from models import PixelModel, UNetModel
+from lib.slurm_utils.slurm_cluster_resolver import SlurmClusterResolver
 
-
-MODELS = {
-    'pixel': PixelModel,
-    'unet': UNetModel,
-}
+from models import UNetModel
+from tensorflow import keras
+from tensorflow.keras import layers
 
 
 class Trainer:
-
     def __init__(self, config):
         """
         config = {
@@ -19,25 +17,35 @@ class Trainer:
             ''
         }
         """
-
         self.config = config
-        self.model_holder = MODELS[self.config['type']](self.config)
+        # model building
+        tf.keras.backend.clear_session()  # For easy reset of notebook state.
+
+        slurm_resolver = SlurmClusterResolver()
+        mirrored_strategy = tf.distribute.MultiWorkerMirroredStrategy(
+                cluster_resolver=slurm_resolver
+            )
+        print('Number of replicas:', mirrored_strategy.num_replicas_in_sync)
+
+        with mirrored_strategy.scope():
+            self.model = UNetModel(self.config)
+
 
     def train(self):
         """
         Alias to model holder train method
         """
+        self.model.train()
 
-        self.model_holder.train()
 
     def load(self):
         """
         Alias to model holder load method
         """
-
-        self.model_holder.load()
+        self.model.load()
 
 
 if __name__ == '__main__':
-    trainer = Trainer(json.load(open('config.json')))
+    trainer = Trainer(json.load(open('code/config.json'))) 
     trainer.train()
+

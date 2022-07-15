@@ -6,7 +6,7 @@
   "batch_size": 128,
   "input_size": 256,
   "bands": [0, 1, 2, 3, 4, 5],
-  "model_path": "/p/project/training2206/ramasub/pixel-detector/models/ramasub_smoke_wmts_ref_3layer.h5", 
-  "val_input_dir": "/p/project/training2206/sedona3/pixel-detector/data/wmts/val/",
-  "train_dir": "/p/project/training2206/sedona3/pixel-detector/data/wmts/train/"
+  "model_path": "/p/project/training2206/<username>/pixel-detector/models/<username>_smoke_wmts_ref_3layer.h5",
+  "val_input_dir": "/p/project/training2206/<username>/pixel-detector/data/wmts/val/",
+  "train_dir": "/p/project/training2206/<username>/pixel-detector/data/wmts/train/"
 }

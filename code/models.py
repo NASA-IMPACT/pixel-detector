@@ -6,6 +6,7 @@ import tensorflow as tf
 
 from lib.utils import bn_conv_relu, bn_upconv_relu
 from lib.unet_generator import UnetGenerator
+from lib.loss_plot import TrainingPlot
 
 from tensorflow.keras.callbacks import (
     CSVLogger,
@@ -55,7 +56,8 @@ class BaseModel:
             ModelCheckpoint(filepath=self.model_save_path,
                             verbose=1, save_best_only=True),
             CSVLogger(log_path, append=True),
-
+            TrainingPlot(),
+            
         ]
 
 

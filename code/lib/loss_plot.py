@@ -8,7 +8,7 @@ import matplotlib; matplotlib.use('agg')
 import keras
 import numpy as np
 import matplotlib.pyplot as plt
-
+import os
 
 class TrainingPlot(keras.callbacks.Callback):
 
@@ -27,9 +27,9 @@ class TrainingPlot(keras.callbacks.Callback):
         # Append the logs, losses and accuracies to the lists
         self.logs.append(logs)
         self.losses.append(logs.get('loss'))
-        self.acc.append(logs.get('acc'))
+        self.acc.append(logs.get('accuracy'))
         self.val_losses.append(logs.get('val_loss'))
-        self.val_acc.append(logs.get('val_acc'))
+        self.val_acc.append(logs.get('val_accuracy'))
         self.num_epochs = np.arange(0, len(self.losses))
         self.make_plots()
 
@@ -39,14 +39,14 @@ class TrainingPlot(keras.callbacks.Callback):
             self.losses,
             self.val_losses,
             "Loss",
-            "Loss_plot_2.png"
+            "plots/loss_plot.png"
         )
 
         self.make_plot(
             self.acc,
             self.val_acc,
             "Accuracy",
-            "Accuracy_plot_2.png"
+            "plots/accuracy_plot.png"
         )
 
     def make_plot(self, train_metric, val_metric, ylabel, save_path):

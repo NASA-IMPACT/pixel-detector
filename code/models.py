@@ -50,7 +50,7 @@ class BaseModel:
         base_path = os.path.splitext(log_path)[0]
         log_path = base_path + '.log'
         self.callbacks = [
-            EarlyStopping(monitor="val_loss", patience=20,
+            EarlyStopping(monitor="val_auc", patience=10,
                           verbose=1, mode="auto"),
             ModelCheckpoint(filepath=self.model_save_path,
                             verbose=1, save_best_only=True),
@@ -62,9 +62,30 @@ class BaseModel:
     def build_model(self):
 
         self.model.compile(
-            optimizer="adam",
+            optimizer=tf.keras.optimizers.Adam(
+                learning_rate=0.0001,
+                beta_1=0.9,
+                beta_2=0.999,
+                epsilon=1e-07,
+                amsgrad=False,
+                name="Adam",
+            ),
             loss="binary_crossentropy",
-            metrics=["accuracy"]
+            metrics=[
+                "accuracy", 
+                tf.keras.metrics.AUC(
+                    num_thresholds=self.config['batch_size'],
+                    curve="ROC",
+                    summation_method="interpolation",
+                    name='auc',
+                    dtype=None,
+                    thresholds=None,
+                    multi_label=False,
+                    num_labels=None,
+                    label_weights=None,
+                    from_logits=False,
+                )
+            ]
         )
         print(self.model.summary())
 
@@ -183,21 +204,22 @@ class UNetModel(BaseModel):
                         ), dtype=tf.int32
                     )
                 )
-            ).with_options(self.options)
+            ).repeat().with_options(self.options)
 
 
     def train(self):
         train_generator = UnetGenerator(
             self.config['train_dir'],
-            n_channels=self.config['total_bands']
+            n_channels=self.config['total_bands'],
+            batch_size=self.config['batch_size'],
         )
         val_generator = UnetGenerator(
             self.config['val_input_dir'],
-            n_channels=self.config['total_bands']
+            n_channels=self.config['total_bands'],
+            batch_size=self.config['batch_size'],
         )
         train_dataset = self.tf_dataset_from_generator(train_generator)
         val_dataset = self.tf_dataset_from_generator(val_generator)
-
         results = self.model.fit(
             train_dataset,
             epochs=200,

@@ -51,7 +51,7 @@ class BaseModel:
         base_path = os.path.splitext(log_path)[0]
         log_path = base_path + '.log'
         self.callbacks = [
-            EarlyStopping(monitor="val_auc", patience=10,
+            EarlyStopping(monitor="val_accuracy", patience=20,
                           verbose=1, mode="auto"),
             ModelCheckpoint(filepath=self.model_save_path,
                             verbose=1, save_best_only=True),
